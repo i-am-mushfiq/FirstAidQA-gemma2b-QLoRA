@@ -51,8 +51,7 @@ from data import build_hf_dataset, load_split, tokenize_dataset
 
 MODEL_ID = "google/gemma-2b-it"
 DEFAULT_LOCAL_PATH = os.path.join(os.path.dirname(__file__), "models", "gemma-2b-it")
-OUTPUT_BASE = os.path.join(os.path.dirname(__file__), "lora_adapters")
-LOGS_DIR = os.path.join(os.path.dirname(__file__), "logs")
+OUTPUT_BASE = os.path.join(os.path.dirname(__file__), "experiments")
 
 
 def resolve_model_id(model_path: str = "", model_id: str = MODEL_ID):
@@ -314,15 +313,8 @@ def train(cfg: TrainConfig):
 # ---------------------------------------------------------------------------
 
 def _write_run_log(cfg: TrainConfig, trainer, adapter_path: str, elapsed: float):
-    """Write a JSON log of this training run for paper reproducibility."""
-    os.makedirs(LOGS_DIR, exist_ok=True)
-    model_tag = os.path.basename(cfg.model_path or cfg.model_id.replace("/", "_"))
-    run_tag = os.path.basename(os.path.normpath(cfg.output_dir)) or model_tag
-    timestamp_tag = datetime.now().strftime("%Y%m%d_%H%M%S")
-    log_path = os.path.join(
-        LOGS_DIR,
-        f"{run_tag}_{cfg.quant}_seed{cfg.seed}_{timestamp_tag}.json",
-    )
+    """Write training_curve.json inside the experiment folder for reproducibility."""
+    log_path = os.path.join(cfg.output_dir, "training_curve.json")
 
     # Extract epoch-level losses from trainer history
     epoch_log = []
@@ -364,7 +356,7 @@ def _write_run_log(cfg: TrainConfig, trainer, adapter_path: str, elapsed: float)
 
     with open(log_path, "w") as f:
         json.dump(log, f, indent=2)
-    print(f"[train] Run log saved       -> {log_path}")
+    print(f"[train] Training curve saved -> {log_path}")
 
 
 # ---------------------------------------------------------------------------

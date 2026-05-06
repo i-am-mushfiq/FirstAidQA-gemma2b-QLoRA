@@ -20,21 +20,19 @@ import os
 import re
 
 HERE        = os.path.dirname(os.path.abspath(__file__))
-RESULTS_DIR = os.path.join(HERE, "eval_results")
+RESULTS_DIR = os.path.join(HERE, "evaluations")
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
 def latest_run() -> str:
-    files = sorted(
-        (f for f in os.listdir(RESULTS_DIR)
-         if f.startswith("run_") and f.endswith(".json")),
-        reverse=True,
-    )
-    if not files:
-        raise FileNotFoundError("No run_*.json files found in " + RESULTS_DIR)
-    return os.path.join(RESULTS_DIR, files[0])
+    """Return path to run.json in the most recent evaluations/eval_*/ folder."""
+    from pathlib import Path
+    runs = sorted(Path(RESULTS_DIR).glob("eval_*/run.json"))
+    if not runs:
+        raise FileNotFoundError("No eval_*/run.json found in " + RESULTS_DIR)
+    return str(runs[-1])
 
 
 def make_tag(label: str, key: str, used: set) -> str:
@@ -311,10 +309,8 @@ def main():
 
     prompt = build_prompt(run_path)
 
-    run_id   = os.path.basename(run_path).replace("run_", "").replace(".json", "")
-    out_path = args.out or os.path.join(
-        RESULTS_DIR, "llm_judge_prompt_%s.txt" % run_id
-    )
+    eval_folder = os.path.dirname(os.path.abspath(run_path))
+    out_path    = args.out or os.path.join(eval_folder, "llm_judge_prompt.txt")
 
     with open(out_path, "w", encoding="utf-8") as f:
         f.write(prompt)

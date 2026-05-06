@@ -13,7 +13,7 @@ Usage:
   python evaluate.py
 
   # Evaluate a specific run file
-  python evaluate.py --run eval_results/run_20250505_143022.json
+  python evaluate.py --run evaluations/eval_20250505_143022/run.json
 
   # Evaluate ALL run files and aggregate
   python evaluate.py --all
@@ -25,7 +25,7 @@ Usage:
   python evaluate.py --bert-model allenai/scibert_scivocab_uncased
 
 Output:
-  eval_results/metrics_<run_id>.json   -- full per-question metrics
+  evaluations/eval_<run_id>/metrics.json  -- full per-question metrics
   Terminal                              -- compact summary table
 """
 
@@ -62,7 +62,7 @@ def _check_deps(want_bert: bool):
 # ---------------------------------------------------------------------------
 
 HERE        = os.path.dirname(os.path.abspath(__file__))
-RESULTS_DIR = os.path.join(HERE, "eval_results")
+RESULTS_DIR = os.path.join(HERE, "evaluations")
 
 DEFAULT_BERT_MODEL = "allenai/scibert_scivocab_uncased"
 
@@ -450,9 +450,9 @@ def print_summary(metrics: dict):
 # ---------------------------------------------------------------------------
 
 def save_metrics(metrics: dict, run_path: str) -> str:
-    os.makedirs(RESULTS_DIR, exist_ok=True)
-    run_id   = metrics.get("run_id", "unknown")
-    out_path = os.path.join(RESULTS_DIR, f"metrics_{run_id}.json")
+    # Save metrics.json alongside run.json in the same eval_<id>/ folder
+    eval_folder = os.path.dirname(os.path.abspath(run_path))
+    out_path = os.path.join(eval_folder, "metrics.json")
     with open(out_path, "w") as f:
         json.dump(metrics, f, indent=2)
     print(f"[evaluate] Metrics saved -> {out_path}")
@@ -464,22 +464,18 @@ def save_metrics(metrics: dict, run_path: str) -> str:
 # ---------------------------------------------------------------------------
 
 def find_latest_run() -> str | None:
+    """Return path to run.json in the most recent evaluations/eval_*/ folder."""
     if not os.path.isdir(RESULTS_DIR):
         return None
-    runs = sorted(
-        p for p in Path(RESULTS_DIR).glob("run_*.json")
-        if not p.name.startswith("metrics_")
-    )
+    runs = sorted(Path(RESULTS_DIR).glob("eval_*/run.json"))
     return str(runs[-1]) if runs else None
 
 
 def find_all_runs() -> list[str]:
+    """Return paths to all run.json files across evaluations/eval_*/ folders."""
     if not os.path.isdir(RESULTS_DIR):
         return []
-    return sorted(
-        str(p) for p in Path(RESULTS_DIR).glob("run_*.json")
-        if not p.name.startswith("metrics_")
-    )
+    return sorted(str(p) for p in Path(RESULTS_DIR).glob("eval_*/run.json"))
 
 
 def parse_args():
@@ -491,12 +487,12 @@ def parse_args():
         "--run",
         default="",
         help="Path to a specific eval_suite run JSON. "
-             "Defaults to the most recent run_*.json in eval_results/.",
+             "Defaults to run.json in the most recent evaluations/eval_*/ folder.",
     )
     p.add_argument(
         "--all",
         action="store_true",
-        help="Evaluate ALL run files in eval_results/ (one metrics file per run).",
+        help="Evaluate ALL run.json files across evaluations/eval_*/ folders.",
     )
     p.add_argument(
         "--no-bert",
@@ -606,7 +602,7 @@ def main():
     if args.all:
         run_paths = find_all_runs()
         if not run_paths:
-            print("[evaluate] No run_*.json files found in", RESULTS_DIR)
+            print("[evaluate] No run.json files found in", RESULTS_DIR)
             sys.exit(1)
         print(f"[evaluate] Found {len(run_paths)} run files.")
     elif args.run:
@@ -614,7 +610,7 @@ def main():
     else:
         latest = find_latest_run()
         if not latest:
-            print("[evaluate] No run_*.json files found in", RESULTS_DIR)
+            print("[evaluate] No run.json files found in", RESULTS_DIR)
             print("           Run eval_suite.py first to generate results.")
             sys.exit(1)
         run_paths = [latest]
@@ -633,8 +629,3 @@ def main():
         with open(agg_path, "w") as f:
             json.dump(agg, f, indent=2)
         print(f"[evaluate] Aggregate saved -> {agg_path}")
-        print_aggregate(agg)
-
-
-if __name__ == "__main__":
-    main()

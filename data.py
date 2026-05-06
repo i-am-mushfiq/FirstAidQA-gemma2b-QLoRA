@@ -34,9 +34,9 @@ from typing import Optional
 # Paths
 # ---------------------------------------------------------------------------
 
-DEFAULT_DATASET_PATH = os.path.join(os.path.dirname(__file__), "firstaidqa_v1.json")
-ENRICHED_PATH = os.path.join(os.path.dirname(__file__), "firstaidqa_v1_enriched.json")
-SPLITS_DIR = os.path.join(os.path.dirname(__file__), "splits")
+DEFAULT_DATASET_PATH = os.path.join(os.path.dirname(__file__), "data", "firstaidqa_v1.json")
+ENRICHED_PATH = os.path.join(os.path.dirname(__file__), "data", "firstaidqa_v1_enriched.json")
+SPLITS_DIR = os.path.join(os.path.dirname(__file__), "splits", "10cat")
 
 # ---------------------------------------------------------------------------
 # System prompt -- kept short for edge deployment (fewer tokens = less latency)
