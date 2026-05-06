@@ -1,0 +1,1270 @@
+{
+  "run_id": "20260505_143609",
+  "timestamp": "2026-05-05T14:52:23.746516",
+  "source": "C:\\Personal_Endeavours\\Fine_Tuning\\eval_results\\run_20260505_143609.json",
+  "meta": {
+    "model_id": "google/gemma-2b-it",
+    "model_source": "C:\\Personal_Endeavours\\Fine_Tuning\\models\\gemma-2b-it",
+    "variants_run": [
+      "base",
+      "4bit",
+      "8bit",
+      "fp16"
+    ],
+    "max_new_tokens": 250,
+    "n_questions": 20,
+    "system_prompt": "You are a first aid assistant. Provide accurate, step-by-step emergency guidance. For life-threatening situations, always advise calling emergency services immediately."
+  },
+  "variants": [
+    {
+      "variant": "base",
+      "label": "Base model (no fine-tuning)",
+      "n_valid": 20,
+      "n_error": 0,
+      "overall": {
+        "rouge1": 0.3034,
+        "rouge2": 0.0988,
+        "rougeL": 0.204,
+        "n": 20
+      },
+      "safety_critical": {
+        "n": 13,
+        "rouge1": 0.2905,
+        "rouge2": 0.0903,
+        "rougeL": 0.1934
+      },
+      "non_urgent": {
+        "n": 7,
+        "rouge1": 0.3273,
+        "rouge2": 0.1146,
+        "rougeL": 0.2236
+      },
+      "per_category": {
+        "Airway, Choking & Drowning": {
+          "rouge1": 0.2502,
+          "rouge2": 0.0446,
+          "rougeL": 0.155,
+          "n": 2
+        },
+        "Bites, Stings & Envenomation": {
+          "rouge1": 0.2657,
+          "rouge2": 0.0762,
+          "rougeL": 0.1614,
+          "n": 2
+        },
+        "Bleeding & Wounds": {
+          "rouge1": 0.2961,
+          "rouge2": 0.1149,
+          "rougeL": 0.2142,
+          "n": 2
+        },
+        "Burns & Environmental Emergencies": {
+          "rouge1": 0.4135,
+          "rouge2": 0.1316,
+          "rougeL": 0.2542,
+          "n": 2
+        },
+        "Cardiac & Resuscitation": {
+          "rouge1": 0.3609,
+          "rouge2": 0.1468,
+          "rougeL": 0.2581,
+          "n": 3
+        },
+        "Minor Injuries & General First Aid": {
+          "rouge1": 0.3631,
+          "rouge2": 0.1661,
+          "rougeL": 0.2636,
+          "n": 2
+        },
+        "Neurological & Altered Consciousness": {
+          "rouge1": 0.2443,
+          "rouge2": 0.0512,
+          "rougeL": 0.1729,
+          "n": 2
+        },
+        "Poisoning, Overdose & Toxic Exposure": {
+          "rouge1": 0.2432,
+          "rouge2": 0.0875,
+          "rougeL": 0.1729,
+          "n": 2
+        },
+        "Spinal Injuries & Patient Movement": {
+          "rouge1": 0.2081,
+          "rouge2": 0.0548,
+          "rougeL": 0.1538,
+          "n": 1
+        },
+        "Trauma & Musculoskeletal": {
+          "rouge1": 0.3119,
+          "rouge2": 0.0689,
+          "rougeL": 0.1816,
+          "n": 2
+        }
+      },
+      "speed": {
+        "mean_tok_per_sec": 53.9,
+        "mean_peak_vram_mb": 5033.4
+      },
+      "per_question": [
+        {
+          "id": 1,
+          "category": "Cardiac & Resuscitation",
+          "safety_critical": true,
+          "rouge1": 0.6182,
+          "rouge2": 0.3774,
+          "rougeL": 0.4364,
+          "bertscore_f1": null,
+          "tokens_per_sec": 55.17,
+          "peak_vram_mb": 5031.0
+        },
+        {
+          "id": 2,
+          "category": "Cardiac & Resuscitation",
+          "safety_critical": true,
+          "rouge1": 0.1913,
+          "rouge2": 0.0,
+          "rougeL": 0.1391,
+          "bertscore_f1": null,
+          "tokens_per_sec": 56.23,
+          "peak_vram_mb": 5030.0
+        },
+        {
+          "id": 3,
+          "category": "Cardiac & Resuscitation",
+          "safety_critical": true,
+          "rouge1": 0.2733,
+          "rouge2": 0.0629,
+          "rougeL": 0.1988,
+          "bertscore_f1": null,
+          "tokens_per_sec": 55.46,
+          "peak_vram_mb": 5033.0
+        },
+        {
+          "id": 4,
+          "category": "Airway, Choking & Drowning",
+          "safety_critical": true,
+          "rouge1": 0.2581,
+          "rouge2": 0.0279,
+          "rougeL": 0.1382,
+          "bertscore_f1": null,
+          "tokens_per_sec": 53.25,
+          "peak_vram_mb": 5036.0
+        },
+        {
+          "id": 5,
+          "category": "Airway, Choking & Drowning",
+          "safety_critical": true,
+          "rouge1": 0.2424,
+          "rouge2": 0.0612,
+          "rougeL": 0.1717,
+          "bertscore_f1": null,
+          "tokens_per_sec": 53.52,
+          "peak_vram_mb": 5035.0
+        },
+        {
+          "id": 6,
+          "category": "Bleeding & Wounds",
+          "safety_critical": true,
+          "rouge1": 0.2723,
+          "rouge2": 0.0952,
+          "rougeL": 0.1885,
+          "bertscore_f1": null,
+          "tokens_per_sec": 53.53,
+          "peak_vram_mb": 5035.0
+        },
+        {
+          "id": 7,
+          "category": "Bleeding & Wounds",
+          "safety_critical": false,
+          "rouge1": 0.32,
+          "rouge2": 0.1345,
+          "rougeL": 0.24,
+          "bertscore_f1": null,
+          "tokens_per_sec": 53.96,
+          "peak_vram_mb": 5036.0
+        },
+        {
+          "id": 8,
+          "category": "Trauma & Musculoskeletal",
+          "safety_critical": false,
+          "rouge1": 0.3195,
+          "rouge2": 0.0719,
+          "rougeL": 0.1893,
+          "bertscore_f1": null,
+          "tokens_per_sec": 53.73,
+          "peak_vram_mb": 5031.0
+        },
+        {
+          "id": 9,
+          "category": "Trauma & Musculoskeletal",
+          "safety_critical": false,
+          "rouge1": 0.3043,
+          "rouge2": 0.0659,
+          "rougeL": 0.1739,
+          "bertscore_f1": null,
+          "tokens_per_sec": 53.92,
+          "peak_vram_mb": 5033.0
+        },
+        {
+          "id": 10,
+          "category": "Bites, Stings & Envenomation",
+          "safety_critical": true,
+          "rouge1": 0.2791,
+          "rouge2": 0.1033,
+          "rougeL": 0.1674,
+          "bertscore_f1": null,
+          "tokens_per_sec": 54.35,
+          "peak_vram_mb": 5036.0
+        },
+        {
+          "id": 11,
+          "category": "Bites, Stings & Envenomation",
+          "safety_critical": true,
+          "rouge1": 0.2524,
+          "rouge2": 0.049,
+          "rougeL": 0.1553,
+          "bertscore_f1": null,
+          "tokens_per_sec": 54.38,
+          "peak_vram_mb": 5034.0
+        },
+        {
+          "id": 12,
+          "category": "Poisoning, Overdose & Toxic Exposure",
+          "safety_critical": true,
+          "rouge1": 0.2391,
+          "rouge2": 0.0989,
+          "rougeL": 0.1522,
+          "bertscore_f1": null,
+          "tokens_per_sec": 53.78,
+          "peak_vram_mb": 5033.0
+        },
+        {
+          "id": 13,
+          "category": "Poisoning, Overdose & Toxic Exposure",
+          "safety_critical": false,
+          "rouge1": 0.2473,
+          "rouge2": 0.0761,
+          "rougeL": 0.1935,
+          "bertscore_f1": null,
+          "tokens_per_sec": 54.12,
+          "peak_vram_mb": 5033.0
+        },
+        {
+          "id": 14,
+          "category": "Burns & Environmental Emergencies",
+          "safety_critical": false,
+          "rouge1": 0.3735,
+          "rouge2": 0.122,
+          "rougeL": 0.241,
+          "bertscore_f1": null,
+          "tokens_per_sec": 53.32,
+          "peak_vram_mb": 5031.0
+        },
+        {
+          "id": 15,
+          "category": "Burns & Environmental Emergencies",
+          "safety_critical": true,
+          "rouge1": 0.4535,
+          "rouge2": 0.1412,
+          "rougeL": 0.2674,
+          "bertscore_f1": null,
+          "tokens_per_sec": 53.31,
+          "peak_vram_mb": 5033.0
+        },
+        {
+          "id": 16,
+          "category": "Neurological & Altered Consciousness",
+          "safety_critical": true,
+          "rouge1": 0.2534,
+          "rouge2": 0.0548,
+          "rougeL": 0.181,
+          "bertscore_f1": null,
+          "tokens_per_sec": 53.42,
+          "peak_vram_mb": 5036.0
+        },
+        {
+          "id": 17,
+          "category": "Neurological & Altered Consciousness",
+          "safety_critical": true,
+          "rouge1": 0.2353,
+          "rouge2": 0.0476,
+          "rougeL": 0.1647,
+          "bertscore_f1": null,
+          "tokens_per_sec": 53.45,
+          "peak_vram_mb": 5032.0
+        },
+        {
+          "id": 18,
+          "category": "Spinal Injuries & Patient Movement",
+          "safety_critical": true,
+          "rouge1": 0.2081,
+          "rouge2": 0.0548,
+          "rougeL": 0.1538,
+          "bertscore_f1": null,
+          "tokens_per_sec": 53.65,
+          "peak_vram_mb": 5036.0
+        },
+        {
+          "id": 19,
+          "category": "Minor Injuries & General First Aid",
+          "safety_critical": false,
+          "rouge1": 0.2407,
+          "rouge2": 0.0748,
+          "rougeL": 0.1389,
+          "bertscore_f1": null,
+          "tokens_per_sec": 53.62,
+          "peak_vram_mb": 5036.0
+        },
+        {
+          "id": 20,
+          "category": "Minor Injuries & General First Aid",
+          "safety_critical": false,
+          "rouge1": 0.4854,
+          "rouge2": 0.2574,
+          "rougeL": 0.3883,
+          "bertscore_f1": null,
+          "tokens_per_sec": 50.91,
+          "peak_vram_mb": 5029.0
+        }
+      ]
+    },
+    {
+      "variant": "4bit",
+      "label": "Fine-tuned QLoRA 4-bit",
+      "n_valid": 20,
+      "n_error": 0,
+      "overall": {
+        "rouge1": 0.2241,
+        "rouge2": 0.0714,
+        "rougeL": 0.1457,
+        "n": 20
+      },
+      "safety_critical": {
+        "n": 13,
+        "rouge1": 0.2207,
+        "rouge2": 0.0685,
+        "rougeL": 0.1418
+      },
+      "non_urgent": {
+        "n": 7,
+        "rouge1": 0.2303,
+        "rouge2": 0.0767,
+        "rougeL": 0.1529
+      },
+      "per_category": {
+        "Airway, Choking & Drowning": {
+          "rouge1": 0.1676,
+          "rouge2": 0.0433,
+          "rougeL": 0.0988,
+          "n": 2
+        },
+        "Bites, Stings & Envenomation": {
+          "rouge1": 0.2299,
+          "rouge2": 0.0572,
+          "rougeL": 0.1465,
+          "n": 2
+        },
+        "Bleeding & Wounds": {
+          "rouge1": 0.2719,
+          "rouge2": 0.1041,
+          "rougeL": 0.1855,
+          "n": 2
+        },
+        "Burns & Environmental Emergencies": {
+          "rouge1": 0.2587,
+          "rouge2": 0.065,
+          "rougeL": 0.1698,
+          "n": 2
+        },
+        "Cardiac & Resuscitation": {
+          "rouge1": 0.1686,
+          "rouge2": 0.0599,
+          "rougeL": 0.1129,
+          "n": 3
+        },
+        "Minor Injuries & General First Aid": {
+          "rouge1": 0.2058,
+          "rouge2": 0.0788,
+          "rougeL": 0.144,
+          "n": 2
+        },
+        "Neurological & Altered Consciousness": {
+          "rouge1": 0.2712,
+          "rouge2": 0.098,
+          "rougeL": 0.1822,
+          "n": 2
+        },
+        "Poisoning, Overdose & Toxic Exposure": {
+          "rouge1": 0.2119,
+          "rouge2": 0.0811,
+          "rougeL": 0.1236,
+          "n": 2
+        },
+        "Spinal Injuries & Patient Movement": {
+          "rouge1": 0.2616,
+          "rouge2": 0.0681,
+          "rougeL": 0.1688,
+          "n": 1
+        },
+        "Trauma & Musculoskeletal": {
+          "rouge1": 0.2397,
+          "rouge2": 0.0623,
+          "rougeL": 0.1529,
+          "n": 2
+        }
+      },
+      "speed": {
+        "mean_tok_per_sec": 19.5,
+        "mean_peak_vram_mb": 2231.9
+      },
+      "per_question": [
+        {
+          "id": 1,
+          "category": "Cardiac & Resuscitation",
+          "safety_critical": true,
+          "rouge1": 0.1517,
+          "rouge2": 0.067,
+          "rougeL": 0.1137,
+          "bertscore_f1": null,
+          "tokens_per_sec": 19.02,
+          "peak_vram_mb": 2233.0
+        },
+        {
+          "id": 2,
+          "category": "Cardiac & Resuscitation",
+          "safety_critical": true,
+          "rouge1": 0.1357,
+          "rouge2": 0.0365,
+          "rougeL": 0.0905,
+          "bertscore_f1": null,
+          "tokens_per_sec": 18.93,
+          "peak_vram_mb": 2232.0
+        },
+        {
+          "id": 3,
+          "category": "Cardiac & Resuscitation",
+          "safety_critical": true,
+          "rouge1": 0.2185,
+          "rouge2": 0.0763,
+          "rougeL": 0.1345,
+          "bertscore_f1": null,
+          "tokens_per_sec": 19.08,
+          "peak_vram_mb": 2232.0
+        },
+        {
+          "id": 4,
+          "category": "Airway, Choking & Drowning",
+          "safety_critical": true,
+          "rouge1": 0.1447,
+          "rouge2": 0.0429,
+          "rougeL": 0.0936,
+          "bertscore_f1": null,
+          "tokens_per_sec": 19.02,
+          "peak_vram_mb": 2232.0
+        },
+        {
+          "id": 5,
+          "category": "Airway, Choking & Drowning",
+          "safety_critical": true,
+          "rouge1": 0.1905,
+          "rouge2": 0.0437,
+          "rougeL": 0.1039,
+          "bertscore_f1": null,
+          "tokens_per_sec": 19.12,
+          "peak_vram_mb": 2232.0
+        },
+        {
+          "id": 6,
+          "category": "Bleeding & Wounds",
+          "safety_critical": true,
+          "rouge1": 0.2569,
+          "rouge2": 0.0926,
+          "rougeL": 0.1743,
+          "bertscore_f1": null,
+          "tokens_per_sec": 19.5,
+          "peak_vram_mb": 2232.0
+        },
+        {
+          "id": 7,
+          "category": "Bleeding & Wounds",
+          "safety_critical": false,
+          "rouge1": 0.2869,
+          "rouge2": 0.1157,
+          "rougeL": 0.1967,
+          "bertscore_f1": null,
+          "tokens_per_sec": 19.64,
+          "peak_vram_mb": 2232.0
+        },
+        {
+          "id": 8,
+          "category": "Trauma & Musculoskeletal",
+          "safety_critical": false,
+          "rouge1": 0.2437,
+          "rouge2": 0.0508,
+          "rougeL": 0.1513,
+          "bertscore_f1": null,
+          "tokens_per_sec": 19.31,
+          "peak_vram_mb": 2232.0
+        },
+        {
+          "id": 9,
+          "category": "Trauma & Musculoskeletal",
+          "safety_critical": false,
+          "rouge1": 0.2358,
+          "rouge2": 0.0738,
+          "rougeL": 0.1545,
+          "bertscore_f1": null,
+          "tokens_per_sec": 19.88,
+          "peak_vram_mb": 2232.0
+        },
+        {
+          "id": 10,
+          "category": "Bites, Stings & Envenomation",
+          "safety_critical": true,
+          "rouge1": 0.2049,
+          "rouge2": 0.0744,
+          "rougeL": 0.1557,
+          "bertscore_f1": null,
+          "tokens_per_sec": 19.84,
+          "peak_vram_mb": 2232.0
+        },
+        {
+          "id": 11,
+          "category": "Bites, Stings & Envenomation",
+          "safety_critical": true,
+          "rouge1": 0.2549,
+          "rouge2": 0.04,
+          "rougeL": 0.1373,
+          "bertscore_f1": null,
+          "tokens_per_sec": 19.77,
+          "peak_vram_mb": 2232.0
+        },
+        {
+          "id": 12,
+          "category": "Poisoning, Overdose & Toxic Exposure",
+          "safety_critical": true,
+          "rouge1": 0.2677,
+          "rouge2": 0.1032,
+          "rougeL": 0.1496,
+          "bertscore_f1": null,
+          "tokens_per_sec": 19.77,
+          "peak_vram_mb": 2232.0
+        },
+        {
+          "id": 13,
+          "category": "Poisoning, Overdose & Toxic Exposure",
+          "safety_critical": false,
+          "rouge1": 0.1561,
+          "rouge2": 0.0591,
+          "rougeL": 0.0976,
+          "bertscore_f1": null,
+          "tokens_per_sec": 19.65,
+          "peak_vram_mb": 2232.0
+        },
+        {
+          "id": 14,
+          "category": "Burns & Environmental Emergencies",
+          "safety_critical": false,
+          "rouge1": 0.2778,
+          "rouge2": 0.08,
+          "rougeL": 0.1825,
+          "bertscore_f1": null,
+          "tokens_per_sec": 19.48,
+          "peak_vram_mb": 2231.0
+        },
+        {
+          "id": 15,
+          "category": "Burns & Environmental Emergencies",
+          "safety_critical": true,
+          "rouge1": 0.2397,
+          "rouge2": 0.05,
+          "rougeL": 0.157,
+          "bertscore_f1": null,
+          "tokens_per_sec": 19.39,
+          "peak_vram_mb": 2232.0
+        },
+        {
+          "id": 16,
+          "category": "Neurological & Altered Consciousness",
+          "safety_critical": true,
+          "rouge1": 0.2811,
+          "rouge2": 0.0972,
+          "rougeL": 0.1847,
+          "bertscore_f1": null,
+          "tokens_per_sec": 19.71,
+          "peak_vram_mb": 2232.0
+        },
+        {
+          "id": 17,
+          "category": "Neurological & Altered Consciousness",
+          "safety_critical": true,
+          "rouge1": 0.2612,
+          "rouge2": 0.0988,
+          "rougeL": 0.1796,
+          "bertscore_f1": null,
+          "tokens_per_sec": 19.81,
+          "peak_vram_mb": 2232.0
+        },
+        {
+          "id": 18,
+          "category": "Spinal Injuries & Patient Movement",
+          "safety_critical": true,
+          "rouge1": 0.2616,
+          "rouge2": 0.0681,
+          "rougeL": 0.1688,
+          "bertscore_f1": null,
+          "tokens_per_sec": 19.83,
+          "peak_vram_mb": 2232.0
+        },
+        {
+          "id": 19,
+          "category": "Minor Injuries & General First Aid",
+          "safety_critical": false,
+          "rouge1": 0.2101,
+          "rouge2": 0.0763,
+          "rougeL": 0.1429,
+          "bertscore_f1": null,
+          "tokens_per_sec": 19.79,
+          "peak_vram_mb": 2232.0
+        },
+        {
+          "id": 20,
+          "category": "Minor Injuries & General First Aid",
+          "safety_critical": false,
+          "rouge1": 0.2016,
+          "rouge2": 0.0813,
+          "rougeL": 0.1452,
+          "bertscore_f1": null,
+          "tokens_per_sec": 19.32,
+          "peak_vram_mb": 2231.0
+        }
+      ]
+    },
+    {
+      "variant": "8bit",
+      "label": "Fine-tuned LoRA 8-bit",
+      "n_valid": 20,
+      "n_error": 0,
+      "overall": {
+        "rouge1": 0.2204,
+        "rouge2": 0.0728,
+        "rougeL": 0.1539,
+        "n": 20
+      },
+      "safety_critical": {
+        "n": 13,
+        "rouge1": 0.2055,
+        "rouge2": 0.0653,
+        "rougeL": 0.1434
+      },
+      "non_urgent": {
+        "n": 7,
+        "rouge1": 0.2483,
+        "rouge2": 0.0868,
+        "rougeL": 0.1735
+      },
+      "per_category": {
+        "Airway, Choking & Drowning": {
+          "rouge1": 0.1761,
+          "rouge2": 0.0399,
+          "rougeL": 0.1144,
+          "n": 2
+        },
+        "Bites, Stings & Envenomation": {
+          "rouge1": 0.1798,
+          "rouge2": 0.05,
+          "rougeL": 0.1377,
+          "n": 2
+        },
+        "Bleeding & Wounds": {
+          "rouge1": 0.2575,
+          "rouge2": 0.0837,
+          "rougeL": 0.1906,
+          "n": 2
+        },
+        "Burns & Environmental Emergencies": {
+          "rouge1": 0.2607,
+          "rouge2": 0.071,
+          "rougeL": 0.2029,
+          "n": 2
+        },
+        "Cardiac & Resuscitation": {
+          "rouge1": 0.1837,
+          "rouge2": 0.062,
+          "rougeL": 0.1471,
+          "n": 3
+        },
+        "Minor Injuries & General First Aid": {
+          "rouge1": 0.2072,
+          "rouge2": 0.0734,
+          "rougeL": 0.1698,
+          "n": 2
+        },
+        "Neurological & Altered Consciousness": {
+          "rouge1": 0.2448,
+          "rouge2": 0.0727,
+          "rougeL": 0.1247,
+          "n": 2
+        },
+        "Poisoning, Overdose & Toxic Exposure": {
+          "rouge1": 0.2148,
+          "rouge2": 0.0939,
+          "rougeL": 0.1508,
+          "n": 2
+        },
+        "Spinal Injuries & Patient Movement": {
+          "rouge1": 0.2363,
+          "rouge2": 0.1277,
+          "rougeL": 0.1603,
+          "n": 1
+        },
+        "Trauma & Musculoskeletal": {
+          "rouge1": 0.2698,
+          "rouge2": 0.0864,
+          "rougeL": 0.1476,
+          "n": 2
+        }
+      },
+      "speed": {
+        "mean_tok_per_sec": 11.0,
+        "mean_peak_vram_mb": 4422.9
+      },
+      "per_question": [
+        {
+          "id": 1,
+          "category": "Cardiac & Resuscitation",
+          "safety_critical": true,
+          "rouge1": 0.1546,
+          "rouge2": 0.0585,
+          "rougeL": 0.1546,
+          "bertscore_f1": null,
+          "tokens_per_sec": 10.91,
+          "peak_vram_mb": 4430.0
+        },
+        {
+          "id": 2,
+          "category": "Cardiac & Resuscitation",
+          "safety_critical": true,
+          "rouge1": 0.1238,
+          "rouge2": 0.0192,
+          "rougeL": 0.1048,
+          "bertscore_f1": null,
+          "tokens_per_sec": 10.91,
+          "peak_vram_mb": 4426.0
+        },
+        {
+          "id": 3,
+          "category": "Cardiac & Resuscitation",
+          "safety_critical": true,
+          "rouge1": 0.2727,
+          "rouge2": 0.1083,
+          "rougeL": 0.1818,
+          "bertscore_f1": null,
+          "tokens_per_sec": 10.91,
+          "peak_vram_mb": 4419.0
+        },
+        {
+          "id": 4,
+          "category": "Airway, Choking & Drowning",
+          "safety_critical": true,
+          "rouge1": 0.1504,
+          "rouge2": 0.0179,
+          "rougeL": 0.0796,
+          "bertscore_f1": null,
+          "tokens_per_sec": 10.89,
+          "peak_vram_mb": 4427.0
+        },
+        {
+          "id": 5,
+          "category": "Airway, Choking & Drowning",
+          "safety_critical": true,
+          "rouge1": 0.2018,
+          "rouge2": 0.0619,
+          "rougeL": 0.1491,
+          "bertscore_f1": null,
+          "tokens_per_sec": 10.91,
+          "peak_vram_mb": 4423.0
+        },
+        {
+          "id": 6,
+          "category": "Bleeding & Wounds",
+          "safety_critical": true,
+          "rouge1": 0.2712,
+          "rouge2": 0.0855,
+          "rougeL": 0.178,
+          "bertscore_f1": null,
+          "tokens_per_sec": 10.82,
+          "peak_vram_mb": 4428.0
+        },
+        {
+          "id": 7,
+          "category": "Bleeding & Wounds",
+          "safety_critical": false,
+          "rouge1": 0.2439,
+          "rouge2": 0.082,
+          "rougeL": 0.2033,
+          "bertscore_f1": null,
+          "tokens_per_sec": 10.91,
+          "peak_vram_mb": 4419.0
+        },
+        {
+          "id": 8,
+          "category": "Trauma & Musculoskeletal",
+          "safety_critical": false,
+          "rouge1": 0.3052,
+          "rouge2": 0.1053,
+          "rougeL": 0.1446,
+          "bertscore_f1": null,
+          "tokens_per_sec": 10.64,
+          "peak_vram_mb": 4420.0
+        },
+        {
+          "id": 9,
+          "category": "Trauma & Musculoskeletal",
+          "safety_critical": false,
+          "rouge1": 0.2343,
+          "rouge2": 0.0675,
+          "rougeL": 0.1506,
+          "bertscore_f1": null,
+          "tokens_per_sec": 10.82,
+          "peak_vram_mb": 4423.0
+        },
+        {
+          "id": 10,
+          "category": "Bites, Stings & Envenomation",
+          "safety_critical": true,
+          "rouge1": 0.2105,
+          "rouge2": 0.0735,
+          "rougeL": 0.17,
+          "bertscore_f1": null,
+          "tokens_per_sec": 11.08,
+          "peak_vram_mb": 4416.0
+        },
+        {
+          "id": 11,
+          "category": "Bites, Stings & Envenomation",
+          "safety_critical": true,
+          "rouge1": 0.1491,
+          "rouge2": 0.0265,
+          "rougeL": 0.1053,
+          "bertscore_f1": null,
+          "tokens_per_sec": 11.12,
+          "peak_vram_mb": 4425.0
+        },
+        {
+          "id": 12,
+          "category": "Poisoning, Overdose & Toxic Exposure",
+          "safety_critical": true,
+          "rouge1": 0.1776,
+          "rouge2": 0.0566,
+          "rougeL": 0.1308,
+          "bertscore_f1": null,
+          "tokens_per_sec": 11.15,
+          "peak_vram_mb": 4423.0
+        },
+        {
+          "id": 13,
+          "category": "Poisoning, Overdose & Toxic Exposure",
+          "safety_critical": false,
+          "rouge1": 0.252,
+          "rouge2": 0.1311,
+          "rougeL": 0.1707,
+          "bertscore_f1": null,
+          "tokens_per_sec": 11.13,
+          "peak_vram_mb": 4424.0
+        },
+        {
+          "id": 14,
+          "category": "Burns & Environmental Emergencies",
+          "safety_critical": false,
+          "rouge1": 0.2881,
+          "rouge2": 0.0747,
+          "rougeL": 0.2058,
+          "bertscore_f1": null,
+          "tokens_per_sec": 11.1,
+          "peak_vram_mb": 4418.0
+        },
+        {
+          "id": 15,
+          "category": "Burns & Environmental Emergencies",
+          "safety_critical": true,
+          "rouge1": 0.2333,
+          "rouge2": 0.0672,
+          "rougeL": 0.2,
+          "bertscore_f1": null,
+          "tokens_per_sec": 11.14,
+          "peak_vram_mb": 4419.0
+        },
+        {
+          "id": 16,
+          "category": "Neurological & Altered Consciousness",
+          "safety_critical": true,
+          "rouge1": 0.2812,
+          "rouge2": 0.0866,
+          "rougeL": 0.1328,
+          "bertscore_f1": null,
+          "tokens_per_sec": 11.06,
+          "peak_vram_mb": 4428.0
+        },
+        {
+          "id": 17,
+          "category": "Neurological & Altered Consciousness",
+          "safety_critical": true,
+          "rouge1": 0.2083,
+          "rouge2": 0.0588,
+          "rougeL": 0.1167,
+          "bertscore_f1": null,
+          "tokens_per_sec": 11.08,
+          "peak_vram_mb": 4422.0
+        },
+        {
+          "id": 18,
+          "category": "Spinal Injuries & Patient Movement",
+          "safety_critical": true,
+          "rouge1": 0.2363,
+          "rouge2": 0.1277,
+          "rougeL": 0.1603,
+          "bertscore_f1": null,
+          "tokens_per_sec": 11.08,
+          "peak_vram_mb": 4427.0
+        },
+        {
+          "id": 19,
+          "category": "Minor Injuries & General First Aid",
+          "safety_critical": false,
+          "rouge1": 0.2176,
+          "rouge2": 0.0675,
+          "rougeL": 0.1506,
+          "bertscore_f1": null,
+          "tokens_per_sec": 11.14,
+          "peak_vram_mb": 4425.0
+        },
+        {
+          "id": 20,
+          "category": "Minor Injuries & General First Aid",
+          "safety_critical": false,
+          "rouge1": 0.1969,
+          "rouge2": 0.0794,
+          "rougeL": 0.189,
+          "bertscore_f1": null,
+          "tokens_per_sec": 11.07,
+          "peak_vram_mb": 4417.0
+        }
+      ]
+    },
+    {
+      "variant": "fp16",
+      "label": "Fine-tuned LoRA fp16",
+      "n_valid": 20,
+      "n_error": 0,
+      "overall": {
+        "rouge1": 0.1947,
+        "rouge2": 0.0606,
+        "rougeL": 0.1335,
+        "n": 20
+      },
+      "safety_critical": {
+        "n": 13,
+        "rouge1": 0.1794,
+        "rouge2": 0.0514,
+        "rougeL": 0.1221
+      },
+      "non_urgent": {
+        "n": 7,
+        "rouge1": 0.2231,
+        "rouge2": 0.0777,
+        "rougeL": 0.1548
+      },
+      "per_category": {
+        "Airway, Choking & Drowning": {
+          "rouge1": 0.2154,
+          "rouge2": 0.0371,
+          "rougeL": 0.1172,
+          "n": 2
+        },
+        "Bites, Stings & Envenomation": {
+          "rouge1": 0.137,
+          "rouge2": 0.04,
+          "rougeL": 0.1041,
+          "n": 2
+        },
+        "Bleeding & Wounds": {
+          "rouge1": 0.1934,
+          "rouge2": 0.0459,
+          "rougeL": 0.1313,
+          "n": 2
+        },
+        "Burns & Environmental Emergencies": {
+          "rouge1": 0.2227,
+          "rouge2": 0.0574,
+          "rougeL": 0.1699,
+          "n": 2
+        },
+        "Cardiac & Resuscitation": {
+          "rouge1": 0.1589,
+          "rouge2": 0.0536,
+          "rougeL": 0.1081,
+          "n": 3
+        },
+        "Minor Injuries & General First Aid": {
+          "rouge1": 0.2097,
+          "rouge2": 0.086,
+          "rougeL": 0.1551,
+          "n": 2
+        },
+        "Neurological & Altered Consciousness": {
+          "rouge1": 0.1621,
+          "rouge2": 0.0385,
+          "rougeL": 0.1084,
+          "n": 2
+        },
+        "Poisoning, Overdose & Toxic Exposure": {
+          "rouge1": 0.2202,
+          "rouge2": 0.078,
+          "rougeL": 0.1553,
+          "n": 2
+        },
+        "Spinal Injuries & Patient Movement": {
+          "rouge1": 0.2393,
+          "rouge2": 0.1121,
+          "rougeL": 0.1709,
+          "n": 1
+        },
+        "Trauma & Musculoskeletal": {
+          "rouge1": 0.2286,
+          "rouge2": 0.087,
+          "rougeL": 0.1464,
+          "n": 2
+        }
+      },
+      "speed": {
+        "mean_tok_per_sec": 29.7,
+        "mean_peak_vram_mb": 5114.8
+      },
+      "per_question": [
+        {
+          "id": 1,
+          "category": "Cardiac & Resuscitation",
+          "safety_critical": true,
+          "rouge1": 0.1524,
+          "rouge2": 0.0577,
+          "rougeL": 0.1143,
+          "bertscore_f1": null,
+          "tokens_per_sec": 29.96,
+          "peak_vram_mb": 5117.0
+        },
+        {
+          "id": 2,
+          "category": "Cardiac & Resuscitation",
+          "safety_critical": true,
+          "rouge1": 0.1048,
+          "rouge2": 0.0096,
+          "rougeL": 0.0667,
+          "bertscore_f1": null,
+          "tokens_per_sec": 30.23,
+          "peak_vram_mb": 5115.0
+        },
+        {
+          "id": 3,
+          "category": "Cardiac & Resuscitation",
+          "safety_critical": true,
+          "rouge1": 0.2194,
+          "rouge2": 0.0936,
+          "rougeL": 0.1435,
+          "bertscore_f1": null,
+          "tokens_per_sec": 28.74,
+          "peak_vram_mb": 5114.0
+        },
+        {
+          "id": 4,
+          "category": "Airway, Choking & Drowning",
+          "safety_critical": true,
+          "rouge1": 0.2271,
+          "rouge2": 0.0088,
+          "rougeL": 0.1048,
+          "bertscore_f1": null,
+          "tokens_per_sec": 29.31,
+          "peak_vram_mb": 5115.0
+        },
+        {
+          "id": 5,
+          "category": "Airway, Choking & Drowning",
+          "safety_critical": true,
+          "rouge1": 0.2037,
+          "rouge2": 0.0654,
+          "rougeL": 0.1296,
+          "bertscore_f1": null,
+          "tokens_per_sec": 29.26,
+          "peak_vram_mb": 5115.0
+        },
+        {
+          "id": 6,
+          "category": "Bleeding & Wounds",
+          "safety_critical": true,
+          "rouge1": 0.1511,
+          "rouge2": 0.0179,
+          "rougeL": 0.1244,
+          "bertscore_f1": null,
+          "tokens_per_sec": 29.41,
+          "peak_vram_mb": 5116.0
+        },
+        {
+          "id": 7,
+          "category": "Bleeding & Wounds",
+          "safety_critical": false,
+          "rouge1": 0.2358,
+          "rouge2": 0.0738,
+          "rougeL": 0.1382,
+          "bertscore_f1": null,
+          "tokens_per_sec": 29.24,
+          "peak_vram_mb": 5114.0
+        },
+        {
+          "id": 8,
+          "category": "Trauma & Musculoskeletal",
+          "safety_critical": false,
+          "rouge1": 0.2329,
+          "rouge2": 0.0891,
+          "rougeL": 0.1526,
+          "bertscore_f1": null,
+          "tokens_per_sec": 29.37,
+          "peak_vram_mb": 5114.0
+        },
+        {
+          "id": 9,
+          "category": "Trauma & Musculoskeletal",
+          "safety_critical": false,
+          "rouge1": 0.2243,
+          "rouge2": 0.0849,
+          "rougeL": 0.1402,
+          "bertscore_f1": null,
+          "tokens_per_sec": 29.25,
+          "peak_vram_mb": 5114.0
+        },
+        {
+          "id": 10,
+          "category": "Bites, Stings & Envenomation",
+          "safety_critical": true,
+          "rouge1": 0.1127,
+          "rouge2": 0.0474,
+          "rougeL": 0.1033,
+          "bertscore_f1": null,
+          "tokens_per_sec": 29.35,
+          "peak_vram_mb": 5114.0
+        },
+        {
+          "id": 11,
+          "category": "Bites, Stings & Envenomation",
+          "safety_critical": true,
+          "rouge1": 0.1613,
+          "rouge2": 0.0325,
+          "rougeL": 0.1048,
+          "bertscore_f1": null,
+          "tokens_per_sec": 29.38,
+          "peak_vram_mb": 5115.0
+        },
+        {
+          "id": 12,
+          "category": "Poisoning, Overdose & Toxic Exposure",
+          "safety_critical": true,
+          "rouge1": 0.2126,
+          "rouge2": 0.0794,
+          "rougeL": 0.1417,
+          "bertscore_f1": null,
+          "tokens_per_sec": 29.39,
+          "peak_vram_mb": 5115.0
+        },
+        {
+          "id": 13,
+          "category": "Poisoning, Overdose & Toxic Exposure",
+          "safety_critical": false,
+          "rouge1": 0.2278,
+          "rouge2": 0.0766,
+          "rougeL": 0.1688,
+          "bertscore_f1": null,
+          "tokens_per_sec": 30.05,
+          "peak_vram_mb": 5115.0
+        },
+        {
+          "id": 14,
+          "category": "Burns & Environmental Emergencies",
+          "safety_critical": false,
+          "rouge1": 0.2213,
+          "rouge2": 0.0478,
+          "rougeL": 0.1739,
+          "bertscore_f1": null,
+          "tokens_per_sec": 29.97,
+          "peak_vram_mb": 5114.0
+        },
+        {
+          "id": 15,
+          "category": "Burns & Environmental Emergencies",
+          "safety_critical": true,
+          "rouge1": 0.2241,
+          "rouge2": 0.0669,
+          "rougeL": 0.166,
+          "bertscore_f1": null,
+          "tokens_per_sec": 30.07,
+          "peak_vram_mb": 5114.0
+        },
+        {
+          "id": 16,
+          "category": "Neurological & Altered Consciousness",
+          "safety_critical": true,
+          "rouge1": 0.2712,
+          "rouge2": 0.0769,
+          "rougeL": 0.1864,
+          "bertscore_f1": null,
+          "tokens_per_sec": 30.0,
+          "peak_vram_mb": 5115.0
+        },
+        {
+          "id": 17,
+          "category": "Neurological & Altered Consciousness",
+          "safety_critical": true,
+          "rouge1": 0.053,
+          "rouge2": 0.0,
+          "rougeL": 0.0303,
+          "bertscore_f1": null,
+          "tokens_per_sec": 30.17,
+          "peak_vram_mb": 5114.0
+        },
+        {
+          "id": 18,
+          "category": "Spinal Injuries & Patient Movement",
+          "safety_critical": true,
+          "rouge1": 0.2393,
+          "rouge2": 0.1121,
+          "rougeL": 0.1709,
+          "bertscore_f1": null,
+          "tokens_per_sec": 29.99,
+          "peak_vram_mb": 5116.0
+        },
+        {
+          "id": 19,
+          "category": "Minor Injuries & General First Aid",
+          "safety_critical": false,
+          "rouge1": 0.1836,
+          "rouge2": 0.0878,
+          "rougeL": 0.1353,
+          "bertscore_f1": null,
+          "tokens_per_sec": 30.09,
+          "peak_vram_mb": 5115.0
+        },
+        {
+          "id": 20,
+          "category": "Minor Injuries & General First Aid",
+          "safety_critical": false,
+          "rouge1": 0.2357,
+          "rouge2": 0.0843,
+          "rougeL": 0.1749,
+          "bertscore_f1": null,
+          "tokens_per_sec": 30.0,
+          "peak_vram_mb": 5114.0
+        }
+      ]
+    }
+  ],
+  "evaluated_at": "2026-05-05T15:00:34.565086",
+  "bert_model": null
+}

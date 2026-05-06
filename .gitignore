@@ -1,0 +1,43 @@
+# =============================================================================
+# Fine_Tuning — gitignore
+# =============================================================================
+# Model weights (never commit — multi-GB)
+models/
+
+# Adapter binary weights (38–150 MB each — reproducible from training)
+*.safetensors
+optimizer.pt
+
+# Tokenizer vocab file (33 MB each — loads from base model)
+tokenizer.json
+tokenizer.model
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+.env
+*.env
+venv/
+.venv/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# HuggingFace cache that sometimes lands locally
+*.lock
+runs/
+
+# Large dataset files that can be regenerated from firstaidqa_v1.json
+# (comment out if you want to track enriched variants)
+# firstaidqa_v1_enriched*.json

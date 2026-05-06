@@ -1,0 +1,216 @@
+{
+  "version": 2,
+  "description": "Thirty-question first-aid evaluation bank for eval_suite_v2.py.",
+  "questions": [
+    {
+      "id": 1,
+      "category": "Cardiac & Resuscitation",
+      "safety_critical": true,
+      "question": "What is the correct ratio of chest compressions to rescue breaths in CPR for an adult, and how deep should compressions be?",
+      "reference": "30 chest compressions to 2 rescue breaths (30:2). Compressions should be at least 5 cm (2 inches) deep at a rate of 100-120 per minute. Allow full chest recoil between compressions."
+    },
+    {
+      "id": 2,
+      "category": "Cardiac & Resuscitation",
+      "safety_critical": true,
+      "question": "A person collapses, is unresponsive, and not breathing normally. What are the first three steps you take?",
+      "reference": "1. Call emergency services (000 in Australia / 911 in US) immediately or send someone to call. 2. Begin CPR: 30 chest compressions followed by 2 rescue breaths. 3. Use an AED as soon as one is available."
+    },
+    {
+      "id": 3,
+      "category": "Cardiac & Resuscitation",
+      "safety_critical": true,
+      "question": "What are the signs of a heart attack and what should you do immediately?",
+      "reference": "Signs: chest pain or pressure, pain radiating to arm or jaw, sweating, nausea, shortness of breath, pale or grey skin. Actions: call emergency services, have the person rest in a comfortable position, give aspirin 300 mg if not allergic, be prepared to start CPR if they lose consciousness."
+    },
+    {
+      "id": 4,
+      "category": "Airway, Choking & Drowning",
+      "safety_critical": true,
+      "question": "An adult is choking and cannot speak, cry, or breathe. What do you do?",
+      "reference": "Give up to 5 firm back blows between the shoulder blades with the heel of your hand. If unsuccessful, give up to 5 abdominal thrusts (Heimlich manoeuvre): stand behind the person, place a fist above the navel, and thrust inward and upward. Alternate back blows and abdominal thrusts until the object is cleared or the person loses consciousness. Call 000."
+    },
+    {
+      "id": 5,
+      "category": "Airway, Choking & Drowning",
+      "safety_critical": true,
+      "question": "You rescue someone from drowning. They are unconscious and not breathing. What do you do?",
+      "reference": "Call emergency services immediately. Give 5 initial rescue breaths before starting CPR. Then perform 30 compressions to 2 rescue breaths. Continue until the person starts breathing or help arrives. Place in recovery position once breathing resumes."
+    },
+    {
+      "id": 6,
+      "category": "Bleeding & Wounds",
+      "safety_critical": true,
+      "question": "How do you control severe arterial bleeding from a limb when blood is spurting and direct pressure is not enough?",
+      "reference": "Apply a tourniquet 5-8 cm above the wound (not over a joint). Tighten until bleeding stops. Record the time of application. Do not remove the tourniquet. Treat for shock and call emergency services immediately. Pack the wound with clean dressings in addition to the tourniquet."
+    },
+    {
+      "id": 7,
+      "category": "Bleeding & Wounds",
+      "safety_critical": false,
+      "question": "What is the correct way to clean and dress a minor laceration?",
+      "reference": "Apply direct pressure with a clean cloth to stop bleeding. Clean the wound under running water for at least 5 minutes. Remove visible debris gently. Apply antiseptic if available. Cover with a sterile non-adherent dressing and secure with a bandage. Seek medical advice if wound is deep, gaping, or contaminated."
+    },
+    {
+      "id": 8,
+      "category": "Trauma & Musculoskeletal",
+      "safety_critical": false,
+      "question": "How do you immobilise a suspected fractured forearm before medical help arrives?",
+      "reference": "Support the arm in the position found. Apply padding around the fracture site. Use a splint (rigid object) along the length of the arm and secure with bandages above and below the fracture, not over it. Apply an arm sling to support the limb. Check circulation (colour, warmth, sensation) distal to the injury regularly."
+    },
+    {
+      "id": 9,
+      "category": "Trauma & Musculoskeletal",
+      "safety_critical": false,
+      "question": "A person has a severely sprained ankle. What is the correct immediate first aid?",
+      "reference": "Apply the RICE protocol: Rest the ankle, apply Ice (wrapped in cloth) for 20 minutes every 2 hours, apply Compression with a bandage to reduce swelling, and Elevate the limb above heart level. Do not apply ice directly to skin. Seek medical review to rule out fracture."
+    },
+    {
+      "id": 10,
+      "category": "Bites, Stings & Envenomation",
+      "safety_critical": true,
+      "question": "What is the correct first aid for a suspected snake bite in Australia?",
+      "reference": "Keep the person calm and still. Apply pressure immobilisation: wrap a broad pressure bandage firmly over the bite site, then wrap the entire limb from fingers/toes to the armpit/groin. Splint the limb. Do NOT wash the bite, cut it, or apply a tourniquet. Call 000 immediately. Do not allow the person to walk."
+    },
+    {
+      "id": 11,
+      "category": "Bites, Stings & Envenomation",
+      "safety_critical": true,
+      "question": "A person is stung by a bee and begins showing signs of anaphylaxis. What is the immediate treatment?",
+      "reference": "Administer epinephrine (EpiPen) immediately into the outer thigh. Call emergency services (000). Lay the person flat with legs elevated unless breathing is difficult (sit up). A second EpiPen can be given after 5 minutes if no improvement. Be prepared to start CPR. Do NOT give antihistamine as sole treatment; it is too slow."
+    },
+    {
+      "id": 12,
+      "category": "Poisoning, Overdose & Toxic Exposure",
+      "safety_critical": true,
+      "question": "You find someone who has suffered an electric shock. They are conscious. What do you do?",
+      "reference": "Do NOT touch the person while they are still in contact with the power source. Turn off the power at the source or switchboard. Once safe, call 000. Check for breathing and pulse. Treat burns at entry and exit points. Lay the person down and treat for shock. Monitor closely as cardiac arrhythmias can develop later."
+    },
+    {
+      "id": 13,
+      "category": "Poisoning, Overdose & Toxic Exposure",
+      "safety_critical": false,
+      "question": "A child has swallowed a household chemical. They are conscious and alert. What do you do?",
+      "reference": "Call Poisons Information Centre (13 11 26 in Australia) or 000 immediately. Do NOT induce vomiting unless specifically instructed. Do NOT give water or milk unless advised. Keep the container for identification. Monitor the child's breathing and consciousness. Follow the instructions of the poisons centre or emergency operator exactly."
+    },
+    {
+      "id": 14,
+      "category": "Burns & Environmental Emergencies",
+      "safety_critical": false,
+      "question": "How do you treat a minor superficial burn at home?",
+      "reference": "Cool the burn under cool (not cold or iced) running water for 20 minutes. Do not apply ice, butter, toothpaste, or any cream. Remove jewellery near the burn. Cover with a non-adherent sterile dressing. Seek medical advice for burns larger than a 20-cent coin, burns on face, hands, feet, or genitals, or any blistering."
+    },
+    {
+      "id": 15,
+      "category": "Burns & Environmental Emergencies",
+      "safety_critical": true,
+      "question": "What are the signs of heat stroke and how do you treat it?",
+      "reference": "Signs: hot, dry or minimally sweaty skin, temperature above 40C, confusion, agitation, loss of consciousness, rapid pulse. Treatment: call 000 immediately. Move to a cool area. Remove excess clothing. Cool rapidly with ice packs to armpits, neck, and groin, or immerse in cool water. Fan the person. Do not give fluids if unconscious."
+    },
+    {
+      "id": 16,
+      "category": "Neurological & Altered Consciousness",
+      "safety_critical": true,
+      "question": "A person is having a tonic-clonic seizure. What should you do and what must you avoid?",
+      "reference": "Do: protect the person from injury by clearing hard objects, cushion the head, time the seizure, place in recovery position after convulsions stop. Call 000 if seizure lasts more than 5 minutes, a second seizure occurs, or the person does not regain consciousness. Do NOT: restrain the person, put anything in their mouth, give water."
+    },
+    {
+      "id": 17,
+      "category": "Neurological & Altered Consciousness",
+      "safety_critical": true,
+      "question": "What position should you place a conscious casualty in when they show signs of shock?",
+      "reference": "Lay the person flat on their back. Elevate their legs approximately 30 cm unless there is a suspected spinal injury, leg fracture, or breathing difficulty. Keep the person warm with a blanket. Do not give food or water. Call 000. Monitor breathing and pulse continuously. Do not leave the person alone."
+    },
+    {
+      "id": 18,
+      "category": "Spinal Injuries & Patient Movement",
+      "safety_critical": true,
+      "question": "A person has fallen from height and you suspect a spinal injury. They are conscious. How do you manage them?",
+      "reference": "Tell the person to stay still. Do not move them unless there is immediate danger. Stabilise the head and neck in the position found. Call 000. If the person must be moved, use log-roll technique with enough rescuers to maintain spinal alignment. Keep the person warm. Monitor breathing continuously. Do not remove a helmet."
+    },
+    {
+      "id": 19,
+      "category": "Minor Injuries & General First Aid",
+      "safety_critical": false,
+      "question": "What are the warning signs of a concussion after a head injury and when should you seek emergency care?",
+      "reference": "Warning signs: headache, confusion, dizziness, memory loss, nausea, vomiting, blurred vision, slurred speech, unequal pupils. Seek emergency care immediately if: loss of consciousness occurred, repeated vomiting, seizure, worsening headache, one pupil is larger than the other, or any deterioration in condition. Do not leave alone for 24 hours."
+    },
+    {
+      "id": 20,
+      "category": "Minor Injuries & General First Aid",
+      "safety_critical": false,
+      "question": "How do you treat a chemical splash to the eye?",
+      "reference": "Immediately irrigate the eye with large amounts of clean water for at least 20 minutes. Hold the eyelid open and let water flow from the inner corner outward. Remove contact lenses if present. Do not rub the eye. Call Poisons Information Centre or go to emergency department. Bring the chemical container for identification."
+    },
+    {
+      "id": 21,
+      "category": "Airway, Choking & Drowning",
+      "safety_critical": true,
+      "question": "An infant under 1 year old is choking, cannot cry, and is turning blue. What should you do?",
+      "reference": "Call emergency services or send someone to call. Lay the infant face down along your forearm with the head lower than the chest and give up to 5 firm back blows between the shoulder blades. If the object does not clear, turn the infant face up and give up to 5 chest thrusts with two fingers in the centre of the chest. Alternate back blows and chest thrusts until clear or the infant becomes unresponsive. Do not use abdominal thrusts on an infant. Start CPR if the infant becomes unresponsive."
+    },
+    {
+      "id": 22,
+      "category": "Bleeding & Wounds",
+      "safety_critical": true,
+      "question": "A person has a large piece of glass embedded in their thigh and the wound is bleeding heavily. What should you do?",
+      "reference": "Do not remove the embedded object. Call 000. Apply firm pressure around the object, not directly on top of it, using bulky sterile dressings or clean cloth. Stabilise the object so it does not move. If bleeding remains life-threatening and cannot be controlled around the object, apply a tourniquet above the wound if it is on a limb. Treat for shock and monitor breathing."
+    },
+    {
+      "id": 23,
+      "category": "Trauma & Musculoskeletal",
+      "safety_critical": false,
+      "question": "A person has an open lower-leg fracture with bone visible. What first aid should you give before help arrives?",
+      "reference": "Call emergency services. Do not push the bone back in. Cover the wound with a sterile dressing and control bleeding with gentle pressure around the wound. Immobilise the leg in the position found using padding and splints if available. Check circulation, warmth, movement, and sensation below the injury before and after splinting. Keep the person still, warm, and reassured."
+    },
+    {
+      "id": 24,
+      "category": "Bites, Stings & Envenomation",
+      "safety_critical": true,
+      "question": "What is the first aid for a suspected funnel-web spider bite in Australia?",
+      "reference": "Call 000 immediately. Keep the person still and calm. Apply pressure immobilisation: a firm broad bandage over the bite area and then along the entire limb, followed by a splint to prevent movement. Do not wash the bite site, cut the wound, suck venom, or apply a tourniquet. Monitor breathing and be prepared to start CPR."
+    },
+    {
+      "id": 25,
+      "category": "Poisoning, Overdose & Toxic Exposure",
+      "safety_critical": true,
+      "question": "You find someone very drowsy with slow breathing after suspected opioid use. What should you do?",
+      "reference": "Call emergency services immediately. Give naloxone if available and follow the device instructions. If the person is not breathing normally, start rescue breathing or CPR according to your training. Place them in the recovery position if breathing adequately. Stay with them because naloxone can wear off and symptoms can return. Do not give food, drink, or try to make them vomit."
+    },
+    {
+      "id": 26,
+      "category": "Burns & Environmental Emergencies",
+      "safety_critical": true,
+      "question": "A person is very cold, confused, shivering weakly, and has been exposed to cold rain for hours. What first aid should you give?",
+      "reference": "Suspect hypothermia and call 000. Move the person out of the cold if safe. Remove wet clothing and dry them gently. Warm them gradually with blankets, warm packs to the chest/neck/armpits/groin, and warm shelter. Handle gently and keep them lying down. Do not use direct high heat, hot baths, alcohol, or vigorous rubbing. Monitor breathing and be prepared for CPR."
+    },
+    {
+      "id": 27,
+      "category": "Neurological & Altered Consciousness",
+      "safety_critical": true,
+      "question": "A person's face droops on one side, one arm is weak, and their speech is slurred. What should you do?",
+      "reference": "Suspect stroke. Use FAST: Face drooping, Arm weakness, Speech difficulty, Time to call emergency services. Call 000 immediately and note the time symptoms started or when the person was last known well. Keep them resting and comfortable. Do not give food, drink, or medication unless instructed by emergency services. Monitor breathing and consciousness."
+    },
+    {
+      "id": 28,
+      "category": "Spinal Injuries & Patient Movement",
+      "safety_critical": true,
+      "question": "A motorcyclist has crashed and you suspect a spinal injury. They are breathing and wearing a helmet. What should you do about the helmet?",
+      "reference": "Do not remove the helmet if the person is breathing and the helmet is not blocking the airway. Call 000. Keep the person still and manually stabilise the head and neck in the position found. Open the visor or loosen the chin strap only if needed to help breathing. Remove the helmet only if the airway cannot be managed otherwise, ideally with trained help while maintaining spinal alignment."
+    },
+    {
+      "id": 29,
+      "category": "Spinal Injuries & Patient Movement",
+      "safety_critical": true,
+      "question": "A person with a suspected spinal injury starts vomiting while lying on their back. How should rescuers move them?",
+      "reference": "Call emergency services. Protect the airway while maintaining spinal alignment. If they must be turned, use a log-roll with several rescuers: one person stabilises the head and neck while others roll the shoulders, hips, and legs together as one unit. Do not twist the neck or back. Clear vomit from the mouth and continue monitoring breathing."
+    },
+    {
+      "id": 30,
+      "category": "Minor Injuries & General First Aid",
+      "safety_critical": false,
+      "question": "What is the correct first aid for a nosebleed?",
+      "reference": "Sit the person upright and lean them forward. Pinch the soft part of the nose just below the bridge continuously for 10-15 minutes. Encourage breathing through the mouth and spitting out blood rather than swallowing it. Do not tilt the head back. Apply a cold pack to the bridge of the nose if helpful. Seek medical care if bleeding lasts more than 20 minutes, follows a head injury, or is very heavy."
+    }
+  ]
+}
