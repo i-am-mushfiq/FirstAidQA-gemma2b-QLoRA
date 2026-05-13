@@ -1,0 +1,800 @@
+{
+  "aggregate_over_n_runs": 15,
+  "run_ids": [
+    "20260508_224901",
+    "20260512_014658",
+    "20260512_014930",
+    "20260505_143609",
+    "20260505_154620",
+    "20260506_004949",
+    "20260506_122433",
+    "20260506_122822",
+    "20260506_132114",
+    "20260507_230926",
+    "20260508_162530",
+    "20260508_165110",
+    "20260509_123546",
+    "20260509_124001",
+    "20260509_124559"
+  ],
+  "variants": {
+    "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337  [T2:greedy-SC + T4:min-tokens + T6:two-pass]": {
+      "rouge1": {
+        "mean": 0.3265,
+        "std": 0.0,
+        "n": 1
+      },
+      "rouge2": {
+        "mean": 0.0894,
+        "std": 0.0,
+        "n": 1
+      },
+      "rougeL": {
+        "mean": 0.1963,
+        "std": 0.0,
+        "n": 1
+      },
+      "bertscore_f1": {
+        "mean": null,
+        "std": null,
+        "n": 0
+      },
+      "sc_rougeL": {
+        "mean": 0.1815,
+        "std": 0.0,
+        "n": 1
+      },
+      "non_rougeL": {
+        "mean": 0.2353,
+        "std": 0.0,
+        "n": 1
+      },
+      "mean_tok_per_sec": {
+        "mean": 4.1,
+        "std": 0.0,
+        "n": 1
+      }
+    },
+    "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337  [T5:RAG]": {
+      "rouge1": {
+        "mean": 0.3249,
+        "std": 0.0,
+        "n": 1
+      },
+      "rouge2": {
+        "mean": 0.0948,
+        "std": 0.0,
+        "n": 1
+      },
+      "rougeL": {
+        "mean": 0.2194,
+        "std": 0.0,
+        "n": 1
+      },
+      "bertscore_f1": {
+        "mean": null,
+        "std": null,
+        "n": 0
+      },
+      "sc_rougeL": {
+        "mean": 0.2036,
+        "std": 0.0,
+        "n": 1
+      },
+      "non_rougeL": {
+        "mean": 0.2611,
+        "std": 0.0,
+        "n": 1
+      },
+      "mean_tok_per_sec": {
+        "mean": 18.8,
+        "std": 0.0,
+        "n": 1
+      }
+    },
+    "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337  [T2:greedy-SC + T5:RAG]": {
+      "rouge1": {
+        "mean": 0.3276,
+        "std": 0.0,
+        "n": 1
+      },
+      "rouge2": {
+        "mean": 0.1056,
+        "std": 0.0,
+        "n": 1
+      },
+      "rougeL": {
+        "mean": 0.2157,
+        "std": 0.0,
+        "n": 1
+      },
+      "bertscore_f1": {
+        "mean": null,
+        "std": null,
+        "n": 0
+      },
+      "sc_rougeL": {
+        "mean": 0.1974,
+        "std": 0.0,
+        "n": 1
+      },
+      "non_rougeL": {
+        "mean": 0.2641,
+        "std": 0.0,
+        "n": 1
+      },
+      "mean_tok_per_sec": {
+        "mean": 19.0,
+        "std": 0.0,
+        "n": 1
+      }
+    },
+    "Base model (no fine-tuning)": {
+      "rouge1": {
+        "mean": 0.298,
+        "std": 0.0076,
+        "n": 2
+      },
+      "rouge2": {
+        "mean": 0.0933,
+        "std": 0.0078,
+        "n": 2
+      },
+      "rougeL": {
+        "mean": 0.1925,
+        "std": 0.0162,
+        "n": 2
+      },
+      "bertscore_f1": {
+        "mean": null,
+        "std": null,
+        "n": 0
+      },
+      "sc_rougeL": {
+        "mean": 0.1841,
+        "std": 0.0131,
+        "n": 2
+      },
+      "non_rougeL": {
+        "mean": 0.2081,
+        "std": 0.0219,
+        "n": 2
+      },
+      "mean_tok_per_sec": {
+        "mean": 53.55,
+        "std": 0.495,
+        "n": 2
+      }
+    },
+    "Fine-tuned QLoRA 4-bit": {
+      "rouge1": {
+        "mean": 0.2993,
+        "std": 0.1063,
+        "n": 2
+      },
+      "rouge2": {
+        "mean": 0.1,
+        "std": 0.0404,
+        "n": 2
+      },
+      "rougeL": {
+        "mean": 0.193,
+        "std": 0.0668,
+        "n": 2
+      },
+      "bertscore_f1": {
+        "mean": null,
+        "std": null,
+        "n": 0
+      },
+      "sc_rougeL": {
+        "mean": 0.1855,
+        "std": 0.0619,
+        "n": 2
+      },
+      "non_rougeL": {
+        "mean": 0.2067,
+        "std": 0.076,
+        "n": 2
+      },
+      "mean_tok_per_sec": {
+        "mean": 19.5,
+        "std": 0.0,
+        "n": 2
+      }
+    },
+    "Fine-tuned LoRA 8-bit": {
+      "rouge1": {
+        "mean": 0.3079,
+        "std": 0.1237,
+        "n": 2
+      },
+      "rouge2": {
+        "mean": 0.1095,
+        "std": 0.0518,
+        "n": 2
+      },
+      "rougeL": {
+        "mean": 0.2052,
+        "std": 0.0725,
+        "n": 2
+      },
+      "bertscore_f1": {
+        "mean": null,
+        "std": null,
+        "n": 0
+      },
+      "sc_rougeL": {
+        "mean": 0.1968,
+        "std": 0.0755,
+        "n": 2
+      },
+      "non_rougeL": {
+        "mean": 0.2209,
+        "std": 0.067,
+        "n": 2
+      },
+      "mean_tok_per_sec": {
+        "mean": 10.9,
+        "std": 0.1414,
+        "n": 2
+      }
+    },
+    "Fine-tuned LoRA fp16": {
+      "rouge1": {
+        "mean": 0.2376,
+        "std": 0.0607,
+        "n": 2
+      },
+      "rouge2": {
+        "mean": 0.0698,
+        "std": 0.0129,
+        "n": 2
+      },
+      "rougeL": {
+        "mean": 0.156,
+        "std": 0.0317,
+        "n": 2
+      },
+      "bertscore_f1": {
+        "mean": null,
+        "std": null,
+        "n": 0
+      },
+      "sc_rougeL": {
+        "mean": 0.1472,
+        "std": 0.0356,
+        "n": 2
+      },
+      "non_rougeL": {
+        "mean": 0.1721,
+        "std": 0.0245,
+        "n": 2
+      },
+      "mean_tok_per_sec": {
+        "mean": 29.55,
+        "std": 0.2121,
+        "n": 2
+      }
+    },
+    "gemma-2b-it 4bit": {
+      "rouge1": {
+        "mean": 0.346,
+        "std": 0.0059,
+        "n": 3
+      },
+      "rouge2": {
+        "mean": 0.1037,
+        "std": 0.0055,
+        "n": 3
+      },
+      "rougeL": {
+        "mean": 0.2296,
+        "std": 0.0078,
+        "n": 3
+      },
+      "bertscore_f1": {
+        "mean": null,
+        "std": null,
+        "n": 0
+      },
+      "sc_rougeL": {
+        "mean": 0.2061,
+        "std": 0.0076,
+        "n": 3
+      },
+      "non_rougeL": {
+        "mean": 0.2769,
+        "std": 0.0018,
+        "n": 3
+      },
+      "mean_tok_per_sec": {
+        "mean": 18.8333,
+        "std": 0.9504,
+        "n": 3
+      }
+    },
+    "Fine-tuned LoRA 4-bit": {
+      "rouge1": {
+        "mean": 0.3813,
+        "std": 0.005,
+        "n": 3
+      },
+      "rouge2": {
+        "mean": 0.1349,
+        "std": 0.0044,
+        "n": 3
+      },
+      "rougeL": {
+        "mean": 0.258,
+        "std": 0.0025,
+        "n": 3
+      },
+      "bertscore_f1": {
+        "mean": null,
+        "std": null,
+        "n": 0
+      },
+      "sc_rougeL": {
+        "mean": 0.2505,
+        "std": 0.0046,
+        "n": 3
+      },
+      "non_rougeL": {
+        "mean": 0.2737,
+        "std": 0.004,
+        "n": 3
+      },
+      "mean_tok_per_sec": {
+        "mean": 18.8333,
+        "std": 0.9504,
+        "n": 3
+      }
+    },
+    "Fine-tuned LoRA google/gemma-2b-it 4-bit": {
+      "rouge1": {
+        "mean": 0.3741,
+        "std": 0.0032,
+        "n": 3
+      },
+      "rouge2": {
+        "mean": 0.1271,
+        "std": 0.0016,
+        "n": 3
+      },
+      "rougeL": {
+        "mean": 0.2494,
+        "std": 0.0007,
+        "n": 3
+      },
+      "bertscore_f1": {
+        "mean": null,
+        "std": null,
+        "n": 0
+      },
+      "sc_rougeL": {
+        "mean": 0.2453,
+        "std": 0.0016,
+        "n": 3
+      },
+      "non_rougeL": {
+        "mean": 0.2581,
+        "std": 0.0068,
+        "n": 3
+      },
+      "mean_tok_per_sec": {
+        "mean": 18.8333,
+        "std": 0.9074,
+        "n": 3
+      }
+    },
+    "exp 10cat 4bit lr1e-4 pat3 20260506 012852": {
+      "rouge1": {
+        "mean": 0.3754,
+        "std": 0.0068,
+        "n": 3
+      },
+      "rouge2": {
+        "mean": 0.1275,
+        "std": 0.008,
+        "n": 3
+      },
+      "rougeL": {
+        "mean": 0.2526,
+        "std": 0.0069,
+        "n": 3
+      },
+      "bertscore_f1": {
+        "mean": null,
+        "std": null,
+        "n": 0
+      },
+      "sc_rougeL": {
+        "mean": 0.232,
+        "std": 0.0041,
+        "n": 3
+      },
+      "non_rougeL": {
+        "mean": 0.2937,
+        "std": 0.0072,
+        "n": 3
+      },
+      "mean_tok_per_sec": {
+        "mean": 19.1333,
+        "std": 0.6658,
+        "n": 3
+      }
+    },
+    "exp 10cat 4bit r8 lr1e-4 pat3 20260506 012852": {
+      "rouge1": {
+        "mean": 0.3658,
+        "std": 0.0057,
+        "n": 3
+      },
+      "rouge2": {
+        "mean": 0.1201,
+        "std": 0.0044,
+        "n": 3
+      },
+      "rougeL": {
+        "mean": 0.239,
+        "std": 0.0042,
+        "n": 3
+      },
+      "bertscore_f1": {
+        "mean": null,
+        "std": null,
+        "n": 0
+      },
+      "sc_rougeL": {
+        "mean": 0.218,
+        "std": 0.0014,
+        "n": 3
+      },
+      "non_rougeL": {
+        "mean": 0.2807,
+        "std": 0.0045,
+        "n": 3
+      },
+      "mean_tok_per_sec": {
+        "mean": 19.2667,
+        "std": 0.6429,
+        "n": 3
+      }
+    },
+    "10cat 4bit r16 lr1e-4 p5 20260506 192538": {
+      "rouge1": {
+        "mean": 0.3685,
+        "std": 0.0,
+        "n": 1
+      },
+      "rouge2": {
+        "mean": 0.125,
+        "std": 0.0,
+        "n": 1
+      },
+      "rougeL": {
+        "mean": 0.2434,
+        "std": 0.0,
+        "n": 1
+      },
+      "bertscore_f1": {
+        "mean": null,
+        "std": null,
+        "n": 0
+      },
+      "sc_rougeL": {
+        "mean": 0.2317,
+        "std": 0.0,
+        "n": 1
+      },
+      "non_rougeL": {
+        "mean": 0.2706,
+        "std": 0.0,
+        "n": 1
+      },
+      "mean_tok_per_sec": {
+        "mean": 19.8,
+        "std": 0.0,
+        "n": 1
+      }
+    },
+    "10cat 4bit r16 lr1e4 p3 20260506 012852": {
+      "rouge1": {
+        "mean": 0.3595,
+        "std": 0.014,
+        "n": 3
+      },
+      "rouge2": {
+        "mean": 0.1138,
+        "std": 0.0078,
+        "n": 3
+      },
+      "rougeL": {
+        "mean": 0.238,
+        "std": 0.0117,
+        "n": 3
+      },
+      "bertscore_f1": {
+        "mean": null,
+        "std": null,
+        "n": 0
+      },
+      "sc_rougeL": {
+        "mean": 0.2213,
+        "std": 0.0104,
+        "n": 3
+      },
+      "non_rougeL": {
+        "mean": 0.2784,
+        "std": 0.0121,
+        "n": 3
+      },
+      "mean_tok_per_sec": {
+        "mean": 19.7667,
+        "std": 0.0577,
+        "n": 3
+      }
+    },
+    "10cat 4bit r16 lr4e-4 p6 20260506 211729": {
+      "rouge1": {
+        "mean": 0.3625,
+        "std": 0.0,
+        "n": 1
+      },
+      "rouge2": {
+        "mean": 0.1182,
+        "std": 0.0,
+        "n": 1
+      },
+      "rougeL": {
+        "mean": 0.2324,
+        "std": 0.0,
+        "n": 1
+      },
+      "bertscore_f1": {
+        "mean": null,
+        "std": null,
+        "n": 0
+      },
+      "sc_rougeL": {
+        "mean": 0.2148,
+        "std": 0.0,
+        "n": 1
+      },
+      "non_rougeL": {
+        "mean": 0.2734,
+        "std": 0.0,
+        "n": 1
+      },
+      "mean_tok_per_sec": {
+        "mean": 19.7,
+        "std": 0.0,
+        "n": 1
+      }
+    },
+    "10cat 4bit r32 lr1e-4 p6 20260507 160543": {
+      "rouge1": {
+        "mean": 0.3619,
+        "std": 0.0,
+        "n": 1
+      },
+      "rouge2": {
+        "mean": 0.1145,
+        "std": 0.0,
+        "n": 1
+      },
+      "rougeL": {
+        "mean": 0.2431,
+        "std": 0.0,
+        "n": 1
+      },
+      "bertscore_f1": {
+        "mean": null,
+        "std": null,
+        "n": 0
+      },
+      "sc_rougeL": {
+        "mean": 0.2331,
+        "std": 0.0,
+        "n": 1
+      },
+      "non_rougeL": {
+        "mean": 0.2665,
+        "std": 0.0,
+        "n": 1
+      },
+      "mean_tok_per_sec": {
+        "mean": 19.9,
+        "std": 0.0,
+        "n": 1
+      }
+    },
+    "10cat 4bit r32 lr4e-4 p8 20260507 195206": {
+      "rouge1": {
+        "mean": 0.3392,
+        "std": 0.0,
+        "n": 1
+      },
+      "rouge2": {
+        "mean": 0.1068,
+        "std": 0.0,
+        "n": 1
+      },
+      "rougeL": {
+        "mean": 0.2193,
+        "std": 0.0,
+        "n": 1
+      },
+      "bertscore_f1": {
+        "mean": null,
+        "std": null,
+        "n": 0
+      },
+      "sc_rougeL": {
+        "mean": 0.1965,
+        "std": 0.0,
+        "n": 1
+      },
+      "non_rougeL": {
+        "mean": 0.2725,
+        "std": 0.0,
+        "n": 1
+      },
+      "mean_tok_per_sec": {
+        "mean": 19.9,
+        "std": 0.0,
+        "n": 1
+      }
+    },
+    "10cat 4bit r8 lr1e-4 p8 20260507 174631": {
+      "rouge1": {
+        "mean": 0.3523,
+        "std": 0.0,
+        "n": 1
+      },
+      "rouge2": {
+        "mean": 0.1171,
+        "std": 0.0,
+        "n": 1
+      },
+      "rougeL": {
+        "mean": 0.2341,
+        "std": 0.0,
+        "n": 1
+      },
+      "bertscore_f1": {
+        "mean": null,
+        "std": null,
+        "n": 0
+      },
+      "sc_rougeL": {
+        "mean": 0.2182,
+        "std": 0.0,
+        "n": 1
+      },
+      "non_rougeL": {
+        "mean": 0.2712,
+        "std": 0.0,
+        "n": 1
+      },
+      "mean_tok_per_sec": {
+        "mean": 19.8,
+        "std": 0.0,
+        "n": 1
+      }
+    },
+    "10cat 4bit r8 lr1e4 p3 20260506 012852": {
+      "rouge1": {
+        "mean": 0.3592,
+        "std": 0.0,
+        "n": 1
+      },
+      "rouge2": {
+        "mean": 0.115,
+        "std": 0.0,
+        "n": 1
+      },
+      "rougeL": {
+        "mean": 0.2341,
+        "std": 0.0,
+        "n": 1
+      },
+      "bertscore_f1": {
+        "mean": null,
+        "std": null,
+        "n": 0
+      },
+      "sc_rougeL": {
+        "mean": 0.2164,
+        "std": 0.0,
+        "n": 1
+      },
+      "non_rougeL": {
+        "mean": 0.2755,
+        "std": 0.0,
+        "n": 1
+      },
+      "mean_tok_per_sec": {
+        "mean": 19.9,
+        "std": 0.0,
+        "n": 1
+      }
+    },
+    "10cat 4bit r16 lr1e-4 p3 v2 20260508 054337": {
+      "rouge1": {
+        "mean": 0.3597,
+        "std": 0.011,
+        "n": 5
+      },
+      "rouge2": {
+        "mean": 0.1186,
+        "std": 0.0061,
+        "n": 5
+      },
+      "rougeL": {
+        "mean": 0.2352,
+        "std": 0.0098,
+        "n": 5
+      },
+      "bertscore_f1": {
+        "mean": null,
+        "std": null,
+        "n": 0
+      },
+      "sc_rougeL": {
+        "mean": 0.2245,
+        "std": 0.0105,
+        "n": 5
+      },
+      "non_rougeL": {
+        "mean": 0.2616,
+        "std": 0.0062,
+        "n": 5
+      },
+      "mean_tok_per_sec": {
+        "mean": 19.26,
+        "std": 0.3578,
+        "n": 5
+      }
+    },
+    "10cat 8bit r16 lr1e-4 p3 20260508 195536": {
+      "rouge1": {
+        "mean": 0.3603,
+        "std": 0.0086,
+        "n": 2
+      },
+      "rouge2": {
+        "mean": 0.1129,
+        "std": 0.0074,
+        "n": 2
+      },
+      "rougeL": {
+        "mean": 0.2347,
+        "std": 0.0127,
+        "n": 2
+      },
+      "bertscore_f1": {
+        "mean": null,
+        "std": null,
+        "n": 0
+      },
+      "sc_rougeL": {
+        "mean": 0.2214,
+        "std": 0.012,
+        "n": 2
+      },
+      "non_rougeL": {
+        "mean": 0.2674,
+        "std": 0.0116,
+        "n": 2
+      },
+      "mean_tok_per_sec": {
+        "mean": 10.55,
+        "std": 0.2121,
+        "n": 2
+      }
+    }
+  },
+  "computed_at": "2026-05-12T01:51:46.644065"
+}

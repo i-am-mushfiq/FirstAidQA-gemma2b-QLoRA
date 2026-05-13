@@ -77,6 +77,7 @@ class TrainConfig:
     quant: Literal["4bit", "8bit", "fp16"] = "4bit"
     output_dir: str = ""
     splits_dir: str = ""          # default resolved at runtime to data.SPLITS_DIR
+    splits_tag: str = ""          # short label used in output dir name (e.g. "10cat")
     seed: int = 42
     max_length: int = 320           # covers 99th percentile of dataset (max ~230 tokens)
     # LoRA hyperparams
@@ -208,13 +209,19 @@ def train(cfg: TrainConfig):
 
     # --- Output dir ---
     if not cfg.output_dir:
-        model_tag = os.path.basename(cfg.model_path or cfg.model_id.replace("/", "_"))
-        cfg.output_dir = os.path.join(OUTPUT_BASE, f"{model_tag}_{cfg.quant}")
+        # Convention: <split>_<quant>_r<r>_lr<lr>_p<patience>_<YYYYMMDD>_<HHMMSS>
+        from data import SPLITS_DIR as DEFAULT_SPLITS_DIR
+        split_tag = cfg.splits_tag or os.path.basename(
+            cfg.splits_dir or DEFAULT_SPLITS_DIR
+        )
+        lr_tag = f"lr{cfg.learning_rate:.0e}".replace("e-0", "e-").replace("e+0", "e")
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        folder = f"{split_tag}_{cfg.quant}_r{cfg.lora_r}_{lr_tag}_p{cfg.early_stopping_patience}_{ts}"
+        cfg.output_dir = os.path.join(OUTPUT_BASE, folder)
     os.makedirs(cfg.output_dir, exist_ok=True)
     print(f"[train] Output dir     : {cfg.output_dir}")
 
     # --- Load splits from disk ---
-    from data import SPLITS_DIR as DEFAULT_SPLITS_DIR
     splits_dir = cfg.splits_dir or DEFAULT_SPLITS_DIR
     print(f"\n[train] Loading splits from  : {splits_dir}")
     train_samples = load_split("train", splits_dir)
@@ -383,11 +390,37 @@ def parse_args() -> TrainConfig:
     p.add_argument("--lora_alpha", type=int, default=32)
     p.add_argument("--lora_dropout", type=float, default=0.05)
     p.add_argument("--patience", type=int, default=2,
-                   help="Early stopping patience (epochs, default 2)")
+                   help="Early stopping patience (eval checkpoints, default 2)")
     p.add_argument("--splits_dir", default="",
-                   help="Path to splits directory (default: splits/). "
-                        "Use splits_10cat/ for 10-category scheme.")
+                   help="Path to splits directory (default: splits/10cat)")
+    p.add_argument("--splits_tag", default="",
+                   help="Short label for output dir name (e.g. '10cat'). "
+                        "Inferred from splits_dir basename if omitted.")
+    p.add_argument("--weight_decay", type=float, default=0.01,
+                   help="AdamW weight decay (default 0.01)")
+    p.add_argument("--target_modules", default="",
+                   help="Comma-separated LoRA target modules. "
+                        "Default: all 7 projection layers. "
+                        "Use 'q_proj,k_proj,v_proj,o_proj' for attention-only.")
+    p.add_argument("--max_grad_norm", type=float, default=1.0,
+                   help="Gradient clipping max norm (default 1.0). "
+                        "Both previous runs clipped 100%% of steps at mean norm ~3.7.")
+    p.add_argument("--lr_scheduler", default="cosine",
+                   choices=["cosine", "linear", "constant", "constant_with_warmup"],
+                   help="LR scheduler type (default cosine)")
+    p.add_argument("--warmup_ratio", type=float, default=0.03,
+                   help="Fraction of steps used for LR warmup (default 0.03)")
+    p.add_argument("--grad_accum", type=int, default=4,
+                   help="Gradient accumulation steps. "
+                        "Effective batch = batch_size * grad_accum (default 4 -> eff. batch 8)")
     args = p.parse_args()
+
+    target_modules = (
+        [m.strip() for m in args.target_modules.split(",") if m.strip()]
+        if args.target_modules
+        else ["q_proj", "k_proj", "v_proj", "o_proj",
+              "gate_proj", "up_proj", "down_proj"]
+    )
 
     return TrainConfig(
         model_id=args.model_id,
@@ -395,15 +428,22 @@ def parse_args() -> TrainConfig:
         quant=args.quant,
         output_dir=args.output_dir,
         splits_dir=args.splits_dir,
+        splits_tag=args.splits_tag,
         seed=args.seed,
         max_length=args.max_length,
         num_train_epochs=args.epochs,
         per_device_train_batch_size=args.batch_size,
+        gradient_accumulation_steps=args.grad_accum,
         learning_rate=args.lr,
+        warmup_ratio=args.warmup_ratio,
+        lr_scheduler_type=args.lr_scheduler,
         lora_r=args.lora_r,
         lora_alpha=args.lora_alpha,
         lora_dropout=args.lora_dropout,
         early_stopping_patience=args.patience,
+        weight_decay=args.weight_decay,
+        max_grad_norm=args.max_grad_norm,
+        target_modules=target_modules,
     )
 
 
@@ -412,12 +452,18 @@ if __name__ == "__main__":
     print("=" * 60)
     print("  Gemma 2B -- LoRA/QLoRA Training")
     print("=" * 60)
-    print(f"  Quant mode  : {cfg.quant}")
-    print(f"  Model       : {cfg.model_path or cfg.model_id}")
-    print(f"  Seed        : {cfg.seed}")
-    print(f"  Max epochs  : {cfg.num_train_epochs} (early stop patience={cfg.early_stopping_patience})")
-    print(f"  Max length  : {cfg.max_length}")
-    print(f"  LR          : {cfg.learning_rate}")
+    print(f"  Quant mode    : {cfg.quant}")
+    print(f"  Model         : {cfg.model_path or cfg.model_id}")
+    print(f"  Seed          : {cfg.seed}")
+    print(f"  Max epochs    : {cfg.num_train_epochs} (early stop patience={cfg.early_stopping_patience})")
+    print(f"  Max length    : {cfg.max_length}")
+    print(f"  LR            : {cfg.learning_rate}")
+    print(f"  LoRA r/alpha  : {cfg.lora_r}/{cfg.lora_alpha}  dropout={cfg.lora_dropout}")
+    print(f"  Weight decay  : {cfg.weight_decay}   max_grad_norm={cfg.max_grad_norm}")
+    print(f"  Scheduler     : {cfg.lr_scheduler_type}   warmup={cfg.warmup_ratio}")
+    print(f"  Eff. batch    : {cfg.per_device_train_batch_size * cfg.gradient_accumulation_steps} "
+          f"(batch={cfg.per_device_train_batch_size} x accum={cfg.gradient_accumulation_steps})")
+    print(f"  Target modules: {', '.join(cfg.target_modules)}")
     print("=" * 60)
 
     adapter_path = train(cfg)

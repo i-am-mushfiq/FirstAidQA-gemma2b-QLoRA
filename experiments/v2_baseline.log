@@ -1,0 +1,11 @@
+﻿
+python.exe : Traceback (most recent call last):
+At C:\Personal_Endeavours\Fine_Tuning\run_v2_baseline.ps1:47 char:1
++ & python $profile.Args 2>&1 | ForEach-Object {
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Traceback (most recent call last)::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  File "C:\Personal_Endeavours\Fine_Tuning\train_v2.py", line 59, in <module>
+    from peft import (
+ModuleNotFoundError: No module named 'peft'

@@ -44,16 +44,16 @@ def _check_deps(want_bert: bool):
     missing = []
     try:
         from rouge_score import rouge_scorer  # noqa: F401
-    except ImportError:
+    except Exception:
         missing.append("rouge-score")
     if want_bert:
         try:
             import bert_score  # noqa: F401
-        except ImportError:
+        except Exception:
             missing.append("bert-score")
     if missing:
-        print("[evaluate] Missing packages:", ", ".join(missing))
-        print("           Install with:  pip install", " ".join(missing))
+        print("[evaluate] Missing packages:", ", ".join(missing), flush=True)
+        print("           Install with:  pip install", " ".join(missing), flush=True)
         sys.exit(1)
 
 
@@ -222,6 +222,41 @@ def _sc_split(answers: list[dict]) -> tuple[list, list]:
 # Per-variant evaluation
 # ---------------------------------------------------------------------------
 
+def _coerce_answer(a: dict) -> dict:
+    """
+    eval_suite.py serialises everything as strings (e.g. error="None",
+    safety_critical="True", tokens_per_sec="18.98").  Normalise in place.
+    """
+    # error: "None" string → Python None
+    err = a.get("error")
+    if isinstance(err, str) and err.lower() in ("none", ""):
+        a["error"] = None
+
+    # safety_critical: "True"/"False" → bool
+    sc = a.get("safety_critical")
+    if isinstance(sc, str):
+        a["safety_critical"] = sc.strip().lower() == "true"
+
+    # numeric fields stored as strings
+    for field in ("tokens_per_sec", "peak_vram_mb", "tokens_generated", "elapsed_s"):
+        v = a.get(field)
+        if isinstance(v, str):
+            try:
+                a[field] = float(v)
+            except (ValueError, TypeError):
+                a[field] = None
+
+    # question_id: string "1" → int
+    qid = a.get("question_id")
+    if isinstance(qid, str):
+        try:
+            a["question_id"] = int(qid)
+        except (ValueError, TypeError):
+            pass
+
+    return a
+
+
 def evaluate_variant(
     variant_result: dict,
     want_bert:      bool,
@@ -233,7 +268,7 @@ def evaluate_variant(
     Returns a metrics dict ready for JSON serialisation.
     """
     label   = variant_result.get("label", variant_result.get("variant"))
-    answers = variant_result.get("answers", [])
+    answers = [_coerce_answer(a) for a in variant_result.get("answers", [])]
 
     # Only scored answers (no errors)
     valid = [a for a in answers if a.get("error") is None and a.get("answer")]
@@ -242,6 +277,8 @@ def evaluate_variant(
     refs  = [a["reference"] for a in valid]
 
     # --- ROUGE ---
+    if not valid:
+        print(f"    WARNING: 0 valid answers found for '{label}' — skipping", flush=True)
     print(f"    ROUGE  ({len(valid)} answers)...", end=" ", flush=True)
     rouge_overall   = compute_rouge(preds, refs)
     rouge_per_item  = compute_rouge_per_item(preds, refs)
@@ -350,13 +387,13 @@ def evaluate_run(
     timestamp = run.get("timestamp", "")
     meta      = run.get("meta", {})
 
-    print(f"\n[evaluate] Run : {run_id}  ({timestamp})")
-    print(f"           File: {run_path}")
+    print(f"\n[evaluate] Run : {run_id}  ({timestamp})", flush=True)
+    print(f"           File: {run_path}", flush=True)
 
     variant_metrics = []
     for vr in run.get("results", []):
         label = vr.get("label", vr.get("variant"))
-        print(f"  → Variant: {label}")
+        print(f"  -> Variant: {label}", flush=True)
         vm = evaluate_variant(vr, want_bert, bert_model, bert_device)
         variant_metrics.append(vm)
 
@@ -464,18 +501,18 @@ def save_metrics(metrics: dict, run_path: str) -> str:
 # ---------------------------------------------------------------------------
 
 def find_latest_run() -> str | None:
-    """Return path to run.json in the most recent evaluations/eval_*/ folder."""
+    """Return path to run.json in the most recent evaluations/*eval_*/ folder."""
     if not os.path.isdir(RESULTS_DIR):
         return None
-    runs = sorted(Path(RESULTS_DIR).glob("eval_*/run.json"))
+    runs = sorted(Path(RESULTS_DIR).glob("*eval_*/run.json"))
     return str(runs[-1]) if runs else None
 
 
 def find_all_runs() -> list[str]:
-    """Return paths to all run.json files across evaluations/eval_*/ folders."""
+    """Return paths to all run.json files across evaluations/*eval_*/ folders."""
     if not os.path.isdir(RESULTS_DIR):
         return []
-    return sorted(str(p) for p in Path(RESULTS_DIR).glob("eval_*/run.json"))
+    return sorted(str(p) for p in Path(RESULTS_DIR).glob("*eval_*/run.json"))
 
 
 def parse_args():
@@ -497,7 +534,12 @@ def parse_args():
     p.add_argument(
         "--no-bert",
         action="store_true",
-        help="Skip BERTScore (ROUGE only, much faster).",
+        help="Skip BERTScore (ROUGE only). This is now the DEFAULT — kept for backwards compatibility.",
+    )
+    p.add_argument(
+        "--bert",
+        action="store_true",
+        help="Enable BERTScore (requires bert-score package and ~2 GB model download).",
     )
     p.add_argument(
         "--bert-model",
@@ -595,8 +637,12 @@ def print_aggregate(agg: dict):
 
 def main():
     args = parse_args()
-    want_bert = not args.no_bert
+    # BERT is opt-IN now (--bert flag). --no-bert kept for back-compat but has no effect.
+    # Old default (want_bert=True) was crashing silently when bert_score wasn't properly
+    # installed because non-ImportError exceptions weren't caught by the dep check.
+    want_bert = args.bert and not args.no_bert
 
+    print(f"[evaluate] Starting  (ROUGE only={not want_bert})", flush=True)
     _check_deps(want_bert)
 
     if args.all:
@@ -629,3 +675,7 @@ def main():
         with open(agg_path, "w") as f:
             json.dump(agg, f, indent=2)
         print(f"[evaluate] Aggregate saved -> {agg_path}")
+
+
+if __name__ == "__main__":
+    main()

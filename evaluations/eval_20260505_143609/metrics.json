@@ -1,7 +1,7 @@
 {
   "run_id": "20260505_143609",
   "timestamp": "2026-05-05T14:52:23.746516",
-  "source": "C:\\Personal_Endeavours\\Fine_Tuning\\eval_results\\run_20260505_143609.json",
+  "source": "C:\\Personal_Endeavours\\Fine_Tuning\\evaluations\\eval_20260505_143609\\run.json",
   "meta": {
     "model_id": "google/gemma-2b-it",
     "model_source": "C:\\Personal_Endeavours\\Fine_Tuning\\models\\gemma-2b-it",
@@ -1265,6 +1265,6 @@
       ]
     }
   ],
-  "evaluated_at": "2026-05-05T15:00:34.565086",
+  "evaluated_at": "2026-05-12T01:51:40.988799",
   "bert_model": null
 }

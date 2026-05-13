@@ -27,11 +27,11 @@ RESULTS_DIR = os.path.join(HERE, "evaluations")
 # ---------------------------------------------------------------------------
 
 def latest_run() -> str:
-    """Return path to run.json in the most recent evaluations/eval_*/ folder."""
+    """Return path to run.json in the most recent evaluations/*eval_*/ folder."""
     from pathlib import Path
-    runs = sorted(Path(RESULTS_DIR).glob("eval_*/run.json"))
+    runs = sorted(Path(RESULTS_DIR).glob("*eval_*/run.json"))
     if not runs:
-        raise FileNotFoundError("No eval_*/run.json found in " + RESULTS_DIR)
+        raise FileNotFoundError("No *eval_*/run.json found in " + RESULTS_DIR)
     return str(runs[-1])
 
 
@@ -154,10 +154,42 @@ RUBRIC = (
 # Prompt builder
 # ---------------------------------------------------------------------------
 
-def build_prompt(run_path: str) -> str:
-    with open(run_path, encoding="utf-8") as f:
-        data = json.load(f)
+def merge_run_files(run_paths: list) -> dict:
+    """
+    Merge multiple run.json files into a single in-memory run dict.
+    Each file contributes its non-skipped variant entries to a combined
+    'results' list.  Used when the ablation study produces one file per
+    configuration and you want a single LLM-judge prompt comparing all of them.
+    """
+    merged_results = []
+    seen_variants  = set()
+    run_id         = "merged"
+    timestamp      = ""
 
+    for path in run_paths:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        if not timestamp:
+            run_id    = data.get("run_id", "merged")
+            timestamp = data.get("timestamp", "")
+        for r in data.get("results", []):
+            if r.get("skipped"):
+                continue
+            key = r.get("variant", r.get("label", ""))
+            if key in seen_variants:
+                continue
+            seen_variants.add(key)
+            merged_results.append(r)
+
+    return {
+        "run_id":    run_id + "_merged",
+        "timestamp": timestamp,
+        "results":   merged_results,
+    }
+
+
+def build_prompt_from_data(data: dict) -> str:
+    """Core prompt builder that works on an already-loaded run dict."""
     run_id  = data["run_id"]
     results = [r for r in data["results"] if not r.get("skipped")]
     if not results:
@@ -290,27 +322,58 @@ def build_prompt(run_path: str) -> str:
     return "\n".join(lines)
 
 
+def build_prompt(run_path: str) -> str:
+    """Load a single run.json and build the judge prompt."""
+    with open(run_path, encoding="utf-8") as f:
+        data = json.load(f)
+    return build_prompt_from_data(data)
+
+
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
 def main():
     p = argparse.ArgumentParser(
-        description="Build LLM-judge prompt from eval_suite_v2 results"
+        description="Build LLM-judge prompt from eval_suite / enhanced_inference results"
     )
     p.add_argument("--run", default="",
-                   help="Path to run_*.json (default: latest in eval_results/)")
+                   help="Path to a single run.json (default: latest in evaluations/)")
+    p.add_argument("--runs", nargs="+", default=[],
+                   help="Paths to multiple run.json files to merge into one prompt "
+                        "(use this for ablation comparisons across enhanced_eval_* runs)")
     p.add_argument("--out", default="",
-                   help="Output .txt path (default: eval_results/llm_judge_prompt_<run_id>.txt)")
+                   help="Output .txt path (default: alongside the source run.json)")
     args = p.parse_args()
 
-    run_path = args.run or latest_run()
-    print("[build_prompt] Source run : " + run_path)
+    if args.runs:
+        # Multi-file merge mode
+        missing = [r for r in args.runs if not os.path.exists(r)]
+        if missing:
+            for m in missing:
+                print("[build_prompt] ERROR: file not found: " + m)
+            raise SystemExit(1)
+        print("[build_prompt] Merging %d run files:" % len(args.runs))
+        for r in args.runs:
+            print("               " + r)
+        data     = merge_run_files(args.runs)
+        run_id   = data["run_id"]
+        # Write merged JSON to the evaluations/ folder so it can be referenced later
+        merged_path = os.path.join(RESULTS_DIR, "merged_" + run_id + ".json")
+        os.makedirs(RESULTS_DIR, exist_ok=True)
+        with open(merged_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+        prompt      = build_prompt_from_data(data)
+        out_folder  = RESULTS_DIR
+    else:
+        run_path = args.run or latest_run()
+        print("[build_prompt] Source run : " + run_path)
+        prompt     = build_prompt(run_path)
+        out_folder = os.path.dirname(os.path.abspath(run_path))
+        with open(run_path, encoding="utf-8") as f:
+            run_id = json.load(f).get("run_id", "unknown")
 
-    prompt = build_prompt(run_path)
-
-    eval_folder = os.path.dirname(os.path.abspath(run_path))
-    out_path    = args.out or os.path.join(eval_folder, "llm_judge_prompt.txt")
+    out_path = args.out or os.path.join(out_folder, "llm_judge_prompt_%s.txt" % run_id)
 
     with open(out_path, "w", encoding="utf-8") as f:
         f.write(prompt)

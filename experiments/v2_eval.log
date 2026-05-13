@@ -1,0 +1,253 @@
+﻿
+python.exe : [transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+At C:\Personal_Endeavours\Fine_Tuning\run_v2_eval.ps1:29 char:1
++ & python eval_suite.py `
++ ~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([transformers] ...dtype` instead!:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+============================================================
+  Eval Suite -- 30-Question First Aid Benchmark
+============================================================
+  Run ID     : 20260508_162530
+  Variants   : ['10cat_4bit_r16_lr1e4_p3_20260506_012852', '10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337']
+  Questions  : 30
+  Bank file  : C:\Personal_Endeavours\Fine_Tuning\data\eval_questions_30.json
+  Max tokens : 250
+  Output dir : C:\Personal_Endeavours\Fine_Tuning\evaluations/
+============================================================
+
+============================================================
+  Model : 10cat 4bit r16 lr1e4 p3 20260506 012852
+  Quant : 4bit  |  Adapter: C:\Personal_Endeavours\Fine_Tuning\experiments\10cat_4bit_r16_lr1e4_p3_20260506_012852\adapter
+============================================================
+  Loading...
+
+Loading weights:   0%|          | 0/164 [00:00<?, ?it/s]
+Loading weights:   1%|          | 1/164 [00:01<03:18,  1.22s/it]
+Loading weights:   2%|1         | 3/164 [00:01<01:07,  2.40it/s]
+Loading weights:   3%|3         | 5/164 [00:01<00:38,  4.11it/s]
+Loading weights:   7%|7         | 12/164 [00:01<00:12, 12.57it/s]
+Loading weights:   9%|9         | 15/164 [00:01<00:10, 13.92it/s]
+Loading weights:  13%|#2        | 21/164 [00:02<00:06, 21.50it/s]
+Loading weights:  15%|#5        | 25/164 [00:02<00:06, 22.47it/s]
+Loading weights:  18%|#8        | 30/164 [00:02<00:04, 27.39it/s]
+Loading weights:  21%|##        | 34/164 [00:02<00:04, 26.84it/s]
+Loading weights:  24%|##4       | 40/164 [00:02<00:04, 28.93it/s]
+Loading weights:  29%|##9       | 48/164 [00:02<00:03, 34.71it/s]
+Loading weights:  32%|###1      | 52/164 [00:02<00:03, 32.04it/s]
+Loading weights:  35%|###5      | 58/164 [00:03<00:03, 32.80it/s]
+Loading weights:  38%|###8      | 63/164 [00:03<00:02, 35.70it/s]
+Loading weights:  41%|####      | 67/164 [00:03<00:02, 32.57it/s]
+Loading weights:  45%|####4     | 73/164 [00:03<00:02, 38.49it/s]
+Loading weights:  48%|####7     | 78/164 [00:03<00:02, 30.48it/s]
+Loading weights:  51%|#####1    | 84/164 [00:03<00:02, 36.32it/s]
+Loading weights:  54%|#####4    | 89/164 [00:04<00:02, 34.25it/s]
+Loading weights:  57%|#####7    | 94/164 [00:04<00:02, 32.21it/s]
+Loading weights:  60%|######    | 99/164 [00:04<00:01, 35.34it/s]
+Loading weights:  63%|######2   | 103/164 [00:04<00:01, 32.21it/s]
+Loading weights:  66%|######5   | 108/164 [00:04<00:01, 35.77it/s]
+Loading weights:  68%|######8   | 112/164 [00:04<00:01, 31.70it/s]
+Loading weights:  71%|#######1  | 117/164 [00:04<00:01, 35.26it/s]
+Loading weights:  74%|#######3  | 121/164 [00:04<00:01, 32.15it/s]
+Loading weights:  77%|#######7  | 127/164 [00:05<00:00, 38.67it/s]
+Loading weights:  80%|########  | 132/164 [00:05<00:00, 32.34it/s]
+Loading weights:  85%|########4 | 139/164 [00:05<00:00, 35.19it/s]
+Loading weights:  90%|########9 | 147/164 [00:05<00:00, 38.87it/s]
+Loading weights:  93%|#########2| 152/164 [00:05<00:00, 31.22it/s]
+Loading weights:  96%|#########5| 157/164 [00:06<00:00, 30.88it/s]
+Loading weights:  99%|#########8| 162/164 [00:06<00:00, 34.51it/s]
+Loading weights: 100%|##########| 164/164 [00:06<00:00, 26.57it/s]
+  VRAM after load : 2150 MB
+  Q01/30  What is the correct ratio of chest compressions to rescue br...
+          19.82 tok/s  peak 2232 MB
+  Q02/30  A person collapses, is unresponsive, and not breathing norma...
+          20.11 tok/s  peak 2232 MB
+  Q03/30  What are the signs of a heart attack and what should you do ...
+          20.02 tok/s  peak 2232 MB
+  Q04/30  An adult is choking and cannot speak, cry, or breathe. What ...
+          20.01 tok/s  peak 2232 MB
+  Q05/30  You rescue someone from drowning. They are unconscious and n...
+          20.03 tok/s  peak 2232 MB
+  Q06/30  How do you control severe arterial bleeding from a limb when...
+          19.96 tok/s  peak 2232 MB
+  Q07/30  What is the correct way to clean and dress a minor laceratio...
+          19.97 tok/s  peak 2231 MB
+  Q08/30  How do you immobilise a suspected fractured forearm before m...
+          19.92 tok/s  peak 2231 MB
+  Q09/30  A person has a severely sprained ankle. What is the correct ...
+          19.97 tok/s  peak 2232 MB
+  Q10/30  What is the correct first aid for a suspected snake bite in ...
+          19.99 tok/s  peak 2231 MB
+  Q11/30  A person is stung by a bee and begins showing signs of anaph...
+          20.21 tok/s  peak 2232 MB
+  Q12/30  You find someone who has suffered an electric shock. They ar...
+          20.17 tok/s  peak 2232 MB
+  Q13/30  A child has swallowed a household chemical. They are conscio...
+          20.19 tok/s  peak 2232 MB
+  Q14/30  How do you treat a minor superficial burn at home?...
+          19.93 tok/s  peak 2231 MB
+  Q15/30  What are the signs of heat stroke and how do you treat it?...
+          20.1 tok/s  peak 2231 MB
+  Q16/30  A person is having a tonic-clonic seizure. What should you d...
+          19.79 tok/s  peak 2232 MB
+  Q17/30  What position should you place a conscious casualty in when ...
+          19.93 tok/s  peak 2232 MB
+  Q18/30  A person has fallen from height and you suspect a spinal inj...
+          20.02 tok/s  peak 2232 MB
+  Q19/30  What are the warning signs of a concussion after a head inju...
+          20.06 tok/s  peak 2232 MB
+  Q20/30  How do you treat a chemical splash to the eye?...
+          19.17 tok/s  peak 2231 MB
+  Q21/30  An infant under 1 year old is choking, cannot cry, and is tu...
+          19.63 tok/s  peak 2232 MB
+  Q22/30  A person has a large piece of glass embedded in their thigh ...
+          19.52 tok/s  peak 2232 MB
+  Q23/30  A person has an open lower-leg fracture with bone visible. W...
+          19.37 tok/s  peak 2232 MB
+  Q24/30  What is the first aid for a suspected funnel-web spider bite...
+          19.61 tok/s  peak 2232 MB
+  Q25/30  You find someone very drowsy with slow breathing after suspe...
+          19.59 tok/s  peak 2232 MB
+  Q26/30  A person is very cold, confused, shivering weakly, and has b...
+          19.65 tok/s  peak 2233 MB
+  Q27/30  A person's face droops on one side, one arm is weak, and the...
+          19.87 tok/s  peak 2233 MB
+  Q28/30  A motorcyclist has crashed and you suspect a spinal injury. ...
+          19.41 tok/s  peak 2233 MB
+  Q29/30  A person with a suspected spinal injury starts vomiting whil...
+          19.45 tok/s  peak 2232 MB
+  Q30/30  What is the correct first aid for a nosebleed?...
+          19.62 tok/s  peak 2231 MB
+
+[eval] Results saved -> C:\Personal_Endeavours\Fine_Tuning\evaluations\eval_20260508_162530\run.json
+
+============================================================
+  Model : 10cat 4bit r16 lr1e-4 p3 v2 20260508 054337
+  Quant : 4bit  |  Adapter: C:\Personal_Endeavours\Fine_Tuning\experiments\10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337\adapter
+============================================================
+  Loading...
+
+Loading weights:   0%|          | 0/164 [00:00<?, ?it/s]
+Loading weights:   1%|          | 1/164 [00:01<03:14,  1.19s/it]
+Loading weights:   2%|2         | 4/164 [00:01<00:43,  3.69it/s]
+Loading weights:   5%|5         | 9/164 [00:01<00:16,  9.41it/s]
+Loading weights:   8%|7         | 13/164 [00:01<00:11, 12.74it/s]
+Loading weights:  10%|#         | 17/164 [00:01<00:08, 17.14it/s]
+Loading weights:  14%|#4        | 23/164 [00:01<00:05, 23.85it/s]
+Loading weights:  20%|#9        | 32/164 [00:01<00:03, 36.73it/s]
+Loading weights:  25%|##5       | 41/164 [00:02<00:02, 47.70it/s]
+Loading weights:  30%|###       | 50/164 [00:02<00:02, 56.52it/s]
+Loading weights:  36%|###5      | 59/164 [00:02<00:01, 63.79it/s]
+Loading weights:  41%|####1     | 68/164 [00:02<00:01, 68.68it/s]
+Loading weights:  47%|####6     | 77/164 [00:02<00:01, 71.06it/s]
+Loading weights:  52%|#####2    | 86/164 [00:02<00:01, 73.79it/s]
+Loading weights:  57%|#####7    | 94/164 [00:02<00:01, 62.57it/s]
+Loading weights:  62%|######1   | 101/164 [00:02<00:01, 62.91it/s]
+Loading weights:  66%|######5   | 108/164 [00:03<00:01, 45.99it/s]
+Loading weights:  70%|######9   | 114/164 [00:03<00:01, 37.73it/s]
+Loading weights:  73%|#######3  | 120/164 [00:03<00:01, 41.39it/s]
+Loading weights:  76%|#######6  | 125/164 [00:03<00:01, 38.13it/s]
+Loading weights:  79%|#######9  | 130/164 [00:03<00:00, 36.23it/s]
+Loading weights:  83%|########2 | 136/164 [00:03<00:00, 41.03it/s]
+Loading weights:  86%|########5 | 141/164 [00:04<00:00, 33.68it/s]
+Loading weights:  90%|########9 | 147/164 [00:04<00:00, 38.95it/s]
+Loading weights:  93%|#########2| 152/164 [00:04<00:00, 36.02it/s]
+Loading weights:  96%|#########5| 157/164 [00:04<00:00, 34.13it/s]
+Loading weights:  99%|#########8| 162/164 [00:04<00:00, 37.45it/s]
+Loading weights: 100%|##########| 164/164 [00:04<00:00, 34.77it/s]
+  VRAM after load : 3181 MB
+  Q01/30  What is the correct ratio of chest compressions to rescue br...
+          19.39 tok/s  peak 3255 MB
+  Q02/30  A person collapses, is unresponsive, and not breathing norma...
+          19.4 tok/s  peak 3255 MB
+  Q03/30  What are the signs of a heart attack and what should you do ...
+          19.02 tok/s  peak 3254 MB
+  Q04/30  An adult is choking and cannot speak, cry, or breathe. What ...
+          19.37 tok/s  peak 3255 MB
+  Q05/30  You rescue someone from drowning. They are unconscious and n...
+          19.51 tok/s  peak 3255 MB
+  Q06/30  How do you control severe arterial bleeding from a limb when...
+          19.33 tok/s  peak 3255 MB
+  Q07/30  What is the correct way to clean and dress a minor laceratio...
+          19.12 tok/s  peak 3254 MB
+  Q08/30  How do you immobilise a suspected fractured forearm before m...
+          19.14 tok/s  peak 3254 MB
+  Q09/30  A person has a severely sprained ankle. What is the correct ...
+          19.34 tok/s  peak 3254 MB
+  Q10/30  What is the correct first aid for a suspected snake bite in ...
+          19.45 tok/s  peak 3254 MB
+  Q11/30  A person is stung by a bee and begins showing signs of anaph...
+          17.88 tok/s  peak 3255 MB
+  Q12/30  You find someone who has suffered an electric shock. They ar...
+          18.43 tok/s  peak 3255 MB
+  Q13/30  A child has swallowed a household chemical. They are conscio...
+          19.38 tok/s  peak 3255 MB
+  Q14/30  How do you treat a minor superficial burn at home?...
+          19.03 tok/s  peak 3254 MB
+  Q15/30  What are the signs of heat stroke and how do you treat it?...
+          19.23 tok/s  peak 3254 MB
+  Q16/30  A person is having a tonic-clonic seizure. What should you d...
+          19.23 tok/s  peak 3255 MB
+  Q17/30  What position should you place a conscious casualty in when ...
+          19.4 tok/s  peak 3254 MB
+  Q18/30  A person has fallen from height and you suspect a spinal inj...
+          18.58 tok/s  peak 3255 MB
+  Q19/30  What are the warning signs of a concussion after a head inju...
+          18.03 tok/s  peak 3255 MB
+  Q20/30  How do you treat a chemical splash to the eye?...
+          16.46 tok/s  peak 3254 MB
+  Q21/30  An infant under 1 year old is choking, cannot cry, and is tu...
+          17.07 tok/s  peak 3255 MB
+  Q22/30  A person has a large piece of glass embedded in their thigh ...
+          15.67 tok/s  peak 3255 MB
+  Q23/30  A person has an open lower-leg fracture with bone visible. W...
+          19.12 tok/s  peak 3255 MB
+  Q24/30  What is the first aid for a suspected funnel-web spider bite...
+          18.1 tok/s  peak 3254 MB
+  Q25/30  You find someone very drowsy with slow breathing after suspe...
+          18.58 tok/s  peak 3255 MB
+  Q26/30  A person is very cold, confused, shivering weakly, and has b...
+          18.2 tok/s  peak 3255 MB
+  Q27/30  A person's face droops on one side, one arm is weak, and the...
+          19.24 tok/s  peak 3255 MB
+  Q28/30  A motorcyclist has crashed and you suspect a spinal injury. ...
+          18.8 tok/s  peak 3255 MB
+  Q29/30  A person with a suspected spinal injury starts vomiting whil...
+          18.8 tok/s  peak 3255 MB
+  Q30/30  What is the correct first aid for a nosebleed?...
+          19.26 tok/s  peak 3254 MB
+
+[eval] Results saved -> C:\Personal_Endeavours\Fine_Tuning\evaluations\eval_20260508_162530\run.json
+
+============================================================
+  SUMMARY
+============================================================
+  Variant                                         Answered  Avg tok/s   Peak MB  Errors
+  ------------------------------------------------------------------------------------
+  10cat 4bit r16 lr1e4 p3 20260506 012852               30      19.8     2233       0
+  10cat 4bit r16 lr1e-4 p3 v2 20260508 054337           30      18.7     3255       0
+
+  Full results : C:\Personal_Endeavours\Fine_Tuning\evaluations\eval_20260508_162530\run.json
+============================================================
+[evaluate] Starting  (ROUGE only=True)
+[evaluate] Auto-selected latest run: C:\Personal_Endeavours\Fine_Tuning\evaluations\eval_20260508_162530\run.json
+
+[evaluate] Run : 20260508_162530  (2026-05-08T16:28:23.849572)
+           File: C:\Personal_Endeavours\Fine_Tuning\evaluations\eval_20260508_162530\run.json
+python.exe : Traceback (most recent call last):
+At C:\Personal_Endeavours\Fine_Tuning\run_v2_eval.ps1:56 char:1
++ & python evaluate.py --no-bert `
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Traceback (most recent call last)::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  File "C:\Personal_Endeavours\Fine_Tuning\evaluate.py", line 681, in <module>
+    main()
+  File "C:\Personal_Endeavours\Fine_Tuning\evaluate.py", line 667, in main
+    metrics = evaluate_run(rp, want_bert, args.bert_model, args.bert_device)
+  File "C:\Personal_Endeavours\Fine_Tuning\evaluate.py", line 396, in evaluate_run
+    print(f"  \u2192 Variant: {label}", flush=True)
+  File "C:\Users\Mushfiq\miniconda3\envs\fine_tuning\lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2192' in position 2: character maps to <undefined>

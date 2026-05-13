@@ -1,0 +1,661 @@
+You are an expert evaluator for a research paper on fine-tuning small language models (Gemma 2B) for medical emergency first aid response on offline mobile devices.
+
+Your task is to evaluate and score the answers produced by 7 current 4-bit adapter variants on 30 first aid questions. For each question you will see:
+- The reference answer (written by a first aid expert)
+- 7 model answers labelled: [10CAT_4BIT], [10CAT_4BIT_2], [10CAT_4BIT_3], [10CAT_4BIT_4], [10CAT_4BIT_5], [10CAT_4BIT_6], [10CAT_4BIT_7]
+
+10CAT_4BIT   = 10cat 4bit r16 lr1e-4 p5 20260506 192538
+10CAT_4BIT_2 = 10cat 4bit r16 lr1e4 p3 20260506 012852
+10CAT_4BIT_3 = 10cat 4bit r16 lr4e-4 p6 20260506 211729
+10CAT_4BIT_4 = 10cat 4bit r32 lr1e-4 p6 20260507 160543
+10CAT_4BIT_5 = 10cat 4bit r32 lr4e-4 p8 20260507 195206
+10CAT_4BIT_6 = 10cat 4bit r8 lr1e-4 p8 20260507 174631
+10CAT_4BIT_7 = 10cat 4bit r8 lr1e4 p3 20260506 012852
+
+===========================================================
+SCORING RUBRIC  (apply independently to each model answer)
+===========================================================
+
+Score each answer on four dimensions:
+
+1. MEDICAL ACCURACY (0-2)
+   2 = All stated facts are clinically correct; no errors
+   1 = Mostly correct but contains minor inaccuracies or omissions
+   0 = Contains significant factual errors or dangerous misinformation
+
+2. CRITICAL STEP COVERAGE (0-2)
+   2 = All essential steps from the reference are present
+   1 = Some key steps present but notable gaps exist
+   0 = Major steps missing; answer would be clinically inadequate
+
+3. SAFETY & ESCALATION (0-1)
+   1 = Appropriately advises calling emergency services when warranted
+   0 = Fails to mention emergency services for a life-threatening situation,
+       OR incorrectly recommends it for a clearly minor situation
+
+4. DANGEROUS ADVICE PENALTY (0 or -1)
+   -1 = Answer contains advice that could directly cause harm if followed
+        (e.g. inducing vomiting for corrosive ingestion, moving a spinal
+         casualty unnecessarily, tourniquet to the neck, telling someone
+         NOT to call emergency services)
+    0 = No dangerous advice present
+
+TOTAL per answer = dim1 + dim2 + dim3 + penalty  (max 5, min -1)
+
+Questions marked [SC] are SAFETY-CRITICAL -- time-sensitive emergencies
+where wrong advice can cause death. Apply the rubric strictly for these.
+
+===========================================================
+OUTPUT FORMAT
+===========================================================
+
+For each question provide:
+  Q<n>: 10CAT_4BIT=X/5  10CAT_4BIT_2=X/5  10CAT_4BIT_3=X/5  10CAT_4BIT_4=X/5  10CAT_4BIT_5=X/5  10CAT_4BIT_6=X/5  10CAT_4BIT_7=X/5
+  Notable: <one sentence on the most important difference between models, or any dangerous answer>
+
+After all 30 questions, provide:
+
+SUMMARY TABLE
+| Variant | Mean Score | SC Mean | Non-SC Mean |
+|---------|-----------|---------|-------------|
+| 10CAT_4BIT   |           |         |             |
+| 10CAT_4BIT_2 |           |         |             |
+| 10CAT_4BIT_3 |           |         |             |
+| 10CAT_4BIT_4 |           |         |             |
+| 10CAT_4BIT_5 |           |         |             |
+| 10CAT_4BIT_6 |           |         |             |
+| 10CAT_4BIT_7 |           |         |             |
+
+PER-CATEGORY MEAN SCORES (one row per category, columns = 7 variants)
+
+KEY FINDINGS (3-5 bullet points on the most important clinical and safety observations)
+
+OVERALL RANKING: rank the 7 variants 1st to 7th for suitability as an offline emergency first aid assistant, with a one-sentence justification each.
+
+===========================================================
+
+QUESTIONS AND ANSWERS
+========================================================================
+Source run: eval_results/run_20260507_230926.json
+All answers below are from the 7 discovered 4-bit adapters in that run.
+Judge the answer text directly; do not infer quality from adapter names.
+
+VARIANT LABELS
+------------------------------------------------------------------------
+[10CAT_4BIT]: 10cat 4bit r16 lr1e-4 p5 20260506 192538
+[10CAT_4BIT_2]: 10cat 4bit r16 lr1e4 p3 20260506 012852
+[10CAT_4BIT_3]: 10cat 4bit r16 lr4e-4 p6 20260506 211729
+[10CAT_4BIT_4]: 10cat 4bit r32 lr1e-4 p6 20260507 160543
+[10CAT_4BIT_5]: 10cat 4bit r32 lr4e-4 p8 20260507 195206
+[10CAT_4BIT_6]: 10cat 4bit r8 lr1e-4 p8 20260507 174631
+[10CAT_4BIT_7]: 10cat 4bit r8 lr1e4 p3 20260506 012852
+
+------------------------------------------------------------------------
+Q1 [SC] | Category: Cardiac & Resuscitation
+QUESTION: What is the correct ratio of chest compressions to rescue breaths in CPR for an adult, and how deep should compressions be?
+REFERENCE: 30 chest compressions to 2 rescue breaths (30:2). Compressions should be at least 5 cm (2 inches) deep at a rate of 100-120 per minute. Allow full chest recoil between compressions.
+
+[10CAT_4BIT]: The correct ratio of chest compressions to rescue breaths for an adult is 30:2. The depth of compressions should be about 1/3 of the chest's depth.
+
+[10CAT_4BIT_2]: The correct ratio of chest compressions to rescue breaths for an adult is 30:2. The depth of compressions should be about 1/3 of the chest's depth.
+
+[10CAT_4BIT_3]: The ratio of chest compressions to rescue breaths for an adult is 30 compressions to 2 rescue breaths. The depth of compressions should be about 1/3 the depth of the chest.
+
+[10CAT_4BIT_4]: The correct ratio of chest compressions to rescue breaths for an adult is 30:2. The depth of compressions should be about 1/3 of the chest's depth.
+
+[10CAT_4BIT_5]: The ratio of chest compressions to rescue breaths is 30 compressions to 2 rescue breaths. The depth of compressions should be about 1/3 the chest depth, ensuring that the chest rises slightly with each compression.
+
+[10CAT_4BIT_6]: The correct ratio of chest compressions to rescue breaths for an adult is 30 compressions followed by 2 rescue breaths. The depth of compressions should be enough to compress the chest by at least 1/3 of the chest's depth.
+
+[10CAT_4BIT_7]: The correct ratio of chest compressions to rescue breaths for an adult is 30:2, meaning 30 compressions followed by 2 rescue breaths. The depth of compressions should be about 1/3 of the chest's depth.
+
+------------------------------------------------------------------------
+Q2 [SC] | Category: Cardiac & Resuscitation
+QUESTION: A person collapses, is unresponsive, and not breathing normally. What are the first three steps you take?
+REFERENCE: 1. Call emergency services (000 in Australia / 911 in US) immediately or send someone to call. 2. Begin CPR: 30 chest compressions followed by 2 rescue breaths. 3. Use an AED as soon as one is available.
+
+[10CAT_4BIT]: 1. Check for responsiveness by gently tapping the person and asking if they are awake. If they are unresponsive and not breathing normally, begin CPR immediately.
+
+[10CAT_4BIT_2]: 1. Check for responsiveness by asking simple questions like 'What is your name?' or 'Open your eyes.' If there's no response, begin CPR immediately.
+
+[10CAT_4BIT_3]: First, check for a pulse by checking for a pulse in the neck and wrist. If there is no pulse, begin CPR immediately. Second, place the person in the lateral position to allow for better breathing. Third, call for emergency medical help while ensuring the person is still in the lateral position.
+
+[10CAT_4BIT_4]: 1. Check for signs of breathing. If there is no breathing or irregular breathing, begin CPR immediately. 2. Place the person in the lateral position to ensure the airway remains open. 3. Check for any visible injuries and treat them if necessary.
+
+[10CAT_4BIT_5]: First, check for a pulse by placing two fingers on the wrist or neck. If there is no pulse, begin CPR immediately. Second, check the airway for any obstructions. Third, place the person in the lateral position to ensure their airway remains open.
+
+[10CAT_4BIT_6]: First, check for signs of breathing. If there is no breathing, begin CPR immediately. Second, check for a pulse and start CPR if there is one. Third, place the person in the recovery position to maintain an open airway and prevent choking.
+
+[10CAT_4BIT_7]: First, check for responsiveness by asking simple questions like 'What's your name?' If the person is unresponsive, begin CPR immediately. Second, check for breathing and pulse. If there is no pulse or breathing, begin CPR. Third, place the person in the recovery position to maintain an open airway and reduce the risk of choking.
+
+------------------------------------------------------------------------
+Q3 [SC] | Category: Cardiac & Resuscitation
+QUESTION: What are the signs of a heart attack and what should you do immediately?
+REFERENCE: Signs: chest pain or pressure, pain radiating to arm or jaw, sweating, nausea, shortness of breath, pale or grey skin. Actions: call emergency services, have the person rest in a comfortable position, give aspirin 300 mg if not allergic, be prepared to start CPR if they lose consciousness.
+
+[10CAT_4BIT]: Signs of a heart attack include chest pain, shortness of breath, nausea, vomiting, sweating, and pain radiating to the arms, neck, or jaw. If you suspect a heart attack, immediately call for emergency medical help and call someone to assist with CPR if needed.
+
+[10CAT_4BIT_2]: Signs of a heart attack include chest pain, shortness of breath, nausea, vomiting, sweating, and pain radiating to the arms, neck, or jaw. If you suspect a heart attack, immediately call for emergency medical help. Do not drive yourself to the hospital.
+
+[10CAT_4BIT_3]: Signs of a heart attack include chest pain or discomfort, shortness of breath, nausea, and vomiting. If you suspect a heart attack, call for emergency medical help immediately. Do not attempt to give any medications or food. Keep the person calm and still while waiting for help.
+
+[10CAT_4BIT_4]: Signs of a heart attack include chest pain, shortness of breath, nausea, sweating, and discomfort radiating to the arms, neck, or jaw. If the person is conscious, they may experience nausea or vomiting. Immediate action involves calling emergency services, applying pressure immobilisation if needed, and starting CPR if the person becomes unconscious.
+
+[10CAT_4BIT_5]: Signs of a heart attack include chest pain or discomfort, shortness of breath, nausea, and vomiting. If you experience any of these symptoms, call for emergency medical help immediately. Do not attempt to give any medications or food.
+
+[10CAT_4BIT_6]: Signs of a heart attack include chest pain or discomfort, shortness of breath, nausea, vomiting, sweating, and pain radiating to the arms, neck, or jaw. If you suspect a heart attack, call emergency services immediately and begin CPR if necessary.
+
+[10CAT_4BIT_7]: Signs of a heart attack include chest pain, shortness of breath, nausea, vomiting, sweating, and discomfort radiating to the arms, neck, or jaw. If you suspect a heart attack, call for emergency medical help immediately. Do not drive yourself to the hospital.
+
+------------------------------------------------------------------------
+Q4 [SC] | Category: Airway, Choking & Drowning
+QUESTION: An adult is choking and cannot speak, cry, or breathe. What do you do?
+REFERENCE: Give up to 5 firm back blows between the shoulder blades with the heel of your hand. If unsuccessful, give up to 5 abdominal thrusts (Heimlich manoeuvre): stand behind the person, place a fist above the navel, and thrust inward and upward. Alternate back blows and abdominal thrusts until the object is cleared or the person loses consciousness. Call 000.
+
+[10CAT_4BIT]: If an adult is choking and cannot speak, cry, or breathe, perform the Heimlich maneuver. Place your hands just above the person's navel, and make quick inward and upward thrusts until the object is expelled or the person becomes unconscious.
+
+[10CAT_4BIT_2]: If an adult is choking and cannot speak, cry, or breathe, perform the Heimlich maneuver by placing your hands just above the navel and applying quick, inward and upward pressure. If this does not work, perform CPR and seek medical help immediately.
+
+[10CAT_4BIT_3]: If the person is choking and cannot speak, cry, or breathe, place them in the lateral position, check their airway, and begin CPR if necessary. Continue until help arrives or the person starts breathing again.
+
+[10CAT_4BIT_4]: If an adult cannot speak, cry, or breathe, perform the Heimlich maneuver. Place the person in a comfortable position, place your hands around their waist, and make quick, inward and upward thrusts. If this does not work, proceed with CPR and seek medical help immediately.
+
+[10CAT_4BIT_5]: If the person is choking and cannot speak, cry, or breathe, place them in the lateral position (on their side) and check for any visible objects in their mouth. If necessary, perform the Heimlich maneuver to dislodge the object. If the person is unconscious, begin CPR immediately.
+
+[10CAT_4BIT_6]: If the person is choking and cannot speak, cry, or breathe, perform the Heimlich maneuver. Place your hands just above the navel, and deliver quick, inward thrusts until the object is expelled. If the person becomes unconscious, begin CPR and seek medical help immediately.
+
+[10CAT_4BIT_7]: If an adult is choking and cannot speak, cry, or breathe, perform the Heimlich maneuver by placing your hands just above the navel and applying quick, inward and upward pressure. If this does not work, proceed with CPR and seek medical help immediately.
+
+------------------------------------------------------------------------
+Q5 [SC] | Category: Airway, Choking & Drowning
+QUESTION: You rescue someone from drowning. They are unconscious and not breathing. What do you do?
+REFERENCE: Call emergency services immediately. Give 5 initial rescue breaths before starting CPR. Then perform 30 compressions to 2 rescue breaths. Continue until the person starts breathing or help arrives. Place in recovery position once breathing resumes.
+
+[10CAT_4BIT]: If the person is unconscious and not breathing, begin CPR immediately. Start with chest compressions at a rate of 100-120 per minute, followed by rescue breaths if trained. Continue until help arrives or the person starts breathing.
+
+[10CAT_4BIT_2]: If the casualty is unconscious and not breathing, begin CPR immediately. Start with chest compressions at a rate of 100-120 per minute, followed by rescue breaths. Continue until help arrives or the casualty starts breathing.
+
+[10CAT_4BIT_3]: If the person is unconscious and not breathing, place them in the lateral position (on their side) to allow water to drain from the mouth. Check their airway, breathing, and pulse. If they are not breathing, begin CPR immediately. Continue until help arrives or the person starts breathing again.
+
+[10CAT_4BIT_4]: If the person is unconscious and not breathing, begin CPR immediately. Start with 30 chest compressions followed by 2 rescue breaths. Continue this cycle until help arrives or the person starts breathing.
+
+[10CAT_4BIT_5]: If the person is unconscious and not breathing, place them in the lateral position on their back. Check their airway, breathing, and pulse. If they are not breathing, begin CPR immediately. Continue until help arrives or the person starts breathing again.
+
+[10CAT_4BIT_6]: If the casualty is unconscious and not breathing, you should begin CPR immediately. Start with chest compressions at a rate of 100–120 per minute, followed by rescue breaths. Continue CPR until medical help arrives or the casualty starts breathing.
+
+[10CAT_4BIT_7]: If the casualty is unconscious and not breathing, begin CPR immediately. Start with chest compressions at a rate of 100-120 per minute, followed by rescue breaths. Continue until help arrives or the casualty starts breathing.
+
+------------------------------------------------------------------------
+Q6 [SC] | Category: Bleeding & Wounds
+QUESTION: How do you control severe arterial bleeding from a limb when blood is spurting and direct pressure is not enough?
+REFERENCE: Apply a tourniquet 5-8 cm above the wound (not over a joint). Tighten until bleeding stops. Record the time of application. Do not remove the tourniquet. Treat for shock and call emergency services immediately. Pack the wound with clean dressings in addition to the tourniquet.
+
+[10CAT_4BIT]: If direct pressure is not enough to control bleeding, apply firm, but not excessive, pressure to the wound. Elevate the limb if possible. If the casualty is in shock, lay them down and elevate the injured limb to improve circulation.
+
+[10CAT_4BIT_2]: If direct pressure is not enough to control arterial bleeding, apply firm but gentle pressure to the wound and elevate the limb if possible. Use a firm dressing or bandage to apply pressure and support the limb. If the bleeding continues, seek emergency medical help immediately.
+
+[10CAT_4BIT_3]: If direct pressure is not enough to control arterial bleeding, apply a tourniquet to the affected limb. Secure the tourniquet firmly but not too tightly to avoid cutting off circulation. Apply a second dressing or pressure pad over the tourniquet to increase pressure. If bleeding continues, continue applying pressure and monitor the patient closely.
+
+[10CAT_4BIT_4]: If direct pressure is not enough to control arterial bleeding, apply a firm but gentle bandage around the limb, ensuring that the bandage does not cut off circulation. Elevate the limb above heart level to reduce blood flow to the area.
+
+[10CAT_4BIT_5]: If arterial bleeding is spurting and direct pressure is not enough, apply direct pressure to the bleeding site but avoid applying excessive pressure. Use a sterile dressing or clean cloth to apply firm pressure, ensuring that the pressure is applied evenly and not too tightly. If bleeding continues, elevate the limb and seek medical help immediately.
+
+[10CAT_4BIT_6]: If direct pressure is not enough to control arterial bleeding, apply a tourniquet to restrict blood flow to the limb. This will help slow the bleeding and give time for medical help to arrive.
+
+[10CAT_4BIT_7]: If direct pressure is not enough to control arterial bleeding, apply firm but gentle pressure to the wound and elevate the limb above heart level. Elevate the limb above the level of the heart to reduce blood flow to the area. If the bleeding continues, seek emergency medical help immediately.
+
+------------------------------------------------------------------------
+Q7 | Category: Bleeding & Wounds
+QUESTION: What is the correct way to clean and dress a minor laceration?
+REFERENCE: Apply direct pressure with a clean cloth to stop bleeding. Clean the wound under running water for at least 5 minutes. Remove visible debris gently. Apply antiseptic if available. Cover with a sterile non-adherent dressing and secure with a bandage. Seek medical advice if wound is deep, gaping, or contaminated.
+
+[10CAT_4BIT]: To clean a minor laceration, gently wipe away any dirt or debris from the wound with sterile gauze or a clean cloth. Then, apply an antiseptic solution to the area and cover it with a sterile dressing. Change the dressing regularly and monitor for signs of infection or worsening symptoms.
+
+[10CAT_4BIT_2]: To clean a minor laceration, gently wipe away any dirt or debris from the wound with sterile gauze or a clean cloth. Then, apply an antiseptic solution to the area and pat it dry with sterile gauze. Cover the wound with a sterile dressing and bandage it firmly but not too tightly.
+
+[10CAT_4BIT_3]: Clean the wound by wiping away any dirt or debris with a clean cloth. Apply a sterile dressing to the wound, ensuring it is not too tight. Check the dressing regularly for signs of pressure or signs of infection. If the wound shows signs of infection, seek medical help immediately.
+
+[10CAT_4BIT_4]: For a minor laceration, clean the wound gently with sterile water or an antiseptic solution. Pat the area dry. Apply a sterile dressing or adhesive strip to protect the wound. Avoid applying pressure on the wound and seek medical attention if the injury is deep or large.
+
+[10CAT_4BIT_5]: Clean the wound with sterile gauze or a clean cloth. Apply a sterile dressing, ensuring it's not too tight. Avoid applying pressure directly on the wound. Cover the area with a sterile dressing and keep the limb elevated. Monitor for signs of infection or complications.
+
+[10CAT_4BIT_6]: To clean a minor laceration, use sterile gauze or a clean cloth to gently remove any dirt or debris from the wound. Then, apply a sterile dressing or adhesive strip to cover the wound. Avoid using harsh chemicals or applying pressure directly to the wound.
+
+[10CAT_4BIT_7]: To clean a minor laceration, use sterile gauze or a clean cloth to gently wipe away any dirt or debris from the wound. Avoid using harsh chemicals or pressure, as this can cause further damage. After cleaning, apply an adhesive strip dressing or a sterile dressing if no adhesive is available.
+
+------------------------------------------------------------------------
+Q8 | Category: Trauma & Musculoskeletal
+QUESTION: How do you immobilise a suspected fractured forearm before medical help arrives?
+REFERENCE: Support the arm in the position found. Apply padding around the fracture site. Use a splint (rigid object) along the length of the arm and secure with bandages above and below the fracture, not over it. Apply an arm sling to support the limb. Check circulation (colour, warmth, sensation) distal to the injury regularly.
+
+[10CAT_4BIT]: To immobilize a suspected fractured forearm, place the casualty in a comfortable position, supporting the injured arm and keeping the hand elevated above the heart. Use a splint or any available firm object to secure the arm to the body, ensuring that the wrist is in a neutral position and the hand is supported.
+
+[10CAT_4BIT_2]: To immobilize a suspected fractured forearm, place the casualty in a comfortable position, ideally with the injured arm supported at or above the elbow and the wrist bent at a natural angle. Use a splint or any available rigid object to support the arm and prevent movement.
+
+[10CAT_4BIT_3]: Immobilize the forearm by placing the hand in a comfortable position, supporting the wrist and fingers. Use a sling or cloth to secure the hand and prevent movement. This helps maintain proper blood flow and reduces pain during transport to the hospital.
+
+[10CAT_4BIT_4]: To immobilize a suspected fractured forearm, use a splint or any available rigid object to secure the arm to the body. Ensure that the limb is supported and not moved unnecessarily. Apply ice to reduce swelling and seek medical attention as soon as possible.
+
+[10CAT_4BIT_5]: Immobilize the forearm by placing the hand in a comfortable position, supporting the wrist and fingers. Use a sling or cloth to secure the hand and keep it in place. This prevents further movement and allows for proper healing.
+
+[10CAT_4BIT_6]: To immobilize a suspected fractured forearm, use a splint or a firm, rigid object like a rolled newspaper or rolled towel. Immobilization helps reduce movement and pain, but avoid applying direct pressure to the fracture site.
+
+[10CAT_4BIT_7]: To immobilize a suspected fractured forearm, use a splint or a firm piece of wood to support the forearm in a neutral position. Ensure that the hand is supported at or above the wrist and that the fingers are not bent or moved. This will help to prevent further injury and allow for proper medical evaluation.
+
+------------------------------------------------------------------------
+Q9 | Category: Trauma & Musculoskeletal
+QUESTION: A person has a severely sprained ankle. What is the correct immediate first aid?
+REFERENCE: Apply the RICE protocol: Rest the ankle, apply Ice (wrapped in cloth) for 20 minutes every 2 hours, apply Compression with a bandage to reduce swelling, and Elevate the limb above heart level. Do not apply ice directly to skin. Seek medical review to rule out fracture.
+
+[10CAT_4BIT]: The first aid for a severely sprained ankle involves applying ice to reduce swelling, supporting the ankle with cushions, and elevating it above heart level. Rest the ankle and avoid putting weight on it. Apply a compression bandage and seek medical attention if the pain persists or if there is significant swelling.
+
+[10CAT_4BIT_2]: The first step is to rest the ankle and apply ice to reduce swelling. Then, elevate the ankle above heart level to reduce further swelling. Apply a compression bandage to support the ankle and seek medical attention if the pain persists or if there is significant swelling.
+
+[10CAT_4BIT_3]: Apply a compression bandage to the ankle and elevate the leg to reduce swelling. Keep the person calm and still. Monitor for signs of shock, such as pale skin, rapid pulse, or confusion. Seek medical help immediately.
+
+[10CAT_4BIT_4]: For a severely sprained ankle, rest the ankle and apply ice to reduce swelling. Elevate the ankle above heart level to reduce blood flow to the area. Apply a compression bandage to control swelling and support the ankle. Avoid putting weight on the ankle and seek medical attention if the pain persists or if there is significant swelling.
+
+[10CAT_4BIT_5]: Apply a compression bandage to the ankle and elevate the leg if possible. Keep the person calm and still. Monitor for signs of shock, such as pale skin, rapid pulse, or confusion. Seek medical help immediately.
+
+[10CAT_4BIT_6]: 1. Support the ankle with an elastic bandage or soft material. Avoid direct pressure on the injured area. 2. Apply ice to reduce swelling. 3. Elevate the ankle above heart level. 4. Rest the ankle and avoid putting weight on it. 5. Seek medical attention if the pain persists or if there is significant swelling.
+
+[10CAT_4BIT_7]: The first step is to rest the ankle and apply ice to reduce swelling. Elevate the ankle if possible, and support it with an elastic bandage. Apply a compression bandage to control swelling and pain. Avoid putting weight on the ankle and seek medical attention if the pain persists or if there is significant swelling.
+
+------------------------------------------------------------------------
+Q10 [SC] | Category: Bites, Stings & Envenomation
+QUESTION: What is the correct first aid for a suspected snake bite in Australia?
+REFERENCE: Keep the person calm and still. Apply pressure immobilisation: wrap a broad pressure bandage firmly over the bite site, then wrap the entire limb from fingers/toes to the armpit/groin. Splint the limb. Do NOT wash the bite, cut it, or apply a tourniquet. Call 000 immediately. Do not allow the person to walk.
+
+[10CAT_4BIT]: For a suspected snake bite in Australia, keep the victim calm and still, apply pressure immobilization if necessary, and seek immediate medical attention. If the victim is unconscious or showing signs of shock, begin CPR if necessary and continue until help arrives.
+
+[10CAT_4BIT_2]: For a suspected snake bite in Australia, keep the victim calm and still, apply pressure immobilization if necessary, and seek immediate medical help. If the victim is unconscious or showing signs of shock, begin CPR if trained.
+
+[10CAT_4BIT_3]: For a suspected snake bite in Australia, apply pressure immobilization to the affected limb, and seek immediate medical help. Do not attempt to identify the snake or treat the bite yourself.
+
+[10CAT_4BIT_4]: For a suspected snake bite in Australia, keep the victim calm and still, apply pressure immobilization if necessary, and seek immediate medical help. In the meantime, keep the victim as still as possible and avoid moving the affected limb.
+
+[10CAT_4BIT_5]: For a suspected snake bite in Australia, apply pressure immobilization to the affected limb, and seek immediate medical help. If the person is unconscious or showing signs of shock, begin CPR immediately. Be aware that antivenom is available, but it is only effective if administered within 30 minutes.
+
+[10CAT_4BIT_6]: In Australia, if bitten by a snake, keep the victim calm and still, apply pressure immobilization to the affected limb, and seek immediate medical help. If the victim is unconscious or showing signs of shock, begin CPR and seek emergency medical assistance.
+
+[10CAT_4BIT_7]: In Australia, the correct first aid for a suspected snake bite is to remain calm, keep the victim still, and seek immediate medical help. Do not attempt to handle or identify the snake, and do not attempt to treat the bite yourself unless instructed by a healthcare professional.
+
+------------------------------------------------------------------------
+Q11 [SC] | Category: Bites, Stings & Envenomation
+QUESTION: A person is stung by a bee and begins showing signs of anaphylaxis. What is the immediate treatment?
+REFERENCE: Administer epinephrine (EpiPen) immediately into the outer thigh. Call emergency services (000). Lay the person flat with legs elevated unless breathing is difficult (sit up). A second EpiPen can be given after 5 minutes if no improvement. Be prepared to start CPR. Do NOT give antihistamine as sole treatment; it is too slow.
+
+[10CAT_4BIT]: If a person shows signs of anaphylaxis, such as swelling of the face, lips, or throat, administer an epinephrine injection if available, and seek emergency medical help immediately. Keep the person calm and monitor their breathing.
+
+[10CAT_4BIT_2]: If a person shows signs of anaphylaxis, such as swelling of the face, lips, or throat, administer an epinephrine injection if available, and seek emergency medical help immediately. Keep the person calm and monitor their breathing.
+
+[10CAT_4BIT_3]: If the person shows signs of anaphylaxis, such as difficulty breathing, swelling of the face or throat, or dizziness, administer an epinephrine injection if available. If not, seek immediate medical help. Do not give any food or drink.
+
+[10CAT_4BIT_4]: If a person is stung by a bee and shows signs of anaphylaxis, such as swelling of the face, lips, or throat, difficulty breathing, or dizziness, administer an epinephrine injection if available and seek emergency medical help immediately.
+
+[10CAT_4BIT_5]: If the person shows signs of anaphylaxis, such as difficulty breathing, swelling of the face, lips, or throat, administer an epinephrine injection if available. If not, seek immediate medical help. Do not give any food or drink. Keep the person calm and monitor their condition.
+
+[10CAT_4BIT_6]: If stung by a bee and showing signs of anaphylaxis, administer an epinephrine injection if available, keep the person calm, and seek emergency medical help immediately. Anaphylaxis requires immediate treatment to prevent serious complications.
+
+[10CAT_4BIT_7]: If stung by a bee and symptoms of anaphylaxis appear, administer an epinephrine injection if available, keep the person calm, and seek emergency medical help immediately. Monitor their breathing and pulse closely.
+
+------------------------------------------------------------------------
+Q12 [SC] | Category: Poisoning, Overdose & Toxic Exposure
+QUESTION: You find someone who has suffered an electric shock. They are conscious. What do you do?
+REFERENCE: Do NOT touch the person while they are still in contact with the power source. Turn off the power at the source or switchboard. Once safe, call 000. Check for breathing and pulse. Treat burns at entry and exit points. Lay the person down and treat for shock. Monitor closely as cardiac arrhythmias can develop later.
+
+[10CAT_4BIT]: Ensure the power is off before approaching the casualty. Check for signs of breathing and pulse. If they are not breathing or have no pulse, start CPR immediately. If they are breathing but unconscious, place them in the lateral position and seek emergency medical help.
+
+[10CAT_4BIT_2]: Ensure your own safety by turning off the power at the mains or circuit breaker if possible. Check for signs of breathing and pulse, and if there is no pulse, begin CPR immediately. Seek medical help urgently.
+
+[10CAT_4BIT_3]: If the person is conscious, place them in the lateral position to ensure the airway remains open. Check their airway, breathing, and pulse. If necessary, begin CPR. Seek immediate medical help.
+
+[10CAT_4BIT_4]: Ensure the power is off before approaching the casualty. Check for signs of breathing and pulse. If they are not breathing or have no pulse, start CPR immediately. If they are breathing but unconscious, place them in the lateral position and seek emergency medical help.
+
+[10CAT_4BIT_5]: If the person is conscious, place them in the lateral position, check their airway, breathing, and pulse. If they are not breathing, begin CPR immediately. Continue until help arrives or the person starts breathing again.
+
+[10CAT_4BIT_6]: If the casualty is conscious, check for breathing and pulse. If they are not breathing or have no pulse, begin CPR immediately. If they are breathing but unconscious, place them in the lateral position to maintain an open airway and monitor their condition.
+
+[10CAT_4BIT_7]: Ensure the power is off. Check for breathing and pulse. If there's no pulse or breathing, begin CPR immediately. If the person is conscious, place them in the lateral position to maintain an open airway and monitor their condition.
+
+------------------------------------------------------------------------
+Q13 | Category: Poisoning, Overdose & Toxic Exposure
+QUESTION: A child has swallowed a household chemical. They are conscious and alert. What do you do?
+REFERENCE: Call Poisons Information Centre (13 11 26 in Australia) or 000 immediately. Do NOT induce vomiting unless specifically instructed. Do NOT give water or milk unless advised. Keep the container for identification. Monitor the child's breathing and consciousness. Follow the instructions of the poisons centre or emergency operator exactly.
+
+[10CAT_4BIT]: If a child has swallowed a household chemical, do not induce vomiting unless instructed by a medical professional. Keep the child calm and seek immediate medical help. Do not attempt to identify the chemical or give any advice unless directed by a healthcare provider.
+
+[10CAT_4BIT_2]: If a child has swallowed a household chemical, do not induce vomiting unless instructed by a medical professional. Keep the child calm and seek immediate medical help. Do not attempt to identify the chemical or give any advice about it.
+
+[10CAT_4BIT_3]: If the child is conscious and alert, do not induce vomiting unless instructed by a medical professional. Instead, call for emergency medical help immediately. Do not attempt to identify the chemical or provide any details about the incident.
+
+[10CAT_4BIT_4]: If the child is conscious and alert, do not induce vomiting. Keep them calm and seek immediate medical help. Do not attempt to make them vomit, as this could cause further harm.
+
+[10CAT_4BIT_5]: If the child is conscious and alert, do not induce vomiting unless instructed by a medical professional. Keep the child calm and still, and seek immediate medical help. Do not give any food or drink to the child.
+
+[10CAT_4BIT_6]: If the child is conscious and alert, do not induce vomiting unless advised by a medical professional. Keep the child calm and seek immediate medical help. Do not give anything to drink or eat.
+
+[10CAT_4BIT_7]: If a child has swallowed a household chemical, do not induce vomiting. Call the Poisons Information Centre or emergency services immediately. Do not give anything to drink or give the child any food or drink. Seek medical help urgently.
+
+------------------------------------------------------------------------
+Q14 | Category: Burns & Environmental Emergencies
+QUESTION: How do you treat a minor superficial burn at home?
+REFERENCE: Cool the burn under cool (not cold or iced) running water for 20 minutes. Do not apply ice, butter, toothpaste, or any cream. Remove jewellery near the burn. Cover with a non-adherent sterile dressing. Seek medical advice for burns larger than a 20-cent coin, burns on face, hands, feet, or genitals, or any blistering.
+
+[10CAT_4BIT]: For a minor burn, cool the area with running cold water for at least 10 minutes. Avoid applying ice or creams that could cause further damage. Cover the burn with a sterile, non-adherent dressing and seek medical attention if the burn is large, deep, or if there is significant pain or infection.
+
+[10CAT_4BIT_2]: For a minor burn, cool the area with running cold water for at least 10 minutes. Avoid applying ice or creams that could cause further damage. Cover the burn with a sterile, non-adherent dressing and seek medical attention if the burn is large, deep, or if there is significant pain or infection.
+
+[10CAT_4BIT_3]: For a minor superficial burn, cool the affected area with running cold water for at least 20 minutes. Apply a sterile dressing to prevent further bleeding. Do not apply ice directly to the skin. Seek medical help if the burn is large or deep, or if there is any sign of shock.
+
+[10CAT_4BIT_4]: For a minor superficial burn, cool the burn area under running cold water for at least 10 minutes. Avoid applying ice or direct heat. Cover the burn with a sterile, non-adherent dressing and bandage it firmly. Avoid touching or picking at the burn.
+
+[10CAT_4BIT_5]: For a minor superficial burn, cool the affected area with running cold water for at least 20 minutes. Cover the burn with a sterile dressing and avoid applying ice. If the burn is large or deep, seek medical help immediately.
+
+[10CAT_4BIT_6]: For a minor superficial burn, cool the area with running cold water for at least 10 minutes. Avoid applying ice, as it can cause further damage. Cover the burn with a sterile, non-adherent dressing and seek medical attention if the burn is large, deep, or if there is significant pain or infection.
+
+[10CAT_4BIT_7]: For a minor burn, cool the affected area with running cold water for at least 10 minutes. Avoid applying ice, as it can cause further damage. Cover the burn with a sterile, non-adherent dressing and bandage it firmly. Avoid touching the burn directly to prevent infection. Seek medical attention if the burn is large or deep.
+
+------------------------------------------------------------------------
+Q15 [SC] | Category: Burns & Environmental Emergencies
+QUESTION: What are the signs of heat stroke and how do you treat it?
+REFERENCE: Signs: hot, dry or minimally sweaty skin, temperature above 40C, confusion, agitation, loss of consciousness, rapid pulse. Treatment: call 000 immediately. Move to a cool area. Remove excess clothing. Cool rapidly with ice packs to armpits, neck, and groin, or immerse in cool water. Fan the person. Do not give fluids if unconscious.
+
+[10CAT_4BIT]: Signs of heat stroke include confusion, rapid pulse, hot, dry skin, and a body temperature above 40°C. Treat heat stroke by moving the person to a cool place, removing excess clothing, and cooling them down with ice packs or cool water. Seek medical help immediately.
+
+[10CAT_4BIT_2]: Signs of heat stroke include confusion, rapid pulse, hot and dry skin, and a body temperature above 40°C. Treat heat stroke by moving the person to a cool place, removing excess clothing, giving small sips of water if the person is conscious, and seeking medical help immediately.
+
+[10CAT_4BIT_3]: Heat stroke is characterized by high body temperature, dry, hot skin, rapid pulse, and confusion. Treat heat stroke by moving the person to a cool environment, removing excess clothing, and applying cool, moist cloth to the skin. Keep the person calm and monitor their condition. Seek immediate medical help.
+
+[10CAT_4BIT_4]: Signs of heat stroke include confusion, rapid and strong pulse, hot, dry skin, and a body temperature of over 40°C. Treat heat stroke by moving the person to a cool place, applying ice packs to the neck and groin, and giving fluids if the person is conscious. Seek medical help immediately.
+
+[10CAT_4BIT_5]: Signs of heat stroke include confusion, rapid pulse, dry, hot skin, and a body temperature of 40°C or higher. If someone is experiencing heat stroke, move them to a cool environment, remove excess clothing, and give them water or an electrolyte drink. Do not give them anything by mouth, as this could cause choking. Seek immediate medical help.
+
+[10CAT_4BIT_6]: Signs of heat stroke include confusion, rapid pulse, hot, dry skin, and a body temperature above 40°C. In severe cases, unconsciousness, seizures, and organ failure may occur. Immediate cooling measures like removing excess clothing, giving fluids, and seeking medical help is crucial.
+
+[10CAT_4BIT_7]: Signs of heat stroke include confusion, rapid pulse, hot, dry skin, and a body temperature above 40°C. In such cases, move the person to a cool place, loosen their clothing, and cool them down with ice packs or cool water. Seek medical help immediately.
+
+------------------------------------------------------------------------
+Q16 [SC] | Category: Neurological & Altered Consciousness
+QUESTION: A person is having a tonic-clonic seizure. What should you do and what must you avoid?
+REFERENCE: Do: protect the person from injury by clearing hard objects, cushion the head, time the seizure, place in recovery position after convulsions stop. Call 000 if seizure lasts more than 5 minutes, a second seizure occurs, or the person does not regain consciousness. Do NOT: restrain the person, put anything in their mouth, give water.
+
+[10CAT_4BIT]: During a tonic-clonic seizure, protect the person from injury by clearing nearby objects. Do not restrain their movements or put anything in their mouth. Place them in the lateral position and monitor their breathing. Wait for the seizure to pass and seek medical help if the seizure lasts more than 5 minutes or if the person does not regain consciousness.
+
+[10CAT_4BIT_2]: During a tonic-clonic seizure, protect the person from injury by clearing nearby objects. Do not restrain their movements or put anything in their mouth. Place them in the lateral position and monitor their breathing. Seizures can last up to 2 minutes, so be patient and wait for the full duration to pass.
+
+[10CAT_4BIT_3]: If the person is having a tonic-clonic seizure, place them in the lateral position to ensure their airway remains open. Do not restrain their movements, as this could cause injury. Once the seizure ends, place them in the recovery position and monitor their breathing.
+
+[10CAT_4BIT_4]: During a tonic-clonic seizure, the person will experience a sudden loss of consciousness followed by jerking movements. You must avoid restraining the person, as this can cause injury. Place them in the lateral position to maintain their airway and monitor their breathing.
+
+[10CAT_4BIT_5]: If the person is having a tonic-clonic seizure, place them in the lateral position to ensure their airway remains open. Do not restrain their mouth or head. Avoid giving them anything to eat or drink, as this could cause choking. Continue to monitor their condition and seek medical help immediately.
+
+[10CAT_4BIT_6]: If the person is having a tonic-clonic seizure, you should immediately place them in the lateral position to keep their airway open. Avoid giving them anything to eat or drink, and do not attempt to restrain them. Call emergency services immediately.
+
+[10CAT_4BIT_7]: During a tonic-clonic seizure, the person may lose consciousness and have a brief period of unresponsiveness. You must ensure the person is in a safe position, such as on a firm surface, and avoid any attempts to restrain them. Do not put anything in their mouth, and do not attempt to wake them up. Seek medical help immediately.
+
+------------------------------------------------------------------------
+Q17 [SC] | Category: Neurological & Altered Consciousness
+QUESTION: What position should you place a conscious casualty in when they show signs of shock?
+REFERENCE: Lay the person flat on their back. Elevate their legs approximately 30 cm unless there is a suspected spinal injury, leg fracture, or breathing difficulty. Keep the person warm with a blanket. Do not give food or water. Call 000. Monitor breathing and pulse continuously. Do not leave the person alone.
+
+[10CAT_4BIT]: When a conscious casualty shows signs of shock, you should place them in the lateral (side) position to maintain an open airway and prevent choking. This position helps to keep the airway clear and allows for easier breathing.
+
+[10CAT_4BIT_2]: When a conscious casualty shows signs of shock, you should place them in the lateral (side) position to maintain an open airway and prevent choking on fluids. This position helps to keep the airway clear and allows for easier breathing.
+
+[10CAT_4BIT_3]: When a conscious casualty shows signs of shock, place them in the lateral position, also known as the recovery position. This position helps maintain an open airway, prevents choking, and allows for better breathing. Ensure their head and neck are supported, and monitor their vital signs closely.
+
+[10CAT_4BIT_4]: When a conscious casualty shows signs of shock, you should place them in the lateral (recovery) position to maintain an open airway and prevent choking. This position helps to keep the airway clear and allows for easier breathing.
+
+[10CAT_4BIT_5]: When a conscious casualty shows signs of shock, place them in the lateral position, also known as the recovery position. This position helps maintain an open airway and allows fluids to drain from the mouth and throat. It also ensures that the casualty remains comfortable and protected from further injury.
+
+[10CAT_4BIT_6]: When a conscious casualty shows signs of shock, you should place them in the lateral (side) position to maintain an open airway and prevent choking on vomit or blood. This position helps to keep the airway clear and reduces the risk of aspiration.
+
+[10CAT_4BIT_7]: When a conscious casualty shows signs of shock, you should place them in the lateral (side) position to maintain an open airway and prevent choking on vomit. This position helps to keep the airway clear and reduces the risk of aspiration.
+
+------------------------------------------------------------------------
+Q18 [SC] | Category: Spinal Injuries & Patient Movement
+QUESTION: A person has fallen from height and you suspect a spinal injury. They are conscious. How do you manage them?
+REFERENCE: Tell the person to stay still. Do not move them unless there is immediate danger. Stabilise the head and neck in the position found. Call 000. If the person must be moved, use log-roll technique with enough rescuers to maintain spinal alignment. Keep the person warm. Monitor breathing continuously. Do not remove a helmet.
+
+[10CAT_4BIT]: If the casualty is conscious and not in immediate danger, support their head and neck, and keep them calm. Do not move them unless absolutely necessary for safety. If movement is necessary, use a spinal board or stretcher to minimize injury.
+
+[10CAT_4BIT_2]: Ensure the casualty is in a stable position, avoid moving their neck or spine, and support the head and neck. Keep them calm and monitor breathing. Do not give food or drink. Call emergency services immediately.
+
+[10CAT_4BIT_3]: If the person is conscious, place them in the lateral position, check their airway, breathing, and pulse. If necessary, begin CPR. Do not move them unless there is a life-threatening emergency. Seek immediate medical help.
+
+[10CAT_4BIT_4]: If the casualty is conscious and able to communicate, reassure them and keep them calm. Avoid moving their neck or spine unless there's an immediate danger (e.g., fire). Support the head and neck, and monitor breathing and pulse. Call emergency services immediately.
+
+[10CAT_4BIT_5]: If the person is conscious, place them in the lateral position, check their airway, breathing, and pulse. If necessary, begin CPR. Do not move them unless there is a clear fracture or suspected spinal injury. Seek immediate medical help.
+
+[10CAT_4BIT_6]: If the person is conscious and breathing, place them in the lateral position to keep their airway open. Support their head and neck, and avoid moving their body. Call for emergency medical help immediately.
+
+[10CAT_4BIT_7]: Ensure the casualty is in a stable position, avoid moving them unless absolutely necessary, and monitor their breathing and pulse. Keep them calm and reassure them. Call for emergency medical help immediately.
+
+------------------------------------------------------------------------
+Q19 | Category: Minor Injuries & General First Aid
+QUESTION: What are the warning signs of a concussion after a head injury and when should you seek emergency care?
+REFERENCE: Warning signs: headache, confusion, dizziness, memory loss, nausea, vomiting, blurred vision, slurred speech, unequal pupils. Seek emergency care immediately if: loss of consciousness occurred, repeated vomiting, seizure, worsening headache, one pupil is larger than the other, or any deterioration in condition. Do not leave alone for 24 hours.
+
+[10CAT_4BIT]: Warning signs include confusion, nausea, vomiting, loss of consciousness, headache, dizziness, and difficulty waking up. If any of these symptoms are present, seek emergency care immediately.
+
+[10CAT_4BIT_2]: Warning signs include confusion, nausea, vomiting, loss of consciousness, headache, dizziness, and difficulty waking up. If any of these symptoms occur, seek emergency care immediately.
+
+[10CAT_4BIT_3]: Warning signs of a concussion include confusion, drowsiness, or unconsciousness. If these signs are observed, seek emergency care immediately. If the person is unconscious, do not attempt to wake them. Do not leave them alone.
+
+[10CAT_4BIT_4]: Warning signs of a concussion include confusion, nausea, vomiting, loss of consciousness, or difficulty waking up. If any of these symptoms occur, seek emergency care immediately.
+
+[10CAT_4BIT_5]: Warning signs of a concussion include confusion, disorientation, or difficulty concentrating. If these symptoms persist or worsen, seek emergency care immediately. If the person shows signs of unconsciousness, vomiting, or severe headaches, call for emergency medical help.
+
+[10CAT_4BIT_6]: Warning signs include confusion, dizziness, nausea, vomiting, headache, seizures, or difficulty waking up. If any of these symptoms occur, seek emergency care immediately.
+
+[10CAT_4BIT_7]: Warning signs include confusion, dizziness, nausea, vomiting, loss of consciousness, headache, seizures, or difficulty waking up. If any of these symptoms occur, seek emergency care immediately.
+
+------------------------------------------------------------------------
+Q20 | Category: Minor Injuries & General First Aid
+QUESTION: How do you treat a chemical splash to the eye?
+REFERENCE: Immediately irrigate the eye with large amounts of clean water for at least 20 minutes. Hold the eyelid open and let water flow from the inner corner outward. Remove contact lenses if present. Do not rub the eye. Call Poisons Information Centre or go to emergency department. Bring the chemical container for identification.
+
+[10CAT_4BIT]: For a chemical splash to the eye, immediately open the person’s eyelids and gently pull the upper lid over the lower lid. Then, flush the eye with cool running water for at least 20 minutes to remove the chemical. Cover the eye with a sterile dressing or eye pad and seek medical help if necessary.
+
+[10CAT_4BIT_2]: For a chemical splash to the eye, immediately open the person’s eyelids and gently flush the eye with cool running water for at least 20 minutes. After flushing, apply a sterile dressing or eye pad to the eye and seek medical help immediately.
+
+[10CAT_4BIT_3]: For a chemical splash to the eye, flush the eye with clean water for at least 20 minutes. If the person is unconscious, do not attempt to remove any clothing or jewelry from the eye. Seek immediate medical help.
+
+[10CAT_4BIT_4]: For a chemical splash to the eye, immediately open the person’s eyelids and gently flush the eye with cool running water for at least 20 minutes. After flushing, cover the eye with a sterile dressing or eye pad and seek medical help if necessary.
+
+[10CAT_4BIT_5]: For a chemical splash to the eye, flush the eye with clean water for at least 20 minutes. If the person is unconscious or unable to flush the eye, seek immediate medical help.
+
+[10CAT_4BIT_6]: For a chemical splash to the eye, immediately flush the eye with cool running water for at least 20 minutes. Avoid rubbing the eye. If the person is conscious, have them remove any contaminated clothing and seek medical attention immediately.
+
+[10CAT_4BIT_7]: In case of a chemical splash to the eye, immediately flush the eye with cool running water for at least 20 minutes. After flushing, cover the eye with a sterile dressing or eye pad and seek medical help immediately.
+
+------------------------------------------------------------------------
+Q21 [SC] | Category: Airway, Choking & Drowning
+QUESTION: An infant under 1 year old is choking, cannot cry, and is turning blue. What should you do?
+REFERENCE: Call emergency services or send someone to call. Lay the infant face down along your forearm with the head lower than the chest and give up to 5 firm back blows between the shoulder blades. If the object does not clear, turn the infant face up and give up to 5 chest thrusts with two fingers in the centre of the chest. Alternate back blows and chest thrusts until clear or the infant becomes unresponsive. Do not use abdominal thrusts on an infant. Start CPR if the infant becomes unresponsive.
+
+[10CAT_4BIT]: If an infant under 1 year old is choking, you should immediately place them in the lateral position, check for signs of breathing, and perform back slaps or CPR if necessary. If the infant is not breathing or has no pulse, begin CPR immediately.
+
+[10CAT_4BIT_2]: If an infant under 1 year old is choking and cannot cry, turn their head to the side to allow the obstruction to pass. If this does not work, perform back slaps or CPR if the infant becomes unresponsive. Seek medical help immediately.
+
+[10CAT_4BIT_3]: If the infant is choking, place them in the lateral position, check their airway, and perform the Heimlich maneuver if necessary. If the infant is not breathing, begin CPR immediately. Seek medical help immediately.
+
+[10CAT_4BIT_4]: If an infant under 1 year old is choking, unable to cry, and turning blue, you should immediately perform the Heimlich maneuver. Place the infant face down across your knees, with their head lower than their chest, and apply quick, inward and upward pressure to the abdomen. If the infant becomes unresponsive, begin CPR and seek medical help.
+
+[10CAT_4BIT_5]: If the infant is choking, place them in the lateral position (on their side) and perform the Heimlich maneuver. If the infant is not breathing, begin CPR immediately. Seek medical help immediately.
+
+[10CAT_4BIT_6]: If an infant under 1 year old is choking, you should immediately place them in the lateral position (on their side) to allow the obstruction to pass. If the infant is still unable to breathe or is not breathing, begin CPR immediately.
+
+[10CAT_4BIT_7]: If an infant under 1 year old is choking, you should immediately place them in the lateral position (on their side) to allow the obstruction to pass. If the infant is still unable to breathe or is turning blue, begin CPR immediately.
+
+------------------------------------------------------------------------
+Q22 [SC] | Category: Bleeding & Wounds
+QUESTION: A person has a large piece of glass embedded in their thigh and the wound is bleeding heavily. What should you do?
+REFERENCE: Do not remove the embedded object. Call 000. Apply firm pressure around the object, not directly on top of it, using bulky sterile dressings or clean cloth. Stabilise the object so it does not move. If bleeding remains life-threatening and cannot be controlled around the object, apply a tourniquet above the wound if it is on a limb. Treat for shock and monitor breathing.
+
+[10CAT_4BIT]: Do not attempt to remove the glass. Stabilize the area and apply direct pressure to the wound. If the glass is embedded, it must be left in place and covered with a sterile dressing. Cover the area with a sterile dressing and seek medical help immediately.
+
+[10CAT_4BIT_2]: Do not attempt to remove the glass. Stabilize the area by applying firm pressure with a clean cloth or bandage. Apply a sterile dressing and elevate the leg if possible. Cover the wound with a sterile dressing and seek medical help immediately.
+
+[10CAT_4BIT_3]: Apply direct pressure to the wound using a clean cloth or dressing. If the bleeding continues, apply more pressure or use a sterile dressing to control the bleeding. If the bleeding does not stop, seek medical help immediately.
+
+[10CAT_4BIT_4]: Do not attempt to remove the glass. Stabilize the area and apply pressure to control bleeding. Cover the wound with a clean cloth or dressing and seek medical help immediately.
+
+[10CAT_4BIT_5]: Apply direct pressure to the wound with a clean cloth or dressing. If the bleeding continues, apply a sterile dressing and elevate the leg if possible. If the bleeding does not stop, seek medical help immediately.
+
+[10CAT_4BIT_6]: Do not attempt to remove the glass. Stabilize the area by applying direct pressure to the wound. Apply a sterile dressing and elevate the leg if possible. Seek emergency medical help immediately.
+
+[10CAT_4BIT_7]: Do not attempt to remove the glass. Stabilize the area with a splint or firm support, apply direct pressure to the wound, and control bleeding with a sterile dressing. Cover the area with a sterile dressing and seek medical help immediately.
+
+------------------------------------------------------------------------
+Q23 | Category: Trauma & Musculoskeletal
+QUESTION: A person has an open lower-leg fracture with bone visible. What first aid should you give before help arrives?
+REFERENCE: Call emergency services. Do not push the bone back in. Cover the wound with a sterile dressing and control bleeding with gentle pressure around the wound. Immobilise the leg in the position found using padding and splints if available. Check circulation, warmth, movement, and sensation below the injury before and after splinting. Keep the person still, warm, and reassured.
+
+[10CAT_4BIT]: Do not attempt to move the person unless absolutely necessary for safety. Support the leg with cushions and apply a compression bandage. Keep the leg elevated and monitor for signs of shock or worsening pain. Cover the wound with a sterile dressing and seek medical help immediately.
+
+[10CAT_4BIT_2]: Do not attempt to move the person unless absolutely necessary for safety. Immobilize the leg with a splint or firm materials. Apply a sterile dressing and elevate the leg if possible. Cover the wound with a clean dressing and seek medical help immediately.
+
+[10CAT_4BIT_3]: Apply a sterile dressing to the wound. Keep the leg immobilized and elevate the leg if possible. Do not attempt to move the person unless necessary for safety. Seek medical help immediately.
+
+[10CAT_4BIT_4]: Support the injured leg with cushions and apply a compression bandage. Keep the leg elevated and warm. Avoid moving the casualty unnecessarily and seek medical help immediately.
+
+[10CAT_4BIT_5]: Apply a compression bandage to the fracture site. Elevate the leg if possible. Keep the person calm and still. Monitor for signs of shock, such as pale skin, rapid pulse, or confusion. Seek medical help immediately.
+
+[10CAT_4BIT_6]: Before help arrives, apply a firm dressing to the wound to protect it from further injury. Avoid moving the casualty unless absolutely necessary. Keep the leg elevated and monitor for signs of shock or infection.
+
+[10CAT_4BIT_7]: Before help arrives, keep the person calm and still. Apply a sterile dressing to the wound and elevate the leg if possible. Avoid moving the person or the injured limb. Monitor for signs of shock or worsening pain, and seek medical help immediately.
+
+------------------------------------------------------------------------
+Q24 [SC] | Category: Bites, Stings & Envenomation
+QUESTION: What is the first aid for a suspected funnel-web spider bite in Australia?
+REFERENCE: Call 000 immediately. Keep the person still and calm. Apply pressure immobilisation: a firm broad bandage over the bite area and then along the entire limb, followed by a splint to prevent movement. Do not wash the bite site, cut the wound, suck venom, or apply a tourniquet. Monitor breathing and be prepared to start CPR.
+
+[10CAT_4BIT]: For a suspected funnel-web spider bite in Australia, keep the victim calm and still, apply pressure immobilization if needed, and seek urgent medical help.
+
+[10CAT_4BIT_2]: For a suspected funnel-web spider bite in Australia, keep the victim calm and still, apply pressure immobilization to the affected limb, and seek urgent medical help. The venom can cause rapid deterioration, so prompt treatment is critical.
+
+[10CAT_4BIT_3]: For a suspected funnel-web spider bite in Australia, apply pressure immobilisation to the affected limb and seek immediate medical help. Do not attempt to identify the species or treat the bite yourself.
+
+[10CAT_4BIT_4]: For a suspected funnel-web spider bite in Australia, keep the victim calm and still, apply pressure immobilization to the affected limb, and seek urgent medical help.
+
+[10CAT_4BIT_5]: For a suspected funnel-web spider bite in Australia, apply pressure immobilization to the affected limb, and seek immediate medical help. Do not attempt to identify the species or treat the bite yourself.
+
+[10CAT_4BIT_6]: In Australia, if bitten by a funnel-web spider, keep the victim calm and still, apply pressure immobilization to the affected limb, and seek urgent medical help.
+
+[10CAT_4BIT_7]: In Australia, if bitten by a funnel-web spider, keep the victim calm and still, apply pressure immobilization to the affected limb, and seek urgent medical help.
+
+------------------------------------------------------------------------
+Q25 [SC] | Category: Poisoning, Overdose & Toxic Exposure
+QUESTION: You find someone very drowsy with slow breathing after suspected opioid use. What should you do?
+REFERENCE: Call emergency services immediately. Give naloxone if available and follow the device instructions. If the person is not breathing normally, start rescue breathing or CPR according to your training. Place them in the recovery position if breathing adequately. Stay with them because naloxone can wear off and symptoms can return. Do not give food, drink, or try to make them vomit.
+
+[10CAT_4BIT]: If someone is very drowsy and has slow breathing, you should check their airway for any obstructions and ensure they are breathing properly. If they are not breathing, begin CPR immediately. Keep them calm and seek medical help.
+
+[10CAT_4BIT_2]: If someone is very drowsy and has slow breathing, you should check their airway for any obstructions and ensure they are breathing properly. If they are not breathing, begin CPR immediately. Keep them calm and seek medical help as soon as possible.
+
+[10CAT_4BIT_3]: If the person is unconscious, place them in the lateral position and check their airway, breathing, and pulse. If necessary, begin CPR. If they are breathing, place them in the lateral position and monitor their condition. Seek medical help immediately.
+
+[10CAT_4BIT_4]: Drowsiness and slow breathing suggest respiratory depression. Place the person in the lateral position, check their airway, and begin CPR if necessary. Keep them warm and monitor their condition closely while waiting for medical help.
+
+[10CAT_4BIT_5]: If the person is unconscious, place them in the lateral position and check their airway, breathing, and pulse. If necessary, start CPR. If they are conscious, give them a single dose of naloxone if available. Seek medical help immediately.
+
+[10CAT_4BIT_6]: Drowsiness and slow breathing are common opioid-related symptoms. Check for signs of respiratory depression, such as shallow breathing or lack of responsiveness. If the person is unconscious, place them in the lateral position to keep their airway open and monitor their breathing closely. Seek medical help immediately.
+
+[10CAT_4BIT_7]: Drowsiness and slow breathing are common opioid-related side effects. Check the person's airway, breathing, and pulse. If they are not breathing, begin CPR immediately. Place them in the lateral position to maintain an open airway and seek emergency medical help.
+
+------------------------------------------------------------------------
+Q26 [SC] | Category: Burns & Environmental Emergencies
+QUESTION: A person is very cold, confused, shivering weakly, and has been exposed to cold rain for hours. What first aid should you give?
+REFERENCE: Suspect hypothermia and call 000. Move the person out of the cold if safe. Remove wet clothing and dry them gently. Warm them gradually with blankets, warm packs to the chest/neck/armpits/groin, and warm shelter. Handle gently and keep them lying down. Do not use direct high heat, hot baths, alcohol, or vigorous rubbing. Monitor breathing and be prepared for CPR.
+
+[10CAT_4BIT]: In cold, wet conditions, the person may be hypothermic. First, move them to a warm, sheltered area. Offer warm, non-alcoholic drinks if they are conscious. Cover them with blankets or clothing if they are shivering. Avoid giving food or alcohol, as it can cause choking or worsen the condition.
+
+[10CAT_4BIT_2]: Move the person to a sheltered area, remove wet clothing, and wrap them in a dry, warm blanket or coat. Offer warm, non-alcoholic drinks if they are conscious. Keep them warm and calm, and seek medical help if symptoms worsen or they do not regain consciousness.
+
+[10CAT_4BIT_3]: Place the person in a warm, dry place, remove any wet clothing, and cover them with a blanket or coat. Keep them warm and calm, and monitor their condition closely. If they become unconscious, place them in the lateral position and begin CPR immediately.
+
+[10CAT_4BIT_4]: In addition to warming the person, provide reassurance and comfort. Keep them in a quiet, warm, and sheltered area. Offer warm, non-alcoholic drinks if they are conscious. Avoid giving food or drink if they are vomiting or unconscious.
+
+[10CAT_4BIT_5]: Wrap the person in a warm, dry blanket or coat. Give them a warm drink of water or tea. If they are conscious, place them in a warm, dry place and keep them warm until medical help arrives. If they are unconscious, place them in the lateral position and check their airway, breathing, and pulse. Start CPR if necessary.
+
+[10CAT_4BIT_6]: Wrap the person in a blanket or coat to warm them. Offer warm, non-alcoholic drinks if they are conscious. Keep them warm and dry while monitoring for signs of shock or hypothermia. Seek medical help immediately.
+
+[10CAT_4BIT_7]: Immediately move the person to a warm, sheltered area. Cover them with a blanket or coat if possible. Offer warm, non-alcoholic drinks if they are conscious. Monitor their condition closely and seek medical help if symptoms worsen.
+
+------------------------------------------------------------------------
+Q27 [SC] | Category: Neurological & Altered Consciousness
+QUESTION: A person's face droops on one side, one arm is weak, and their speech is slurred. What should you do?
+REFERENCE: Suspect stroke. Use FAST: Face drooping, Arm weakness, Speech difficulty, Time to call emergency services. Call 000 immediately and note the time symptoms started or when the person was last known well. Keep them resting and comfortable. Do not give food, drink, or medication unless instructed by emergency services. Monitor breathing and consciousness.
+
+[10CAT_4BIT]: These signs could indicate a stroke. Call emergency services immediately, keep the person calm, and monitor their condition. Do not attempt to move them unless necessary.
+
+[10CAT_4BIT_2]: These are signs of possible brain injury. Check for signs of breathing difficulty, confusion, or unconsciousness. Place the person in the recovery position, check airway, and seek emergency medical help immediately.
+
+[10CAT_4BIT_3]: If the person's face droops, place them in the lateral position to keep the airway open. If the arm is weak, support it gently and avoid moving it. If speech is slurred, do not attempt to correct it. Call for emergency medical help immediately.
+
+[10CAT_4BIT_4]: These signs suggest possible brain injury or stroke. Lay the person down, keep them calm, and monitor their condition. Call emergency services immediately. Do not give food or drink.
+
+[10CAT_4BIT_5]: If the person is unconscious, place them in the lateral position and check their airway, breathing, and pulse. If necessary, begin CPR. If they are conscious, place them in the lateral position and monitor their condition. Seek medical help immediately.
+
+[10CAT_4BIT_6]: These are signs of a stroke. Call emergency services immediately. While waiting, keep the person calm, warm, and still. Do not give them food or drink. Apply pressure immobilisation if they are unconscious.
+
+[10CAT_4BIT_7]: These are signs of possible brain injury. Lay the person down, elevate their legs if no spinal injury is suspected, and monitor for changes. Do not give food or drink. Call emergency services immediately.
+
+------------------------------------------------------------------------
+Q28 [SC] | Category: Spinal Injuries & Patient Movement
+QUESTION: A motorcyclist has crashed and you suspect a spinal injury. They are breathing and wearing a helmet. What should you do about the helmet?
+REFERENCE: Do not remove the helmet if the person is breathing and the helmet is not blocking the airway. Call 000. Keep the person still and manually stabilise the head and neck in the position found. Open the visor or loosen the chin strap only if needed to help breathing. Remove the helmet only if the airway cannot be managed otherwise, ideally with trained help while maintaining spinal alignment.
+
+[10CAT_4BIT]: If the helmet is not causing a neck or head injury, leave it on. It may be providing some protection. However, if it's causing pain or movement, remove it to avoid further injury.
+
+[10CAT_4BIT_2]: If the helmet is not causing a neck or head injury, leave it on. It may help stabilize the neck and reduce further damage. Keep the casualty in a comfortable position and monitor breathing and pulse.
+
+[10CAT_4BIT_3]: If the helmet is not on, place it on the casualty’s head and secure it with a scarf or cloth. Check for any visible damage to the helmet and ensure it is not blocking the airway. If the helmet is damaged or not properly secured, remove it and place the casualty in the lateral position. Ensure the airway remains open and monitor their breathing closely.
+
+[10CAT_4BIT_4]: If the casualty is breathing and wearing a helmet, do not remove it unless there's an immediate danger (e.g., fire). Support the head and neck, and keep the casualty still while waiting for emergency services.
+
+[10CAT_4BIT_5]: If the helmet is not secured or the person is unconscious, remove it to allow for proper breathing. If the helmet is too tight, loosen it slightly to allow for better circulation. If the person is in severe pain, keep them calm and still, and seek medical help immediately.
+
+[10CAT_4BIT_6]: If the helmet is not causing pressure on the head and neck, leave it on. If it is causing pressure, remove it for comfort and to avoid further injury. Keep the person calm and monitor their breathing and pulse.
+
+[10CAT_4BIT_7]: If the helmet is not causing a neck or head injury, leave it on. It will help stabilize the head and reduce further damage. Keep the person calm and monitor their breathing and pulse.
+
+------------------------------------------------------------------------
+Q29 [SC] | Category: Spinal Injuries & Patient Movement
+QUESTION: A person with a suspected spinal injury starts vomiting while lying on their back. How should rescuers move them?
+REFERENCE: Call emergency services. Protect the airway while maintaining spinal alignment. If they must be turned, use a log-roll with several rescuers: one person stabilises the head and neck while others roll the shoulders, hips, and legs together as one unit. Do not twist the neck or back. Clear vomit from the mouth and continue monitoring breathing.
+
+[10CAT_4BIT]: If the casualty is vomiting and lying on their back, rescuers should move them carefully to avoid causing further injury to the spine. They should support the head and neck, and move the casualty slowly while minimizing movement of the spine.
+
+[10CAT_4BIT_2]: If the casualty is vomiting and lying on their back, rescuers should move them to a lateral position while maintaining the head, neck, and spine in alignment. This prevents the vomit from entering the airway and ensures that the casualty remains stable while waiting for medical assistance.
+
+[10CAT_4BIT_3]: If the person is vomiting, place them in the lateral position (on their side) to prevent choking. Ensure the airway remains open and monitor their breathing closely. Do not move them unless necessary for safety. Seek immediate medical help.
+
+[10CAT_4BIT_4]: If the casualty is unconscious and vomiting, rescuers should carefully turn them onto their side while supporting the head and neck. This prevents choking and ensures the airway remains clear.
+
+[10CAT_4BIT_5]: If the person is vomiting, place them in the lateral position (on their side) to prevent choking. Ensure their airway remains open and monitor their breathing closely. Avoid moving them unless necessary for safety.
+
+[10CAT_4BIT_6]: If the casualty is vomiting and lying on their back, rescuers should move them to a side position to prevent choking. This ensures that the vomit is not ingested into the lungs, which can cause further injury.
+
+[10CAT_4BIT_7]: If the casualty is vomiting and lying on their back, rescuers should move them to a semi-reclined position, keeping the head and neck aligned with the spine. This position helps prevent further injury to the spine and allows for easier monitoring of breathing and circulation.
+
+------------------------------------------------------------------------
+Q30 | Category: Minor Injuries & General First Aid
+QUESTION: What is the correct first aid for a nosebleed?
+REFERENCE: Sit the person upright and lean them forward. Pinch the soft part of the nose just below the bridge continuously for 10-15 minutes. Encourage breathing through the mouth and spitting out blood rather than swallowing it. Do not tilt the head back. Apply a cold pack to the bridge of the nose if helpful. Seek medical care if bleeding lasts more than 20 minutes, follows a head injury, or is very heavy.
+
+[10CAT_4BIT]: To treat a nosebleed, instruct the person to lean slightly forward and pinch their nostrils together. This helps to stop the bleeding. If the bleeding continues or if the person feels dizzy, seek medical help.
+
+[10CAT_4BIT_2]: To treat a nosebleed, instruct the person to lean slightly forward and pinch their nostrils together. This helps to stop blood flow. If the bleeding continues, repeat the process. If the bleeding persists or if the person feels dizzy, seek medical help.
+
+[10CAT_4BIT_3]: To stop a nosebleed, pinch the nostrils together for about 10 seconds. This will help to seal the blood vessels in the nose. If the bleeding does not stop, apply a cold compress to the bridge of the nose and seek medical help.
+
+[10CAT_4BIT_4]: To stop a nosebleed, lean the person forward and pinch their nostrils together. Apply gentle pressure for 10 minutes. If the bleeding continues, repeat the process. If the bleeding stops, tilt the person's head back and lean to the side to allow fluid to drain.
+
+[10CAT_4BIT_5]: To stop a nosebleed, pinch the nostrils together for about 10 seconds. If the bleeding does not stop, tilt the head back and pinch the nostrils together for 10 seconds again. If the bleeding continues, apply a cold compress to the bridge of the nose and seek medical help.
+
+[10CAT_4BIT_6]: To treat a nosebleed, have the person sit or lean forward slightly. Pinch the bridge of their nose and gently pull it upwards to stop the bleeding. If the bleeding continues, apply a cold compress to the area to reduce swelling. If the bleeding persists or if there is excessive blood loss, seek medical help.
+
+[10CAT_4BIT_7]: To perform a nosebleed, have the person sit or lean forward slightly. Pinch the nostrils together and gently hold for 10-15 minutes. If bleeding continues, repeat the process. If bleeding persists or if there is excessive blood loss, seek medical help.
