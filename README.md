@@ -497,20 +497,9 @@ Six independent evaluators (GPT-4o, Claude, Gemini, Grok, DeepSeek, Kimi K2) rea
 ---
 
 ## 14. Citation
-
-```bibtex
-@misc{firstaid_qlora_2026,
-  title  = {Offline Medical First-Aid Response via QLoRA Fine-Tuning of Gemma 2B Instruct},
-  author = {Sittul Muna},
-  year   = {2026},
-  note   = {Working paper}
-}
-```
+Not available yet
 
 ---
 
 ## 15. Licence
-
-Code in this repository is released under the **MIT Licence**.
-
 The dataset (`data/firstaidqa_v1.json`) and all model artifacts are subject to their respective upstream licences. Gemma model weights are governed by the [Gemma Terms of Use](https://ai.google.dev/gemma/terms). Derivative models must comply with those terms and must not be used to provide unsupervised medical advice in place of qualified professionals.
