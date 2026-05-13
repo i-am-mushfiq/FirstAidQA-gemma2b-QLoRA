@@ -1,14 +1,15 @@
 # =============================================================================
 # git_push_github.ps1
 # One-shot: stage everything, commit, tag, set remote, push to GitHub
-# Run from: C:\Personal_Endeavours\Fine_Tuning\
+# Run from: C:\Personal_Endeavours\Fine_Tuning\scripts\
 # =============================================================================
 
-# Ensure we are in the correct directory
-Set-Location -Path $PSScriptRoot
+# Resolve repo root (this script lives in scripts\ — one level up is the repo root)
+$repoRoot = Split-Path -Parent $PSScriptRoot
+Set-Location -Path $repoRoot
 
 # ── 0. Remove stale git lock if present ──────────────────────────────────────
-$lockFile = Join-Path $PSScriptRoot ".git\index.lock"
+$lockFile = Join-Path $repoRoot ".git\index.lock"
 if (Test-Path $lockFile) {
     Write-Host "[0] Removing stale git lock file..." -ForegroundColor Yellow
     Remove-Item $lockFile -Force -ErrorAction SilentlyContinue
