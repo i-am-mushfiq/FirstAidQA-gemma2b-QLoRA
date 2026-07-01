@@ -1,0 +1,16 @@
+# Normalise line endings to LF in the repo; checkout as-is on all platforms
+* text=auto eol=lf
+
+# Force binary — never touch line endings
+*.safetensors binary
+*.pt binary
+*.npy binary
+*.npz binary
+*.pkl binary
+*.docx binary
+*.pptx binary
+*.xlsx binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.pdf binary

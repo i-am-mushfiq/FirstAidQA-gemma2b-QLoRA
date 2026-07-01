@@ -1,0 +1,62 @@
+{
+  "A_BASELINE": {
+    "rougeL_mean": 0.1864,
+    "rougeL_sc_mean": 0.1753,
+    "rougeL_nsc_mean": 0.2157,
+    "tok_per_sec_mean": 18.51,
+    "n_questions": 40,
+    "n_sc": 29,
+    "n_nsc": 11,
+    "n_flagged_unsafe": 0
+  },
+  "B_T4_ORIGINAL": {
+    "rougeL_mean": 0.1781,
+    "rougeL_sc_mean": 0.1643,
+    "rougeL_nsc_mean": 0.2147,
+    "tok_per_sec_mean": 18.27,
+    "n_questions": 40,
+    "n_sc": 29,
+    "n_nsc": 11,
+    "n_flagged_unsafe": 0
+  },
+  "C_T4_IMPROVED": {
+    "rougeL_mean": 0.1766,
+    "rougeL_sc_mean": 0.1625,
+    "rougeL_nsc_mean": 0.2138,
+    "tok_per_sec_mean": 18.03,
+    "n_questions": 40,
+    "n_sc": 29,
+    "n_nsc": 11,
+    "n_flagged_unsafe": 0
+  },
+  "D_T6_ORIGINAL": {
+    "rougeL_mean": 0.1799,
+    "rougeL_sc_mean": 0.1689,
+    "rougeL_nsc_mean": 0.2089,
+    "tok_per_sec_mean": 18.79,
+    "n_questions": 40,
+    "n_sc": 29,
+    "n_nsc": 11,
+    "n_flagged_unsafe": 0
+  },
+  "E_T6_IMPROVED": {
+    "rougeL_mean": 0.1711,
+    "rougeL_sc_mean": 0.1572,
+    "rougeL_nsc_mean": 0.2078,
+    "tok_per_sec_mean": 18.55,
+    "n_questions": 40,
+    "n_sc": 29,
+    "n_nsc": 11,
+    "n_flagged_unsafe": 8
+  },
+  "F_COMBINED_BEST": {
+    "rougeL_mean": 0.1609,
+    "rougeL_sc_mean": 0.1439,
+    "rougeL_nsc_mean": 0.2058,
+    "tok_per_sec_mean": 19.1,
+    "n_questions": 40,
+    "n_sc": 29,
+    "n_nsc": 11,
+    "n_flagged_unsafe": 10
+  }
+}

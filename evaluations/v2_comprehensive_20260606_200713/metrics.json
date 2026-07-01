@@ -1,0 +1,62 @@
+{
+  "A_BASE_4BIT": {
+    "rougeL_mean": 0.1411,
+    "rougeL_sc_mean": 0.1597,
+    "rougeL_nsc_mean": 0.1359,
+    "tok_per_sec_mean": 29.2,
+    "n_questions": 41,
+    "n_sc": 9,
+    "n_nsc": 32,
+    "n_flagged_unsafe": 0
+  },
+  "B_FINETUNED_4BIT": {
+    "rougeL_mean": 0.1727,
+    "rougeL_sc_mean": 0.1516,
+    "rougeL_nsc_mean": 0.1787,
+    "tok_per_sec_mean": 17.93,
+    "n_questions": 41,
+    "n_sc": 9,
+    "n_nsc": 32,
+    "n_flagged_unsafe": 0
+  },
+  "D_T4_IMPROVED": {
+    "rougeL_mean": 0.1721,
+    "rougeL_sc_mean": 0.1604,
+    "rougeL_nsc_mean": 0.1754,
+    "tok_per_sec_mean": 17.79,
+    "n_questions": 41,
+    "n_sc": 9,
+    "n_nsc": 32,
+    "n_flagged_unsafe": 0
+  },
+  "E_T6_IMPROVED": {
+    "rougeL_mean": 0.1667,
+    "rougeL_sc_mean": 0.1373,
+    "rougeL_nsc_mean": 0.175,
+    "tok_per_sec_mean": 18.09,
+    "n_questions": 41,
+    "n_sc": 9,
+    "n_nsc": 32,
+    "n_flagged_unsafe": 5
+  },
+  "F_RAG_BM25": {
+    "rougeL_mean": 0.1599,
+    "rougeL_sc_mean": 0.1573,
+    "rougeL_nsc_mean": 0.1606,
+    "tok_per_sec_mean": 18.26,
+    "n_questions": 41,
+    "n_sc": 9,
+    "n_nsc": 32,
+    "n_flagged_unsafe": 0
+  },
+  "C_FINETUNED_8BIT": {
+    "rougeL_mean": 0.1745,
+    "rougeL_sc_mean": 0.1642,
+    "rougeL_nsc_mean": 0.1774,
+    "tok_per_sec_mean": 9.18,
+    "n_questions": 41,
+    "n_sc": 9,
+    "n_nsc": 32,
+    "n_flagged_unsafe": 0
+  }
+}
