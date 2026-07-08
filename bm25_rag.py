@@ -83,8 +83,16 @@ GAP_TOPIC_PATTERNS: dict = {
     # all configs.  KB has 148 spinal records but the multi-rescuer log-roll
     # protocol is near-absent; retrieval injects generic spine-protection
     # advice that omits the log-roll mandate.
+    # Pattern is bidirectional: catches "spinal...move" AND "move...spinal"
+    # so it fires for both "how to move a spinal patient" and "can you move
+    # a patient with spinal injury" orderings.
     "spinal_logroll": (
-        re.compile(r"log.?roll|spinal.{0,30}(move|turn|transport|shift|roll)", re.I),
+        re.compile(
+            r"log.?roll"
+            r"|spinal.{0,50}(mov\w*|turn\w*|transport\w*|shift\w*|roll\w*)"
+            r"|(mov\w*|turn\w*|transport\w*).{0,50}spinal",
+            re.I
+        ),
         "T4/T6 synthesis: spinal log-roll scored <=2/5 all configs"
     ),
 

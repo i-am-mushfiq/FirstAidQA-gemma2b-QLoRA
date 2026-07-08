@@ -58,7 +58,7 @@ OLD_GAP_DESCRIPTIONS = {
 # ---------------------------------------------------------------------------
 GAP_TOPIC_PATTERNS = {
     "infant_choking":          re.compile(r"(infant|baby).{0,40}chok|chok.{0,40}(infant|baby)", re.I),
-    "spinal_logroll":          re.compile(r"log.?roll|spinal.{0,30}(move|turn|transport|shift|roll)", re.I),
+    "spinal_logroll":          re.compile(r"log.?roll|spinal.{0,50}(mov\w*|turn\w*|transport\w*|shift\w*|roll\w*)|(mov\w*|turn\w*|transport\w*).{0,50}spinal", re.I),
     "chest_seal":              re.compile(r"chest seal|sucking chest|open chest wound", re.I),
     "tourniquet_escalation":   re.compile(r"tourniquet", re.I),
     "naloxone_opioid":         re.compile(r"naloxone|opioid.{0,20}overdose|overdose.{0,20}opioid", re.I),
