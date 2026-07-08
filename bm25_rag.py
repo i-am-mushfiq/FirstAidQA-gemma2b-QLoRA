@@ -1,7 +1,8 @@
 """
 bm25_rag.py  --  BM25 retriever for Phase 1 inference evaluation
 =================================================================
-Standalone retrieval module.  Imported by enhanced_inference.py.
+Standalone retrieval module.  Imported by enhanced_inference.py and
+v2_comprehensive_eval.py.
 
 Design decisions from 4-LLM expert consensus (May 2026):
   - BM25 is preferred over dense/semantic retrieval for short medical
@@ -11,49 +12,118 @@ Design decisions from 4-LLM expert consensus (May 2026):
   - Hard 1-example limit: mobile latency budget (~20-30 s) does not
     allow the quadratic attention cost of multiple prepended examples.
   - 150-token cap per retrieved example (~115 words at 1.3 tok/word).
-  - Gap-question gate: retrieval is SKIPPED ENTIRELY for Q6, Q17, Q21,
-    Q22, Q28 (the 5 confirmed training-data protocol gaps).  For these
-    questions the KB contains plausible-but-wrong examples that would
-    actively worsen the answer.  Q21 (infant choking) and Q22 (embedded
-    object) are specifically dangerous if retrieval fires.
+  - Topic gate (replaces old ID gate from pre-v3): retrieval is SKIPPED
+    ENTIRELY when the query text matches any confirmed corpus-gap regex.
+    For these topics the KB contains plausible-but-wrong examples that
+    would actively worsen the answer.  The gate fires on query TEXT so
+    it works regardless of how question IDs are formatted in the bank.
 
-Usage (as a module in enhanced_inference.py):
+Gap-gate change history
+-----------------------
+  v2 eval (June 2026): ID-keyed gate GAP_QUESTION_IDS = {6,17,21,22,28}
+    existed in bm25_rag.py but was NEVER applied -- v2_comprehensive_eval.py
+    used its own inline BM25Retriever with no gate.  audit_gap_gate.py
+    (July 2026) confirmed all 41 Config F answers received top-3 ungated
+    retrieval.  Secondary finding: even if the ID gate had been applied,
+    the IDs map to v2-bank questions about fever, fracture signs, and
+    fainting -- none of which are corpus gaps.  Gate replaced with topic
+    patterns covering V2_PIPELINE corpus-audit findings and T4/T6 synthesis
+    results.  See evaluations/v2_comprehensive_20260606_200713/audit_gap_gate.txt.
+
+Usage (as a module in v2_comprehensive_eval.py or enhanced_inference.py):
     from bm25_rag import BM25Retriever
-    retriever = BM25Retriever("splits/10cat/train.json")
-    result    = retriever.retrieve(question_id=17, query="treatment for shock")
-    # result is None when gap-gated or below threshold
-    # result is a dict with bm25_fired / bm25_skipped_gap when it fires
+    retriever = BM25Retriever("splits/10cat/train.json", verbose=False)
+    result    = retriever.retrieve("How do I treat a choking infant?")
+    # result["bm25_fired"] is True when a retrieved example is present
+    # result["bm25_skipped_gap"] is True when the topic gate fired
 
 Usage (standalone diagnostic / smoke-test):
     python bm25_rag.py
     python bm25_rag.py --question "How do you treat cardiac arrest?"
-    python bm25_rag.py --question_id 17 --question "Treatment for shock?"
-    python bm25_rag.py --question_id 21 --question "Infant choking under 1 year"
+    python bm25_rag.py --question "How do you help a choking infant?"
     python bm25_rag.py --train_path splits/10cat/train.json --top_n 3
 """
 
 import argparse
 import json
 import os
+import re
 import sys
 
 # ---------------------------------------------------------------------------
-# Gap-question gate
+# Topic-based gap gate
+# ---------------------------------------------------------------------------
+# Each entry maps a topic key to (compiled_regex, corpus_audit_justification).
+# The justification comment references V2_PIPELINE.md corpus counts or
+# T4/T6 synthesis results from evaluations/v2_comprehensive_20260606_200713/.
+# When ANY pattern matches the incoming query string, retrieval is skipped.
 # ---------------------------------------------------------------------------
 
-#: Question IDs for which retrieval must be skipped completely.
-#: These are the 5 confirmed training-data protocol gaps.
-#: The KB contains the nearest plausible wrong answer for these questions.
-#: Q21 (infant choking) and Q22 (embedded object) are actively dangerous.
-GAP_QUESTION_IDS: frozenset = frozenset({6, 17, 21, 22, 28})
+GAP_TOPIC_PATTERNS: dict = {
 
-# Human-readable descriptions for logging
-_GAP_DESCRIPTIONS = {
-    6:  "Arterial bleeding / tourniquet placement",
-    17: "Shock position (lay flat, elevate legs)",
-    21: "Infant choking (back-blow / chest-thrust variant)",
-    22: "Embedded object ('do not remove, stabilise')",
-    28: "Helmet removal spinal immobilisation protocol",
+    # V2_PIPELINE corpus audit (run 2026-05-05, n=5,550 training records):
+    # arterial+tourniquet = 2 / 5,550 records; BOTH examples discourage
+    # tourniquet placement.  Retrieval injects anti-tourniquet advice for
+    # any arterial-bleeding or snake-bite-tourniquet query.
+    "tourniquet_escalation": (
+        re.compile(r"tourniquet", re.I),
+        "V2_PIPELINE audit: arterial+tourniquet 2/5550, both discouraging"
+    ),
+
+    # V2_PIPELINE audit: choking_heimlich_only = 41 records vs
+    # choking_back_blows = 12.  Heimlich-dominant KB will reinforce wrong
+    # technique for infants under 1 year (back blows + chest thrusts only).
+    # T4/T6 synthesis: old-bank Q21 scored <=2/5 across all 6 configs.
+    "infant_choking": (
+        re.compile(r"(infant|baby).{0,40}chok|chok.{0,40}(infant|baby)", re.I),
+        "V2_PIPELINE audit: choking_heimlich_only 41 vs back_blows 12"
+    ),
+
+    # T4/T6 synthesis: old-bank Q29 (spinal log-roll) scored <=2/5 across
+    # all configs.  KB has 148 spinal records but the multi-rescuer log-roll
+    # protocol is near-absent; retrieval injects generic spine-protection
+    # advice that omits the log-roll mandate.
+    "spinal_logroll": (
+        re.compile(r"log.?roll|spinal.{0,30}(move|turn|transport|shift|roll)", re.I),
+        "T4/T6 synthesis: spinal log-roll scored <=2/5 all configs"
+    ),
+
+    # T4/T6 synthesis: old-bank Q36 (vented chest seal) scored <=2/5 across
+    # all configs.  KB penetrating-chest examples do not distinguish 3-sided
+    # (non-occlusive) seal from 4-sided occlusive seal; retrieval injects
+    # wrong seal advice.
+    "chest_seal": (
+        re.compile(r"chest seal|sucking chest|open chest wound", re.I),
+        "T4/T6 synthesis: vented chest seal scored <=2/5 all configs"
+    ),
+
+    # T4/T6 synthesis: old-bank Q25 (naloxone) scored <=2/5 across all
+    # configs.  KB has 260 poisoning records; naloxone protocol is
+    # near-absent, retrieval injects general poisoning management.
+    "naloxone_opioid": (
+        re.compile(r"naloxone|opioid.{0,20}overdose|overdose.{0,20}opioid", re.I),
+        "T4/T6 synthesis: naloxone/opioid scored <=2/5 all configs"
+    ),
+
+    # T4/T6 synthesis: old-bank Q33 (paediatric drowning CPR) scored <=2/5.
+    # KB CPR records rarely include the 5-rescue-breath-first drowning
+    # protocol for children; retrieval reinforces adult-first-compression
+    # sequence.
+    "rescue_breaths_drowning": (
+        re.compile(
+            r"rescue breath.{0,30}(child|drown|water)|drown.{0,30}(child|rescue)",
+            re.I
+        ),
+        "T4/T6 synthesis: paediatric drowning CPR scored <=2/5 all configs"
+    ),
+
+    # v2 bank evaluation (DeepSeek panel, June 2026): V2Q37 (burn cooling
+    # 20-min rule) was top-ranked training gap -- scored 0-1/5 across all
+    # configs.  KB burn records specify incorrect durations or ice application.
+    "burn_cooling": (
+        re.compile(r"burn.{0,40}cool|cool.{0,40}burn", re.I),
+        "DeepSeek eval: V2Q37 burn cooling top-ranked gap, scored 0-1/5"
+    ),
 }
 
 # ---------------------------------------------------------------------------
@@ -84,17 +154,19 @@ class BM25Retriever:
     train_path : str
         Path to the training split JSON (list of {question, answer, category}).
     gap_gate   : bool
-        If True (default), skip retrieval for GAP_QUESTION_IDS.
+        If True (default), apply GAP_TOPIC_PATTERNS to skip retrieval for
+        confirmed corpus-gap topics.
     verbose    : bool
         Print initialisation and per-query log lines.
 
     Public methods
     --------------
-    retrieve(question_id, query) -> dict | None
-        Returns a result dict or None (gap-gated / below threshold / unavailable).
+    retrieve(query, question_id=None) -> dict
+        Returns a result dict.  Check result["bm25_fired"] to determine
+        whether a retrieved example is present.
 
-    Result dict schema
-    ------------------
+    Result dict schema (when bm25_fired is True)
+    ---------------------------------------------
     {
         "question"          : str,   # retrieved training question
         "answer"            : str,   # retrieved training answer (capped)
@@ -103,13 +175,16 @@ class BM25Retriever:
         "score"             : float, # normalised BM25 score (0-1)
         "bm25_fired"        : True,
         "bm25_skipped_gap"  : False,
+        "gap_topic"         : None,
         "word_cap_applied"  : bool,
     }
 
-    When retrieval is skipped (gap gate or unavailable):
+    Result dict schema (when topic gate fires or retriever unavailable)
+    -------------------------------------------------------------------
     {
         "bm25_fired"        : False,
-        "bm25_skipped_gap"  : bool,  # True if gap gate, False if unavailable
+        "bm25_skipped_gap"  : bool,  # True if topic gate, False if unavailable
+        "gap_topic"         : str | None,  # pattern key that matched, or None
     }
     """
 
@@ -205,17 +280,17 @@ class BM25Retriever:
     # Public API
     # ------------------------------------------------------------------
 
-    def retrieve(self, question_id: int, query: str) -> dict:
+    def retrieve(self, query: str, question_id: int = None) -> dict:
         """
         Retrieve the single best-matching training example for *query*.
 
         Parameters
         ----------
-        question_id : int
-            The eval question ID (from eval_questions_40.json).
-            Used exclusively for gap-gate checking.
         query : str
-            The raw question text from the eval bank.
+            The raw question text from the eval bank.  The topic gate is
+            applied against this string using GAP_TOPIC_PATTERNS regexes.
+        question_id : int, optional
+            Eval question ID for log messages only.  Has no effect on gating.
 
         Returns
         -------
@@ -223,19 +298,29 @@ class BM25Retriever:
             Always returns a dict.  Check ``result["bm25_fired"]`` to know
             whether a retrieved example is present.
         """
-        # --- Gap gate ---------------------------------------------------------
-        if self.gap_gate and question_id in GAP_QUESTION_IDS:
-            if self.verbose:
-                desc = _GAP_DESCRIPTIONS.get(question_id, "unknown gap")
-                print(
-                    f"[BM25RAG] Q{question_id:02d} GAP GATE — retrieval skipped. "
-                    f"({desc})"
-                )
-            return {"bm25_fired": False, "bm25_skipped_gap": True}
+        qid_label = f"Q{question_id:02d}" if question_id is not None else "Q??"
+
+        # --- Topic gate -------------------------------------------------------
+        # Fire when any confirmed corpus-gap pattern matches the query text.
+        # Retrieval is skipped entirely for these topics: the KB contains
+        # plausible-but-wrong examples that would worsen the model's answer.
+        if self.gap_gate:
+            for topic, (pattern, _justification) in GAP_TOPIC_PATTERNS.items():
+                if pattern.search(query):
+                    if self.verbose:
+                        print(
+                            f"[BM25RAG] {qid_label} TOPIC GATE -- retrieval skipped: "
+                            f"'{topic}' matched '{query[:50]}...'"
+                        )
+                    return {
+                        "bm25_fired":       False,
+                        "bm25_skipped_gap": True,
+                        "gap_topic":        topic,
+                    }
 
         # --- Unavailable guard -----------------------------------------------
         if not self.available:
-            return {"bm25_fired": False, "bm25_skipped_gap": False}
+            return {"bm25_fired": False, "bm25_skipped_gap": False, "gap_topic": None}
 
         # --- BM25 scoring -----------------------------------------------------
         import numpy as np
@@ -251,9 +336,8 @@ class BM25Retriever:
         norm_score = (best_score / max_score) if max_score > 0 else 0.0
 
         if self.verbose:
-            q_preview = query[:55] + "..." if len(query) > 55 else query
             print(
-                f"[BM25RAG] Q{question_id:02d}  score={norm_score:.3f}  "
+                f"[BM25RAG] {qid_label}  score={norm_score:.3f}  "
                 f"retrieved: {self._questions[best_idx][:55]}..."
             )
 
@@ -271,6 +355,7 @@ class BM25Retriever:
             "score":            round(norm_score, 4),
             "bm25_fired":       True,
             "bm25_skipped_gap": False,
+            "gap_topic":        None,
             "word_cap_applied": cap_applied,
         }
 
@@ -278,7 +363,7 @@ class BM25Retriever:
     # Diagnostics
     # ------------------------------------------------------------------
 
-    def diagnose(self, question_id: int, query: str, top_n: int = 3):
+    def diagnose(self, query: str, question_id: int = None, top_n: int = 3):
         """
         Print top_n BM25 results without the gap gate.
         For manual inspection of what BM25 would retrieve.
@@ -294,11 +379,19 @@ class BM25Retriever:
         max_score    = float(raw_scores.max()) if raw_scores.max() > 0 else 1.0
         top_indices  = np.argsort(raw_scores)[::-1][:top_n]
 
-        gated = question_id in GAP_QUESTION_IDS
+        # Check which topic patterns would fire
+        gated_topics = [
+            topic for topic, (pattern, _) in GAP_TOPIC_PATTERNS.items()
+            if pattern.search(query)
+        ]
+        qid_label = f"Q{question_id:02d}" if question_id is not None else "Q??"
         print(f"\n{'='*60}")
-        print(f"  BM25 Diagnose  Q{question_id:02d}")
+        print(f"  BM25 Diagnose  {qid_label}")
         print(f"  Query  : {query[:70]}")
-        print(f"  Gated  : {'YES — gap question (retrieval would be skipped)' if gated else 'no'}")
+        if gated_topics:
+            print(f"  Gated  : YES -- topic patterns: {', '.join(gated_topics)}")
+        else:
+            print(f"  Gated  : no")
         print(f"{'='*60}")
         for rank, idx in enumerate(top_indices, 1):
             score = float(raw_scores[idx]) / max_score
@@ -323,14 +416,14 @@ def _parse_args():
     )
     p.add_argument("--train_path",   default="splits/10cat/train.json",
                    help="Path to training split (default: splits/10cat/train.json)")
-    p.add_argument("--question_id",  type=int, default=0,
-                   help="Eval question ID for gap-gate testing (default: 0 = no gate)")
+    p.add_argument("--question_id",  type=int, default=None,
+                   help="Optional eval question ID (for log labels only; no effect on gating)")
     p.add_argument("--question",     default="",
                    help="Question text to retrieve for.  If omitted, runs smoke-test suite.")
     p.add_argument("--top_n",        type=int, default=3,
                    help="Number of results to show in diagnose mode (default: 3)")
     p.add_argument("--no_gap_gate",  action="store_true",
-                   help="Disable the gap-question gate for this diagnostic run")
+                   help="Disable the topic gap gate for this diagnostic run")
     return p.parse_args()
 
 
@@ -350,49 +443,79 @@ if __name__ == "__main__":
     if args.question:
         # Single query — show both retrieve() result and diagnose()
         print("\n--- retrieve() result ---")
-        result = retriever.retrieve(args.question_id, args.question)
+        result = retriever.retrieve(args.question, question_id=args.question_id)
         print(json.dumps(result, indent=2, ensure_ascii=False))
 
-        print("\n--- diagnose() (gap gate bypassed) ---")
-        retriever.diagnose(args.question_id, args.question, top_n=args.top_n)
+        print("\n--- diagnose() (gap gate bypassed for ranking) ---")
+        retriever.diagnose(args.question, question_id=args.question_id, top_n=args.top_n)
 
     else:
-        # Smoke-test: run a representative sample from each category
+        # Smoke-test: verify topic gate fires on gap topics and passes clean queries.
+        # Each tuple: (question_text, expect_gated, description)
         SMOKE_TESTS = [
-            # (question_id, question_text, description)
-            (1,  "How do you perform CPR on an adult?",                   "CPR — should fire"),
-            (5,  "What are the signs and treatment for anaphylaxis?",     "Anaphylaxis — should fire"),
-            (6,  "How do you control severe arterial bleeding?",          "GAP Q6 — should be skipped"),
-            (17, "What position for a patient in shock?",                 "GAP Q17 — should be skipped"),
-            (21, "How do you help a choking infant under 1 year?",        "GAP Q21 — should be skipped"),
-            (22, "Glass embedded in thigh — what do you do?",             "GAP Q22 — should be skipped"),
-            (28, "Motorcyclist crash, suspected spinal injury, helmet on", "GAP Q28 — should be skipped"),
-            (10, "How do you treat a severe burn?",                       "Burns — should fire"),
-            (15, "Signs and treatment of heat stroke?",                   "Heat stroke — should fire"),
+            # --- Should FIRE (not gap topics) ---
+            ("How do you perform CPR on an adult?",
+             False, "CPR adult -- should fire"),
+            ("What are the signs and treatment for anaphylaxis?",
+             False, "Anaphylaxis -- should fire"),
+            ("How do you treat a severe burn on the arm after 5 minutes?",
+             False, "Burn (no cool keyword) -- should fire"),
+            ("Signs and treatment of heat stroke in a runner?",
+             False, "Heat stroke -- should fire"),
+            ("Glass embedded in thigh -- what do you do?",
+             False, "Embedded object -- should fire (no gap in v3)"),
+
+            # --- Should be GATED (topic patterns) ---
+            ("How do you apply a tourniquet to control arterial bleeding?",
+             True,  "tourniquet_escalation -- should be gated"),
+            ("How do you help a choking infant under 1 year?",
+             True,  "infant_choking -- should be gated"),
+            ("Should a rescuer apply a tourniquet to a snake bite?",
+             True,  "tourniquet_escalation (snake context) -- should be gated"),
+            ("How do you log-roll a casualty with spinal injury?",
+             True,  "spinal_logroll -- should be gated"),
+            ("What is the correct way to apply a chest seal?",
+             True,  "chest_seal -- should be gated"),
+            ("Can you give naloxone for opioid overdose at home?",
+             True,  "naloxone_opioid -- should be gated"),
+            ("How do you give rescue breaths to a drowning child?",
+             True,  "rescue_breaths_drowning -- should be gated"),
+            ("How long should you cool a burn under running water?",
+             True,  "burn_cooling -- should be gated"),
         ]
 
-        print("\n" + "=" * 60)
-        print("  BM25 RAG Smoke Test — Phase 1")
-        print("=" * 60)
+        print("\n" + "=" * 70)
+        print("  BM25 RAG Smoke Test -- topic gate (v3)")
+        print("=" * 70)
 
-        fired = 0
-        gated = 0
-        for qid, qtext, desc in SMOKE_TESTS:
-            result = retriever.retrieve(qid, qtext)
-            if result["bm25_fired"]:
+        fired  = 0
+        gated  = 0
+        errors = 0
+        for qtext, expect_gated, desc in SMOKE_TESTS:
+            result = retriever.retrieve(qtext)
+            actual_gated = result["bm25_skipped_gap"]
+            actual_fired = result["bm25_fired"]
+            ok = (actual_gated == expect_gated)
+            if not ok:
+                errors += 1
+
+            status = "GATED " if actual_gated else ("FIRED " if actual_fired else "SKIP  ")
+            flag   = "OK" if ok else "FAIL"
+            topic  = result.get("gap_topic", "") or ""
+            score_s = f"score={result['score']:.3f}" if actual_fired else f"topic={topic}"
+
+            print(f"  [{flag}] {status} {score_s:<22}  {desc}")
+            if actual_fired:
                 fired += 1
-                print(f"  Q{qid:02d} FIRED   score={result['score']:.3f}  "
-                      f"cap={'Y' if result['word_cap_applied'] else 'N'}  "
-                      f"[{result['category']}]  — {desc}")
-            elif result["bm25_skipped_gap"]:
+            elif actual_gated:
                 gated += 1
-                print(f"  Q{qid:02d} GATED   (gap question)                              "
-                      f"— {desc}")
-            else:
-                print(f"  Q{qid:02d} SKIP    (retriever unavailable)                      "
-                      f"— {desc}")
 
-        print(f"\n  Fired: {fired}  |  Gap-gated: {gated}  |  Total: {len(SMOKE_TESTS)}")
-        print("=" * 60)
+        print(f"\n  Fired: {fired}  |  Gap-gated: {gated}  |  Errors: {errors}  "
+              f"|  Total: {len(SMOKE_TESTS)}")
+        if errors == 0:
+            print("  ALL ASSERTIONS PASSED")
+        else:
+            print(f"  WARNING: {errors} assertion(s) failed (expected vs actual gating)")
+        print("=" * 70)
         print("\nRun with --question to test a specific query.")
-        print("Run with --question_id N --question '...' to test gap-gate behaviour.")
+        print("Run with --no_gap_gate to see what BM25 retrieves without gating.")

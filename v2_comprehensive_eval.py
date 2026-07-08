@@ -1,7 +1,7 @@
 """
 v2_comprehensive_eval.py
 ========================
-Runs six inference configurations against the statistically representative
+Runs seven inference configurations against the statistically representative
 v2 40-question evaluation bank (evaluations/eval_bank_v2_40q/eval_bank_v2.json).
 
 Configurations
@@ -9,14 +9,23 @@ Configurations
   A  BASE_4BIT       Base Gemma 2B-IT (no fine-tuning), 4-bit NF4
   B  FINETUNED_4BIT  Best v2 adapter, 4-bit NF4                   (canonical)
   C  FINETUNED_8BIT  Best v2 adapter, 8-bit INT8
-  D  T4_IMPROVED     4-bit fine-tuned + T4 soft-retry length floor
+  D  T4_IMPROVED     4-bit fine-tuned + T4 soft-retry (excluded: loop-fix pending)
   E  T6_IMPROVED     4-bit fine-tuned + T6 binary safety gate
-  F  RAG_BM25        4-bit fine-tuned + BM25 RAG (top-3, train split)
+  F  RAG_BM25        4-bit fine-tuned + topic-gated BM25 RAG (top-1, train split)
+  G  BASE_RAG        Base Gemma 2B-IT (no adapter) + topic-gated BM25 RAG (top-1)
 
 Model load order (minimises GPU reloads):
-  Pass 1: base  4-bit  (no adapter)  -> A
+  Pass 1: base  4-bit  (no adapter)  -> A, G
   Pass 2: ft    4-bit  (with adapter) -> B, D, E, F
   Pass 3: ft    8-bit  (with adapter) -> C
+
+BM25 RAG change from v2 run (June 2026)
+-----------------------------------------
+  The June 2026 run used an inline BM25Retriever with NO gap gate and top-3
+  retrieval.  This eval imports bm25_rag.BM25Retriever which applies a topic-
+  keyed gap gate (7 patterns derived from V2_PIPELINE corpus audit and T4/T6
+  synthesis) and returns top-1 only.  See audit_gap_gate.py for the full
+  forensic verdict.
 
 Why this bank?
 --------------
@@ -32,7 +41,7 @@ Usage
       [--adapter_8bit  experiments/.../adapter]  \\
       [--model_path    models/gemma-2b-it]        \\
       [--questions     evaluations/eval_bank_v2_40q/eval_bank_v2.json] \\
-      [--configs       A B C D E F]               \\
+      [--configs       A B C E F G]               \\
       [--max_new_tokens 350]
 """
 
@@ -51,6 +60,10 @@ import numpy as np
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 from peft import PeftModel
+
+# BM25 retriever with topic-keyed gap gate -- replaces the inline class used
+# in the June 2026 run (which had NO gate and used top-3 retrieval).
+from bm25_rag import BM25Retriever as BM25GatedRetriever
 
 # ---------------------------------------------------------------------------
 # Default paths
@@ -104,49 +117,6 @@ T6_UNSAFE_CRITERIA = (
     "  8. Omits rescue breaths before compressions for a drowning victim\n"
     "Otherwise respond SAFE."
 )
-
-# ---------------------------------------------------------------------------
-# BM25 retriever (inline -- no sentence-transformers dependency)
-# ---------------------------------------------------------------------------
-class BM25Retriever:
-    """Minimal BM25 implementation over the training Q&A split."""
-
-    def __init__(self, splits_path: str):
-        try:
-            from rank_bm25 import BM25Okapi
-        except ImportError:
-            print("[RAG] rank_bm25 not found. Install with: pip install rank_bm25 --break-system-packages")
-            sys.exit(1)
-
-        with open(splits_path, encoding="utf-8") as f:
-            samples = json.load(f)
-
-        self.chunks: list[str] = []
-        self.metadata: list[dict] = []
-        for s in samples:
-            cat   = s.get("category", "General")
-            q_txt = s["question"].strip()
-            a_txt = s["answer"].strip()
-            chunk = f"[{cat}] Q: {q_txt}\nA: {a_txt}"
-            self.chunks.append(chunk)
-            self.metadata.append({"category": cat, "question": q_txt})
-
-        tokenized = [c.lower().split() for c in self.chunks]
-        self.index = BM25Okapi(tokenized)
-        print(f"[RAG] BM25 index built over {len(self.chunks):,} chunks")
-
-    def retrieve(self, query: str, top_k: int = 3) -> list[tuple[int, float]]:
-        tokens = query.lower().split()
-        scores = self.index.get_scores(tokens)
-        top_indices = np.argsort(scores)[::-1][:top_k]
-        return [(int(i), float(scores[i])) for i in top_indices]
-
-    def build_context_block(self, results: list[tuple[int, float]]) -> str:
-        lines = []
-        for rank, (idx, _score) in enumerate(results, 1):
-            lines.append(f"[Reference {rank}]\n{self.chunks[idx]}")
-        return "\n\n".join(lines)
-
 
 # ---------------------------------------------------------------------------
 # Model loading / unloading
@@ -418,29 +388,54 @@ def run_t6_improved(model, tokenizer, q: dict, stop_ids: list, max_new: int) -> 
 
 
 def run_rag_bm25(model, tokenizer, q: dict, stop_ids: list,
-                 retriever: BM25Retriever, max_new: int) -> dict:
-    """Config F: BM25 RAG -- retrieve top-3 training chunks, inject as context."""
-    t_ret = time.time()
-    hits  = retriever.retrieve(q["question"], top_k=3)
-    t_ret = time.time() - t_ret
-    context  = retriever.build_context_block(hits)
-    prompt   = prompt_rag(q["question"], context)
+                 retriever: BM25GatedRetriever, max_new: int,
+                 config_label: str = "F_RAG_BM25") -> dict:
+    """
+    Config F or G: topic-gated BM25 RAG.
+
+    Uses bm25_rag.BM25Retriever (imported as BM25GatedRetriever) which:
+      - applies GAP_TOPIC_PATTERNS to skip retrieval for confirmed corpus gaps
+      - returns top-1 result (not top-3 as the June 2026 run used)
+      - records bm25_fired / bm25_skipped_gap / gap_topic in the result dict
+
+    When the gate fires (bm25_skipped_gap=True), the standard prompt is used
+    so no wrong context is injected.
+
+    config_label distinguishes F (fine-tuned adapter) from G (base model).
+    The retrieval logic is identical for both.
+    """
+    t_ret  = time.time()
+    result = retriever.retrieve(q["question"])
+    t_ret  = time.time() - t_ret
+
+    if result["bm25_fired"]:
+        # Build a single-reference context block from the top-1 result
+        context = (
+            f"[Reference]\n"
+            f"[{result['category']}] Q: {result['question']}\n"
+            f"A: {result['answer']}"
+        )
+        prompt = prompt_rag(q["question"], context)
+    else:
+        # Gap gate fired or retriever unavailable -- fall back to standard prompt
+        prompt = prompt_standard(q["question"])
+
     r = generate(model, tokenizer, prompt,
                  max_new_tokens=max_new, stop_ids=stop_ids)
-    retrieved = [
-        {"rank": rank, "score": round(score, 4),
-         "category": retriever.metadata[idx]["category"],
-         "question": retriever.metadata[idx]["question"]}
-        for rank, (idx, score) in enumerate(hits, 1)
-    ]
-    return {
-        **r,
-        "config": "F_RAG_BM25",
-        "meta": {
-            "retrieve_time_s": round(t_ret, 3),
-            "retrieved":       retrieved,
-        },
+
+    meta = {
+        "retrieve_time_s":   round(t_ret, 3),
+        "bm25_fired":        result["bm25_fired"],
+        "bm25_skipped_gap":  result.get("bm25_skipped_gap", False),
+        "gap_topic":         result.get("gap_topic", None),
+        "word_cap_applied":  result.get("word_cap_applied", False),
     }
+    if result["bm25_fired"]:
+        meta["retrieved_question"] = result["question"][:80]
+        meta["retrieved_category"] = result.get("category", "")
+        meta["retrieved_score"]    = result.get("score", 0.0)
+
+    return {**r, "config": config_label, "meta": meta}
 
 
 # ---------------------------------------------------------------------------
@@ -454,7 +449,7 @@ def run_questions(
     stop_ids: list[int],
     max_new: int,
     floor_map: dict | None = None,
-    retriever: BM25Retriever | None = None,
+    retriever: BM25GatedRetriever | None = None,
 ) -> list[dict]:
     results = []
     n = len(questions)
@@ -471,8 +466,9 @@ def run_questions(
             r = run_t4_improved(model, tokenizer, q, stop_ids, floor_map or {}, max_new)
         elif config_label == "E_T6_IMPROVED":
             r = run_t6_improved(model, tokenizer, q, stop_ids, max_new)
-        elif config_label == "F_RAG_BM25":
-            r = run_rag_bm25(model, tokenizer, q, stop_ids, retriever, max_new)
+        elif config_label in ("F_RAG_BM25", "G_BASE_RAG"):
+            r = run_rag_bm25(model, tokenizer, q, stop_ids, retriever, max_new,
+                             config_label=config_label)
         else:
             raise ValueError(f"Unknown config: {config_label}")
 
@@ -534,31 +530,35 @@ def compute_metrics(results: list[dict]) -> dict:
 
 def print_table(all_metrics: dict[str, dict]):
     labels = {
-        "A_BASE_4BIT":      "A  Base 4-bit (no FT)   ",
-        "B_FINETUNED_4BIT": "B  Fine-tuned 4-bit      ",
-        "C_FINETUNED_8BIT": "C  Fine-tuned 8-bit      ",
-        "D_T4_IMPROVED":    "D  T4 Improved (4-bit)   ",
-        "E_T6_IMPROVED":    "E  T6 Improved (4-bit)   ",
-        "F_RAG_BM25":       "F  RAG BM25   (4-bit)    ",
+        "A_BASE_4BIT":      "A  Base 4-bit (no FT)     ",
+        "B_FINETUNED_4BIT": "B  Fine-tuned 4-bit        ",
+        "C_FINETUNED_8BIT": "C  Fine-tuned 8-bit        ",
+        "D_T4_IMPROVED":    "D  T4 Improved (excl.)     ",
+        "E_T6_IMPROVED":    "E  T6 Improved (4-bit)     ",
+        "F_RAG_BM25":       "F  RAG BM25    (ft 4-bit)  ",
+        "G_BASE_RAG":       "G  RAG BM25    (base 4-bit)",
     }
-    print("\n" + "=" * 80)
-    print(f"{'Config':<26} {'ROUGE-L':>8} {'SC':>8} {'Non-SC':>8} "
+    print("\n" + "=" * 84)
+    print(f"{'Config':<28} {'ROUGE-L':>8} {'SC':>8} {'Non-SC':>8} "
           f"{'tok/s':>7} {'Flagged':>8}")
-    print("-" * 80)
+    print("-" * 84)
     base_rl = all_metrics.get("B_FINETUNED_4BIT", {}).get("rougeL_mean", 0.0)
-    for key in ["A_BASE_4BIT","B_FINETUNED_4BIT","C_FINETUNED_8BIT",
-                "D_T4_IMPROVED","E_T6_IMPROVED","F_RAG_BM25"]:
+    for key in ["A_BASE_4BIT", "B_FINETUNED_4BIT", "C_FINETUNED_8BIT",
+                "D_T4_IMPROVED", "E_T6_IMPROVED", "F_RAG_BM25", "G_BASE_RAG"]:
         m = all_metrics.get(key)
-        if not m:
+        if m is None:
+            # Show excluded configs as N/A rows
+            lbl = labels.get(key, key)
+            print(f"{lbl:<28} {'N/A':>8} {'N/A':>8} {'N/A':>8} {'N/A':>7} {'N/A':>8}")
             continue
         lbl   = labels.get(key, key)
         rl    = m["rougeL_mean"]
         delta = (f"  ({'+' if rl >= base_rl else ''}{rl - base_rl:+.4f} vs B)"
                  if key != "B_FINETUNED_4BIT" else "")
-        print(f"{lbl:<26} {rl:>8.4f} {m['rougeL_sc_mean']:>8.4f} "
+        print(f"{lbl:<28} {rl:>8.4f} {m['rougeL_sc_mean']:>8.4f} "
               f"{m['rougeL_nsc_mean']:>8.4f} {m['tok_per_sec_mean']:>7.1f} "
               f"{m['n_flagged_unsafe']:>8}{delta}")
-    print("=" * 80)
+    print("=" * 84)
 
 
 # ---------------------------------------------------------------------------
@@ -593,7 +593,8 @@ def save_run_json(out_dir: str, all_results: dict, args_dict: dict):
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
-ALL_CONFIGS = ["A", "B", "C", "D", "E", "F"]
+# Camera-ready run excludes D (loop-fix pending) and uses A,B,C,E,F,G.
+ALL_CONFIGS = ["A", "B", "C", "D", "E", "F", "G"]
 CONFIG_MAP  = {
     "A": "A_BASE_4BIT",
     "B": "B_FINETUNED_4BIT",
@@ -601,21 +602,26 @@ CONFIG_MAP  = {
     "D": "D_T4_IMPROVED",
     "E": "E_T6_IMPROVED",
     "F": "F_RAG_BM25",
+    "G": "G_BASE_RAG",
 }
+
+# Default camera-ready set: D excluded (loop-fix pending)
+CAMERA_READY_CONFIGS = ["A", "B", "C", "E", "F", "G"]
 
 
 def parse_args():
-    p = argparse.ArgumentParser(description="v2 comprehensive eval -- 6 configs")
+    p = argparse.ArgumentParser(description="v2 comprehensive eval -- 7 configs")
     p.add_argument("--adapter_4bit",  default=DEFAULT_ADAPTER_4BIT)
     p.add_argument("--adapter_8bit",  default=DEFAULT_ADAPTER_8BIT)
     p.add_argument("--model_path",    default=DEFAULT_MODEL)
     p.add_argument("--questions",     default=DEFAULT_QBANK)
-    p.add_argument("--configs",       nargs="+", default=ALL_CONFIGS,
+    p.add_argument("--configs",       nargs="+", default=CAMERA_READY_CONFIGS,
                    choices=ALL_CONFIGS,
-                   help="Configs to run (default: all). A=base, B=ft4, C=ft8, "
-                        "D=T4, E=T6, F=RAG")
+                   help="Configs to run. Default: A B C E F G (D excluded). "
+                        "A=base, B=ft4, C=ft8, D=T4(excl), E=T6, F=RAG-ft, G=RAG-base")
     p.add_argument("--max_new_tokens",type=int, default=MAX_NEW_TOKENS)
-    p.add_argument("--rag_top_k",     type=int, default=3)
+    p.add_argument("--camera_ready",  action="store_true",
+                   help="Tag output directory CAMERA_READY_<timestamp>")
     return p.parse_args()
 
 
@@ -630,7 +636,9 @@ def main():
     # Normalise: ensure each has an 'id' field (int) for display compatibility
     for q in questions:
         if "id" not in q:
-            q["id"] = int(re.sub(r"\D", "", q["question_id"]))
+            # Extract suffix digits only (e.g. "V2Q06" -> suffix int 6)
+            m = re.search(r"(\d+)$", q["question_id"])
+            q["id"] = int(m.group(1)) if m else 0
     print(f"[load] {len(questions)} questions from {args.questions}")
     sc_count = sum(1 for q in questions if q["safety_critical"])
     print(f"       SC={sc_count}/{len(questions)} ({100*sc_count/len(questions):.1f}%)")
@@ -639,26 +647,52 @@ def main():
     floor_map = compute_floor_map(TRAIN_SPLIT)
 
     # Output dir
-    ts      = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-    out_dir = os.path.join(EVAL_OUT_DIR, f"v2_comprehensive_{ts}")
+    ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    if getattr(args, "camera_ready", False):
+        dir_name = f"CAMERA_READY_{ts}"
+    else:
+        dir_name = f"v2_comprehensive_{ts}"
+    out_dir = os.path.join(EVAL_OUT_DIR, dir_name)
     os.makedirs(out_dir, exist_ok=True)
     print(f"[out]  {out_dir}\n")
 
     all_results: dict[str, list] = {}
     all_metrics: dict[str, dict] = {}
 
-    # -- Pass 1: Base model 4-bit (no adapter) -----------------------------
-    if "A_BASE_4BIT" in requested:
+    # Build BM25 retriever once if any RAG config is requested (F or G).
+    # The topic-gated BM25GatedRetriever is shared between F and G -- the only
+    # difference is which model is loaded for generation.
+    rag_configs_requested = [c for c in ["F_RAG_BM25", "G_BASE_RAG"] if c in requested]
+    retriever: BM25GatedRetriever | None = None
+    if rag_configs_requested:
+        if not os.path.exists(TRAIN_SPLIT):
+            print(f"[RAG] WARNING: train split not found at {TRAIN_SPLIT}")
+            print(f"[RAG] Excluding RAG configs: {rag_configs_requested}")
+            requested = [c for c in requested if c not in rag_configs_requested]
+        else:
+            retriever = BM25GatedRetriever(TRAIN_SPLIT, gap_gate=True, verbose=False)
+            print(f"[RAG] Topic-gated BM25 retriever ready ({len(retriever._questions):,} docs)")
+
+    # -- Pass 1: Base model 4-bit (no adapter) -- runs A and G ------------
+    pass1_configs = [c for c in ["A_BASE_4BIT", "G_BASE_RAG"] if c in requested]
+    if pass1_configs:
         print("\n" + "=" * 60)
-        print("  PASS 1 -- Base model 4-bit (no fine-tuning)")
+        print(f"  PASS 1 -- Base model 4-bit (no adapter): {pass1_configs}")
         print("=" * 60)
         model, tokenizer = load_model(args.model_path, None, "4bit")
         stop_ids = get_stop_ids(tokenizer)
-        res = run_questions("A_BASE_4BIT", model, tokenizer, questions,
-                            stop_ids, args.max_new_tokens)
-        all_results["A_BASE_4BIT"] = res
-        all_metrics["A_BASE_4BIT"] = compute_metrics(res)
-        save_config_json(out_dir, "A_BASE_4BIT", res, args_dict)
+
+        for config_label in pass1_configs:
+            print(f"\n{'-'*60}\n  Config {config_label}\n{'-'*60}")
+            res = run_questions(
+                config_label, model, tokenizer, questions,
+                stop_ids, args.max_new_tokens,
+                retriever=retriever,
+            )
+            all_results[config_label] = res
+            all_metrics[config_label] = compute_metrics(res)
+            save_config_json(out_dir, config_label, res, args_dict)
+
         unload(model)
 
     # -- Pass 2: Fine-tuned 4-bit (B, D, E, F) ----------------------------
@@ -669,17 +703,6 @@ def main():
         print("\n" + "=" * 60)
         print(f"  PASS 2 -- Fine-tuned 4-bit: {pass2_configs}")
         print("=" * 60)
-
-        # Build BM25 retriever if RAG is needed (before loading model)
-        retriever = None
-        if "F_RAG_BM25" in pass2_configs:
-            if not os.path.exists(TRAIN_SPLIT):
-                print(f"[RAG] WARNING: train split not found at {TRAIN_SPLIT}")
-                print("[RAG] Skipping F_RAG_BM25")
-                pass2_configs = [c for c in pass2_configs if c != "F_RAG_BM25"]
-            else:
-                retriever = BM25Retriever(TRAIN_SPLIT)
-
         model, tokenizer = load_model(args.model_path, args.adapter_4bit, "4bit")
         stop_ids = get_stop_ids(tokenizer)
 
@@ -711,6 +734,18 @@ def main():
         unload(model)
 
     # -- Save & report -----------------------------------------------------
+    # Add package versions to args_dict for reproducibility
+    try:
+        import torch as _torch
+        import transformers as _tfm
+        args_dict["_versions"] = {
+            "torch":          _torch.__version__,
+            "transformers":   _tfm.__version__,
+            "max_new_tokens": args.max_new_tokens,
+        }
+    except Exception:
+        pass
+
     save_run_json(out_dir, all_results, args_dict)
 
     metrics_path = os.path.join(out_dir, "metrics.json")
@@ -718,9 +753,20 @@ def main():
         json.dump(all_metrics, f, indent=2)
     print(f"\n[save] metrics.json -> {metrics_path}")
 
+    # Print 7-config table (D shows N/A if not run)
     print_table(all_metrics)
 
+    # Sanity check: verify expected question counts
+    print("\n7-config sanity check:")
+    for cfg, res in sorted(all_results.items()):
+        n_ans = len(res)
+        n_empty = sum(1 for r in res if not r.get("answer", "").strip())
+        sc_match = sum(1 for r in res if r.get("safety_critical"))
+        print(f"  {cfg:<22}  n={n_ans:3d}  empty={n_empty}  SC={sc_match}")
+
     print(f"\n[done] Results in: {out_dir}")
+    if getattr(args, "camera_ready", False):
+        print(f"[NOTE] This is a CAMERA_READY run -- do not edit outputs after this point.")
     print(f"[next] python build_v2_judge_prompt.py --run_dir {out_dir}")
 
 

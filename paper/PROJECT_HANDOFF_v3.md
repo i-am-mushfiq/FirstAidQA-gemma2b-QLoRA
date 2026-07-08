@@ -213,6 +213,30 @@ BM25 keyword retrieval over training KB (`splits/10cat/train.json`, 4,441 pairs)
 
 **[v3 update]** The v2 comprehensive evaluation (DeepSeek, 41Q v2 bank, offline rubric) shows RAG_BM25 at SC mean 3.18/5 versus FINETUNED_4BIT at 2.18/5 — a gain of +1.00 on SC questions. This is the strongest signal any technique has produced in the project.
 
+### [July 2026] Gap-Gate Forensic Finding and Topic-Gate Redesign
+
+**Misfire confirmed.** `audit_gap_gate.py` (run July 2026) cross-referenced `evaluations/v2_comprehensive_20260606_200713/run.json` against `eval_bank_v2.json` and determined that **Config F in the June 2026 run received zero gap-gate filtering**. Root cause: `v2_comprehensive_eval.py` defined its own inline `BM25Retriever` class with signature `retrieve(query, top_k)` — no `question_id` argument, no gap-gate logic. The `bm25_rag.py` module (which has the gate) was never imported. All 41 questions in Config F received top-3 BM25 retrieval without any topic checking. The audit output is archived at `evaluations/v2_comprehensive_20260606_200713/audit_gap_gate.txt`.
+
+Secondary finding: the old ID-keyed gate (`GAP_QUESTION_IDS = frozenset({6, 17, 21, 22, 28})`) was keyed to **old-bank question positions**, not v2 bank content. In the v2 bank, those numeric positions map to: V2Q06 (internal bleeding recognition), V2Q17 (child fever warning signs), V2Q21 (fracture signs), V2Q22 (why not straighten fracture), V2Q28 (impending faint warning signs). None of these are corpus-gap topics. The only v2 bank question that touches an actual corpus gap is V2Q35 (avoid tourniquet in snake bite context), which the old ID gate would have missed entirely.
+
+**Topic gate replacement (July 2026 fix).** `bm25_rag.py` now uses `GAP_TOPIC_PATTERNS` — seven compiled regexes over the incoming query text, derived from the V2_PIPELINE corpus audit and T4/T6 synthesis:
+
+| Pattern key | Regex trigger | Corpus-audit justification |
+|---|---|---|
+| tourniquet_escalation | `tourniquet` | V2_PIPELINE: arterial+tourniquet 2/5,550 records, both discouraging placement |
+| infant_choking | `(infant\|baby).{0,40}chok` | V2_PIPELINE: Heimlich-only 41 records vs back-blows 12; wrong for under-1 |
+| spinal_logroll | `log.?roll\|spinal.{0,30}(move\|turn...)` | T4/T6: spinal log-roll scored <=2/5 across all 6 configs |
+| chest_seal | `chest seal\|sucking chest` | T4/T6: vented chest seal scored <=2/5; KB lacks 3-sided seal protocol |
+| naloxone_opioid | `naloxone\|opioid.{0,20}overdose` | T4/T6: naloxone scored <=2/5; near-absent in 260 KB poisoning records |
+| rescue_breaths_drowning | `rescue breath.{0,30}(child\|drown...)` | T4/T6: paediatric drowning CPR scored <=2/5 |
+| burn_cooling | `burn.{0,40}cool\|cool.{0,40}burn` | DeepSeek v2 eval: V2Q37 burn cooling top-ranked gap, scored 0-1/5 |
+
+The `retrieve()` signature changed from `retrieve(question_id, query)` to `retrieve(query, question_id=None)` — gating now fires on query text rather than numeric ID, so it works regardless of how question IDs are formatted in any eval bank. `v2_comprehensive_eval.py` was updated to import `BM25GatedRetriever` from `bm25_rag`, remove its inline class, switch from top-3 to top-1, and add Config G (base model + RAG, no adapter — isolates the adapter contribution from the retrieval contribution).
+
+In the v2 bank, the topic gate fires on exactly one question: V2Q35 ("Why should you avoid... applying a tourniquet" in snake bite context). This is correct — the KB's 2/5,550 tourniquet examples both discourage tourniquet placement, so retrieval injects anti-tourniquet context that, while clinically correct for snake bites specifically, conflates two different tourniquet scenarios and should not be injected.
+
+The camera-ready run (Task 2) will be the first properly gated BM25 RAG measurement against the v2 bank. The June 2026 Config F scores (SC mean 3.18/5, DeepSeek) are thus the **ungated** baseline; the camera-ready Config F will be the **gated** comparison.
+
 ---
 
 ## 12. T4/T6 Isolation Ablation Study
@@ -379,7 +403,9 @@ Template balance: 10 questions per template type (T0–T3). Question content dra
 | C_FINETUNED_8BIT | Fine-tuned adapter, 8-bit (formally rejected; run for completeness) |
 | D_T4_IMPROVED | Fine-tuned + T4_IMPROVED (soft-retry) inference |
 | E_T6_IMPROVED | Fine-tuned + T6_IMPROVED (binary gate) inference |
-| F_RAG_BM25 | Fine-tuned + BM25 RAG (gap-gated, top-1, 150-token cap) |
+| F_RAG_BM25 | Fine-tuned + BM25 RAG (**ungated in this run** — see below; top-3, inline class) |
+
+**[July 2026 correction]** Config F in this run was effectively ungated. `v2_comprehensive_eval.py` used its own inline `BM25Retriever` (no gap gate, top-3 retrieval). The `bm25_rag.py` module was never imported. All 41 Config F questions received top-3 BM25 retrieval without topic filtering. See Chapter 11 forensic section and `evaluations/v2_comprehensive_20260606_200713/audit_gap_gate.txt` for full details. The camera-ready run will use the corrected topic-gated top-1 implementation.
 
 Judge prompt generated for 4 configs (C and D excluded via `--exclude C_FINETUNED_8BIT D_T4_IMPROVED`): 157,288 characters, 2,010 lines, 0 ghost references to excluded configs.
 
@@ -437,6 +463,12 @@ The v2 comprehensive evaluation shows Config F (RAG_BM25) achieving 3.22/5 overa
 ---
 
 ## 17. What Remains
+
+### Immediate — Camera-Ready Run (P0; Task 2)
+
+**Prerequisite completed (July 2026):** gap-gate forensics done (`audit_gap_gate.py`), `bm25_rag.py` updated to topic gate, `v2_comprehensive_eval.py` updated to import `BM25GatedRetriever` and add Config G.
+
+Run `v2_comprehensive_eval.py --configs A B C E F G --camera_ready` on the GPU machine. This produces `evaluations/CAMERA_READY_<timestamp>/` with 6 configs x 41 questions. Config F will be the first properly gated BM25 RAG measurement. Config G (base model + RAG) isolates the adapter contribution. D stays excluded (loop-fix pending). After the run: verify per-question metadata, confirm `bm25_skipped_gap=True` fires on V2Q35, confirm zero empty generations, git commit with CAMERA_READY tag.
 
 ### Immediate — Cross-Judge Synthesis for v2 Comprehensive Eval
 
@@ -585,19 +617,4 @@ cd C:\Personal_Endeavours\Fine_Tuning
 
 ```powershell
 conda activate fine_tuning
-cd C:\Personal_Endeavours\Fine_Tuning
-.\run_v2_baseline.ps1
-```
-
-Runs `train_v2.py` with `--quant 4bit --lora_r 16 --lora_alpha 32 --lr 1e-4 --patience 3 --seed 42`. Expect ~1.25 hours on a 12 GB GPU. Val loss should land within 0.01 of 1.3400.
-
-### ⚠️ Do Not Use `rag_inference.py` for Evaluation
-
-`rag_inference.py` is a legacy prototype: top-3 retrieval, no gap-question gate, dense retriever as primary. It will inject dangerous content for old-bank Q21 (infant choking) and old-bank Q22 (embedded object in wound) — the v2 bank equivalents are: no direct equivalent for infant choking; V2Q05 for embedded object. For all RAG evaluation use `enhanced_inference.py --rag_retriever bm25`.
-
-### Key File Locations
-
-| File | Purpose |
-|---|---|
-| `experiments/10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337/adapter/` | **Final adapter weights** |
-| `evaluations/eval_ba
+cd C:\Personal_Endeavours\Fine_

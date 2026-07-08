@@ -1,0 +1,114 @@
+================================================================================
+  GAP-GATE FORENSIC AUDIT
+  Run dir : /sessions/practical-stoic-dirac/mnt/Fine_Tuning/evaluations/v2_comprehensive_20260606_200713
+  Run at  : 2026-06-06T20:24:45.663151
+  Config F: F_RAG_BM25
+================================================================================
+
+SECTION 1 -- GAP GATE PRESENCE IN run.json
+--------------------------------------------------------------------------------
+  Config F has 41 answers.
+
+  meta.bm25_fired present       :   0 / 41
+  meta.bm25_skipped_gap present  :   0 / 41
+  meta.gap_topic present         :   0 / 41
+  meta.retrieved present         :  41 / 41
+
+  FINDING: No gap-gate metadata present in any Config F answer.
+  The v2_comprehensive_eval.py inline BM25Retriever has no gap gate logic.
+  Every question received retrieval regardless of topic.
+
+SECTION 2 -- PER-QUESTION TABLE (Config F)
+--------------------------------------------------------------------------------
+  QID      SC   OLD-ID-GATE?   TOPIC-GATE?            RETRIEVED?   RETRIEVED_Q (80 chars)
+  ------- --- ------------- --------------------- ----------- ----------------------------------------------------------------------
+  V2Q01    Y    ---            ---                    fired(3)     What precautions should be taken while applying direct pressure to a b
+  V2Q02         ---            ---                    fired(3)     What should I do if there is bleeding from a stab wound?
+  V2Q03         ---            ---                    fired(3)     What kind of dressing should I use after removing a fish hook?
+  V2Q04         ---            ---                    fired(3)     What is the best way to remove a tick that is deeply embedded in the s
+  V2Q05         ---            ---                    fired(3)     How can I tell if someone has a foreign body embedded in their eye?
+  V2Q06         ---            ---                    fired(3)     What should I do if someone faints after a traumatic injury?
+  V2Q07         ---            ---                    fired(3)     What should you do if a casualty with a suspected spinal injury is bre
+  V2Q08    Y    ---            ---                    fired(3)     What should you do if you find someone unconscious but breathing norma
+  V2Q09    Y    ---            ---                    fired(3)     What should you do if you are unsure whether the person is in cardiac 
+  V2Q10    Y    ---            ---                    fired(3)     What are the signs that mouth-to-mask resuscitation is being performed
+  V2Q11         ---            ---                    fired(3)     What should you do if you encounter a person in cardiac arrest but do 
+  V2Q12         ---            ---                    fired(3)     Why is it recommended to alternate between compressions and rescue bre
+  V2Q13         ---            ---                    fired(3)     What should you do if you are unsure whether a person is in cardiac ar
+  V2Q14         ---            ---                    fired(3)     What if my child swallows a small button battery?
+  V2Q15         ---            ---                    fired(3)     How should I treat a foreign object in the eye?
+  V2Q16         ---            ---                    fired(3)     How should I protect the eye if there is an embedded foreign body and 
+  V2Q17         ---            ---                    fired(3)     What are signs of a severe asthma attack that require urgent medical a
+  V2Q18         ---            ---                    fired(3)     What is the best way to position someone who has fainted?
+  V2Q19         ---            ---                    fired(3)     What should I do if someone faints but remains unresponsive for more t
+  V2Q20         ---            ---                    fired(3)     How do you assess the severity of a fracture in the field?
+  V2Q21         ---            ---                    fired(3)     What signs might suggest a child?s nosebleed is due to trauma rather t
+  V2Q22         ---            ---                    fired(3)     Is it okay to straighten a deformed limb before applying a splint?
+  V2Q23         ---            ---                    fired(3)     When should you use mouth-to-mask resuscitation instead of mouth-to-mo
+  V2Q24         ---            ---                    fired(3)     What should you do if someone experiences a cramp while swimming?
+  V2Q25    Y    ---            ---                    fired(3)     What is the best way to help someone who feels faint after standing to
+  V2Q26         ---            ---                    fired(3)     Can a person with a concussion return to physical activity immediately
+  V2Q27         ---            ---                    fired(3)     How can extreme thirst help distinguish hyperglycaemia from hypoglycae
+  V2Q28         ---            ---                    fired(3)     How can I tell if someone is about to faint?
+  V2Q29    Y    ---            ---                    fired(3)     What should I do if a choking adult is unable to cough or speak?
+  V2Q30         ---            ---                    fired(3)     How should I assist someone having an asthma attack if they do not hav
+  V2Q31         ---            ---                    fired(3)     Why is it important to place an unconscious choking person in the late
+  V2Q32         ---            ---                    fired(3)     What are the signs that someone may need CPR after being rescued from 
+  V2Q33    Y    ---            ---                    fired(3)     What should I do if the venomous snake bite victim is a child?
+  V2Q34         ---            ---                    fired(3)     What should you do if someone stung by a Box Jellyfish begins to show 
+  V2Q35         ---            tourniquet_escalation  fired(3)     What is the risk of not washing a venomous snake bite site?
+  V2Q36    Y    ---            ---                    fired(3)     How do I safely position someone with a fractured leg while waiting fo
+  V2Q37         ---            ---                    fired(3)     What should you do if someone has sustained a burn from a car accident
+  V2Q38         ---            ---                    fired(3)     Can I apply ice directly to the eye if it swells after an injury?
+  V2Q39    Y    ---            ---                    fired(3)     What are the signs of poisoning from inhaling carbon monoxide?
+  V2Q40         ---            ---                    fired(3)     How can you recognize heat stroke in a person who is confused but stil
+  V2Q41         ---            ---                    fired(3)     What precautions should you take when moving a casualty with a possibl
+
+SECTION 3 -- MISFIRE ANALYSIS
+--------------------------------------------------------------------------------
+
+  A. Old ID gate {6,17,21,22,28} cross-referenced against v2 bank:
+
+    Old Q06 -> V2Q06:  What signs might suggest that a person is bleeding internally after a 
+              Topic gate: (no gap topic match)
+
+    Old Q17 -> V2Q17:  What signs indicate that a child's fever has reached a level requiring
+              Topic gate: (no gap topic match)
+
+    Old Q21 -> V2Q21:  What are the signs that suggest a person may have a fracture rather th
+              Topic gate: (no gap topic match)
+
+    Old Q22 -> V2Q22:  Why should you not attempt to straighten a fractured or dislocated lim
+              Topic gate: (no gap topic match)
+
+    Old Q28 -> V2Q28:  What are the early warning signs that someone is about to faint?
+              Topic gate: (no gap topic match)
+
+  B. Questions old ID gate would have gated INCORRECTLY (not a gap topic):
+    (none)
+
+  C. Actual gap-topic questions the old ID gate would have MISSED:
+    V2Q35: Why should you avoid cutting, sucking, applying a tourniquet  [tourniquet_escalation]
+
+  D. Questions that should be gated under new topic gate:
+    V2Q35: Why should you avoid cutting, sucking, applying a tourniquet  [tourniquet_escalation]
+
+SECTION 4 -- VERDICT
+--------------------------------------------------------------------------------
+
+  VERDICT: MISFIRED
+
+  Root cause: v2_comprehensive_eval.py defines its own inline BM25Retriever
+  class that takes (query, top_k) with no question_id argument and no gap gate
+  logic. The imported bm25_rag.py module was NOT used for this run. All 41
+  questions in Config F received top-3 BM25 retrieval without any gap checking.
+
+  Secondary finding: Even if the old ID gate had been applied, it would have
+  gated 0 non-gap questions (V2Q06, V2Q17, V2Q21, V2Q22, V2Q28 -- all wrong)
+  and missed 1 actual gap-topic questions in the v2 bank.
+
+  Required fix: replace ID gate with topic gate in bm25_rag.py; update
+  v2_comprehensive_eval.py to import and use bm25_rag.BM25Retriever instead
+  of the inline class. Switch from top-3 to top-1 retrieval.
+
+================================================================================
