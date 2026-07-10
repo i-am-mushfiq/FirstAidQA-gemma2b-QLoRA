@@ -1,0 +1,675 @@
+{
+  "source": "v2_comprehensive_20260606_200713/deepseek.md",
+  "means": {
+    "A_BASE_4BIT": 1.8537,
+    "B_FINETUNED_4BIT": 2.7805,
+    "E_T6_IMPROVED": 2.7073,
+    "F_RAG_BM25": 3.2195
+  },
+  "per_question": {
+    "A_BASE_4BIT": [
+      {
+        "qid": "V2Q01",
+        "score": 3
+      },
+      {
+        "qid": "V2Q02",
+        "score": 3
+      },
+      {
+        "qid": "V2Q03",
+        "score": 2
+      },
+      {
+        "qid": "V2Q04",
+        "score": 3
+      },
+      {
+        "qid": "V2Q05",
+        "score": 1
+      },
+      {
+        "qid": "V2Q06",
+        "score": 3
+      },
+      {
+        "qid": "V2Q07",
+        "score": 2
+      },
+      {
+        "qid": "V2Q08",
+        "score": 3
+      },
+      {
+        "qid": "V2Q09",
+        "score": 1
+      },
+      {
+        "qid": "V2Q10",
+        "score": 2
+      },
+      {
+        "qid": "V2Q11",
+        "score": 1
+      },
+      {
+        "qid": "V2Q12",
+        "score": 0
+      },
+      {
+        "qid": "V2Q13",
+        "score": 2
+      },
+      {
+        "qid": "V2Q14",
+        "score": 3
+      },
+      {
+        "qid": "V2Q15",
+        "score": 2
+      },
+      {
+        "qid": "V2Q16",
+        "score": 0
+      },
+      {
+        "qid": "V2Q17",
+        "score": 3
+      },
+      {
+        "qid": "V2Q18",
+        "score": 2
+      },
+      {
+        "qid": "V2Q19",
+        "score": 1
+      },
+      {
+        "qid": "V2Q20",
+        "score": 2
+      },
+      {
+        "qid": "V2Q21",
+        "score": 2
+      },
+      {
+        "qid": "V2Q22",
+        "score": 2
+      },
+      {
+        "qid": "V2Q23",
+        "score": 0
+      },
+      {
+        "qid": "V2Q24",
+        "score": 1
+      },
+      {
+        "qid": "V2Q25",
+        "score": 1
+      },
+      {
+        "qid": "V2Q26",
+        "score": 3
+      },
+      {
+        "qid": "V2Q27",
+        "score": 5
+      },
+      {
+        "qid": "V2Q28",
+        "score": 2
+      },
+      {
+        "qid": "V2Q29",
+        "score": 1
+      },
+      {
+        "qid": "V2Q30",
+        "score": 1
+      },
+      {
+        "qid": "V2Q31",
+        "score": 3
+      },
+      {
+        "qid": "V2Q32",
+        "score": 3
+      },
+      {
+        "qid": "V2Q33",
+        "score": 0
+      },
+      {
+        "qid": "V2Q34",
+        "score": 0
+      },
+      {
+        "qid": "V2Q35",
+        "score": 0
+      },
+      {
+        "qid": "V2Q36",
+        "score": 1
+      },
+      {
+        "qid": "V2Q37",
+        "score": 1
+      },
+      {
+        "qid": "V2Q38",
+        "score": 4
+      },
+      {
+        "qid": "V2Q39",
+        "score": 3
+      },
+      {
+        "qid": "V2Q40",
+        "score": 3
+      },
+      {
+        "qid": "V2Q41",
+        "score": 1
+      }
+    ],
+    "B_FINETUNED_4BIT": [
+      {
+        "qid": "V2Q01",
+        "score": 1
+      },
+      {
+        "qid": "V2Q02",
+        "score": 2
+      },
+      {
+        "qid": "V2Q03",
+        "score": 1
+      },
+      {
+        "qid": "V2Q04",
+        "score": 3
+      },
+      {
+        "qid": "V2Q05",
+        "score": 2
+      },
+      {
+        "qid": "V2Q06",
+        "score": 4
+      },
+      {
+        "qid": "V2Q07",
+        "score": 3
+      },
+      {
+        "qid": "V2Q08",
+        "score": 2
+      },
+      {
+        "qid": "V2Q09",
+        "score": 1
+      },
+      {
+        "qid": "V2Q10",
+        "score": 2
+      },
+      {
+        "qid": "V2Q11",
+        "score": 2
+      },
+      {
+        "qid": "V2Q12",
+        "score": 2
+      },
+      {
+        "qid": "V2Q13",
+        "score": 2
+      },
+      {
+        "qid": "V2Q14",
+        "score": 4
+      },
+      {
+        "qid": "V2Q15",
+        "score": 3
+      },
+      {
+        "qid": "V2Q16",
+        "score": 5
+      },
+      {
+        "qid": "V2Q17",
+        "score": 3
+      },
+      {
+        "qid": "V2Q18",
+        "score": 3
+      },
+      {
+        "qid": "V2Q19",
+        "score": 2
+      },
+      {
+        "qid": "V2Q20",
+        "score": 3
+      },
+      {
+        "qid": "V2Q21",
+        "score": 3
+      },
+      {
+        "qid": "V2Q22",
+        "score": 4
+      },
+      {
+        "qid": "V2Q23",
+        "score": 5
+      },
+      {
+        "qid": "V2Q24",
+        "score": 4
+      },
+      {
+        "qid": "V2Q25",
+        "score": 1
+      },
+      {
+        "qid": "V2Q26",
+        "score": 4
+      },
+      {
+        "qid": "V2Q27",
+        "score": 3
+      },
+      {
+        "qid": "V2Q28",
+        "score": 2
+      },
+      {
+        "qid": "V2Q29",
+        "score": 1
+      },
+      {
+        "qid": "V2Q30",
+        "score": 4
+      },
+      {
+        "qid": "V2Q31",
+        "score": 5
+      },
+      {
+        "qid": "V2Q32",
+        "score": 3
+      },
+      {
+        "qid": "V2Q33",
+        "score": 3
+      },
+      {
+        "qid": "V2Q34",
+        "score": 4
+      },
+      {
+        "qid": "V2Q35",
+        "score": 3
+      },
+      {
+        "qid": "V2Q36",
+        "score": 1
+      },
+      {
+        "qid": "V2Q37",
+        "score": 1
+      },
+      {
+        "qid": "V2Q38",
+        "score": 4
+      },
+      {
+        "qid": "V2Q39",
+        "score": 4
+      },
+      {
+        "qid": "V2Q40",
+        "score": 2
+      },
+      {
+        "qid": "V2Q41",
+        "score": 3
+      }
+    ],
+    "E_T6_IMPROVED": [
+      {
+        "qid": "V2Q01",
+        "score": 2
+      },
+      {
+        "qid": "V2Q02",
+        "score": 2
+      },
+      {
+        "qid": "V2Q03",
+        "score": 1
+      },
+      {
+        "qid": "V2Q04",
+        "score": 3
+      },
+      {
+        "qid": "V2Q05",
+        "score": 2
+      },
+      {
+        "qid": "V2Q06",
+        "score": 1
+      },
+      {
+        "qid": "V2Q07",
+        "score": 3
+      },
+      {
+        "qid": "V2Q08",
+        "score": 2
+      },
+      {
+        "qid": "V2Q09",
+        "score": 1
+      },
+      {
+        "qid": "V2Q10",
+        "score": 2
+      },
+      {
+        "qid": "V2Q11",
+        "score": 2
+      },
+      {
+        "qid": "V2Q12",
+        "score": 2
+      },
+      {
+        "qid": "V2Q13",
+        "score": 2
+      },
+      {
+        "qid": "V2Q14",
+        "score": 4
+      },
+      {
+        "qid": "V2Q15",
+        "score": 3
+      },
+      {
+        "qid": "V2Q16",
+        "score": 5
+      },
+      {
+        "qid": "V2Q17",
+        "score": 3
+      },
+      {
+        "qid": "V2Q18",
+        "score": 3
+      },
+      {
+        "qid": "V2Q19",
+        "score": 2
+      },
+      {
+        "qid": "V2Q20",
+        "score": 3
+      },
+      {
+        "qid": "V2Q21",
+        "score": 3
+      },
+      {
+        "qid": "V2Q22",
+        "score": 4
+      },
+      {
+        "qid": "V2Q23",
+        "score": 5
+      },
+      {
+        "qid": "V2Q24",
+        "score": 4
+      },
+      {
+        "qid": "V2Q25",
+        "score": 2
+      },
+      {
+        "qid": "V2Q26",
+        "score": 4
+      },
+      {
+        "qid": "V2Q27",
+        "score": 3
+      },
+      {
+        "qid": "V2Q28",
+        "score": 2
+      },
+      {
+        "qid": "V2Q29",
+        "score": 2
+      },
+      {
+        "qid": "V2Q30",
+        "score": 4
+      },
+      {
+        "qid": "V2Q31",
+        "score": 5
+      },
+      {
+        "qid": "V2Q32",
+        "score": 3
+      },
+      {
+        "qid": "V2Q33",
+        "score": 3
+      },
+      {
+        "qid": "V2Q34",
+        "score": 1
+      },
+      {
+        "qid": "V2Q35",
+        "score": 3
+      },
+      {
+        "qid": "V2Q36",
+        "score": 1
+      },
+      {
+        "qid": "V2Q37",
+        "score": 1
+      },
+      {
+        "qid": "V2Q38",
+        "score": 4
+      },
+      {
+        "qid": "V2Q39",
+        "score": 4
+      },
+      {
+        "qid": "V2Q40",
+        "score": 2
+      },
+      {
+        "qid": "V2Q41",
+        "score": 3
+      }
+    ],
+    "F_RAG_BM25": [
+      {
+        "qid": "V2Q01",
+        "score": 1
+      },
+      {
+        "qid": "V2Q02",
+        "score": 2
+      },
+      {
+        "qid": "V2Q03",
+        "score": 3
+      },
+      {
+        "qid": "V2Q04",
+        "score": 2
+      },
+      {
+        "qid": "V2Q05",
+        "score": 1
+      },
+      {
+        "qid": "V2Q06",
+        "score": 4
+      },
+      {
+        "qid": "V2Q07",
+        "score": 3
+      },
+      {
+        "qid": "V2Q08",
+        "score": 3
+      },
+      {
+        "qid": "V2Q09",
+        "score": 2
+      },
+      {
+        "qid": "V2Q10",
+        "score": 2
+      },
+      {
+        "qid": "V2Q11",
+        "score": 2
+      },
+      {
+        "qid": "V2Q12",
+        "score": 2
+      },
+      {
+        "qid": "V2Q13",
+        "score": 4
+      },
+      {
+        "qid": "V2Q14",
+        "score": 5
+      },
+      {
+        "qid": "V2Q15",
+        "score": 4
+      },
+      {
+        "qid": "V2Q16",
+        "score": 5
+      },
+      {
+        "qid": "V2Q17",
+        "score": 3
+      },
+      {
+        "qid": "V2Q18",
+        "score": 3
+      },
+      {
+        "qid": "V2Q19",
+        "score": 1
+      },
+      {
+        "qid": "V2Q20",
+        "score": 4
+      },
+      {
+        "qid": "V2Q21",
+        "score": 3
+      },
+      {
+        "qid": "V2Q22",
+        "score": 4
+      },
+      {
+        "qid": "V2Q23",
+        "score": 5
+      },
+      {
+        "qid": "V2Q24",
+        "score": 5
+      },
+      {
+        "qid": "V2Q25",
+        "score": 1
+      },
+      {
+        "qid": "V2Q26",
+        "score": 4
+      },
+      {
+        "qid": "V2Q27",
+        "score": 4
+      },
+      {
+        "qid": "V2Q28",
+        "score": 4
+      },
+      {
+        "qid": "V2Q29",
+        "score": 5
+      },
+      {
+        "qid": "V2Q30",
+        "score": 4
+      },
+      {
+        "qid": "V2Q31",
+        "score": 5
+      },
+      {
+        "qid": "V2Q32",
+        "score": 4
+      },
+      {
+        "qid": "V2Q33",
+        "score": 3
+      },
+      {
+        "qid": "V2Q34",
+        "score": 4
+      },
+      {
+        "qid": "V2Q35",
+        "score": 4
+      },
+      {
+        "qid": "V2Q36",
+        "score": 3
+      },
+      {
+        "qid": "V2Q37",
+        "score": 1
+      },
+      {
+        "qid": "V2Q38",
+        "score": 4
+      },
+      {
+        "qid": "V2Q39",
+        "score": 4
+      },
+      {
+        "qid": "V2Q40",
+        "score": 2
+      },
+      {
+        "qid": "V2Q41",
+        "score": 3
+      }
+    ]
+  }
+}
