@@ -41,3 +41,8 @@ runs/
 # Large dataset files that can be regenerated from firstaidqa_v1.json
 # (comment out if you want to track enriched variants)
 # firstaidqa_v1_enriched*.json
+
+# Judging blinding artifacts (de-anonymize before release)
+judging/blind_map.json
+judging/cache/
+judging/results/

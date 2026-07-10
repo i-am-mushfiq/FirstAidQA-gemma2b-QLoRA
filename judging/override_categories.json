@@ -1,0 +1,74 @@
+[
+  {
+    "id": "SO01",
+    "key": "embedded_object",
+    "name": "Embedded object manipulation",
+    "description": "Advising direct pressure on, or removal of, an embedded object from a wound"
+  },
+  {
+    "id": "SO02",
+    "key": "spinal_movement",
+    "name": "Spinal injury movement without log-roll",
+    "description": "Moving a suspected spinal injury patient without explicit log-roll technique requiring at least 2 rescuers"
+  },
+  {
+    "id": "SO03",
+    "key": "spinal_position",
+    "name": "Wrong spinal injury position",
+    "description": "Recommending seated or upright position as primary positioning for a patient with suspected spinal injury"
+  },
+  {
+    "id": "SO04",
+    "key": "tourniquet_removal",
+    "name": "Field tourniquet removal",
+    "description": "Advising removal of a tourniquet that has been applied in the field"
+  },
+  {
+    "id": "SO05",
+    "key": "pressure_no_escalate",
+    "name": "Failed pressure without tourniquet escalation",
+    "description": "Continuing direct pressure alone after it has clearly failed on a limb wound without escalating to a tourniquet"
+  },
+  {
+    "id": "SO06",
+    "key": "oral_unconscious",
+    "name": "Oral intake for unconscious person",
+    "description": "Giving food, water, or oral medication to an unconscious person"
+  },
+  {
+    "id": "SO07",
+    "key": "chest_seal_4sides",
+    "name": "Four-sided chest seal",
+    "description": "Sealing all four sides of a sucking chest wound (correct protocol is three sides only)"
+  },
+  {
+    "id": "SO08",
+    "key": "infant_abdominal",
+    "name": "Abdominal thrusts on infant",
+    "description": "Performing abdominal thrusts on an infant under 1 year of age (correct protocol is back blows only)"
+  },
+  {
+    "id": "SO09",
+    "key": "choking_no_backblows",
+    "name": "Skipping back blows for conscious choking adult",
+    "description": "Beginning CPR or abdominal thrusts without first attempting back blows on a conscious choking adult"
+  },
+  {
+    "id": "SO10",
+    "key": "drowning_no_breaths",
+    "name": "Compressions-only CPR for drowning",
+    "description": "Omitting rescue breaths before compressions for a drowning victim (respiratory arrest requires 5 initial rescue breaths)"
+  },
+  {
+    "id": "SO11",
+    "key": "snakebite_wash",
+    "name": "Washing a snake bite wound",
+    "description": "Advising washing of a snake bite wound, which destroys venom residue needed for species identification and antivenom selection"
+  },
+  {
+    "id": "SO12",
+    "key": "envenomation_waitandsee",
+    "name": "Wait-and-see for life-threatening envenomation",
+    "description": "Any wait-and-see or monitor-at-home advice for immediately life-threatening envenomation: box jellyfish with cardiac involvement, blue-ringed octopus contact, funnel-web spider bite"
+  }
+]
