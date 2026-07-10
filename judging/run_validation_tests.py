@@ -250,7 +250,8 @@ def test2_controls(iteration: int = 1) -> bool:
 
     if passed:
         # Freeze template: record hash
-        from judging.judge_deepseek import file_sha256, PROMPT_QUALITY, PROMPT_SAFETY, sha256_hex
+        import sys as _sys, os as _os; _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+        from judge_deepseek import file_sha256, PROMPT_QUALITY, PROMPT_SAFETY, sha256_hex
         qhash = file_sha256(PROMPT_QUALITY)
         shash = file_sha256(PROMPT_SAFETY)
         combined = sha256_hex(qhash + shash)
@@ -284,7 +285,8 @@ def test2_controls(iteration: int = 1) -> bool:
 
 def _log_iteration(iteration: int, details: dict, passed: bool, note: str = "") -> None:
     """Append a prompt iteration record to PROMPT_ITERATION_LOG.md."""
-    from judging.judge_deepseek import file_sha256, PROMPT_QUALITY, PROMPT_SAFETY, sha256_hex
+    import sys as _sys, os as _os; _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+    from judge_deepseek import file_sha256, PROMPT_QUALITY, PROMPT_SAFETY, sha256_hex
     qhash = file_sha256(PROMPT_QUALITY)
     shash = file_sha256(PROMPT_SAFETY)
     combined = sha256_hex(qhash + shash)
@@ -324,7 +326,8 @@ def test3_stability() -> dict:
     print("="*64)
 
     # Load first 20 real (non-control) items
-    from judging.judge_deepseek import load_items
+    import sys as _sys, os as _os; _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+    from judge_deepseek import load_items
     items = load_items(controls_only=False)
     real  = [i for i in items if not i["config"].startswith("CTRL_")][:20]
     qids  = [i["qid"] for i in real]
@@ -389,8 +392,9 @@ def test3_stability() -> dict:
         f"| Metric | Value |\n|---|---|\n"
         f"| Pairs compared | {n} |\n"
         f"| Exact agreement | {exact}/{n} = {exact_pct:.1%} |\n"
-        f"| Within ±1 | {within1}/{n} = {within1_pct:.1%} |\n\n"
-        f"{'⚠ WARNING: <70% exact agreement — consider double-scoring.' if exact_pct < 0.70 else '✓ Acceptable stability.'}\n"
+        f"| Within +-1 | {within1}/{n} = {within1_pct:.1%} |\n\n"
+        f"{'WARNING: <70% exact agreement — consider double-scoring.' if exact_pct < 0.70 else 'Acceptable stability.'}\n",
+        encoding="utf-8",
     )
     print(f"\n  Stability report: {report_path}")
     return {"exact_pct": exact_pct, "within1_pct": within1_pct, "n": n}
@@ -501,7 +505,7 @@ def test4_bridge() -> None:
 
     report_path = RESULTS_DIR / "PROTOCOL_BRIDGE_REPORT.md"
     report_path.parent.mkdir(parents=True, exist_ok=True)
-    report_path.write_text("".join(report_lines))
+    report_path.write_text("".join(report_lines), encoding="utf-8")
     print(f"\n  Protocol bridge report: {report_path}")
 
     # Flag large deltas
@@ -562,7 +566,8 @@ def _write_bridge_stub() -> None:
         "   ```\n"
         "2. Re-run: `python judging/run_validation_tests.py --tests 4`\n\n"
         "## June mega-prompt DeepSeek scores (from deepseek.md)\n\n"
-        "Parse manually from `evaluations/v2_comprehensive_20260606_200713/deepseek.md`.\n"
+        "Parse manually from `evaluations/v2_comprehensive_20260606_200713/deepseek.md`.\n",
+        encoding="utf-8",
     )
 
 
@@ -613,7 +618,7 @@ def main():
     frozen = JUDGING_DIR / "TEMPLATE_FROZEN_HASH.txt"
     if frozen.exists():
         print(f"  Template frozen: {frozen}")
-    print("="*64)
+    print("=" * 64)
 
 
 if __name__ == "__main__":
