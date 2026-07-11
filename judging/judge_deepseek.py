@@ -116,7 +116,7 @@ def init_model(model_name: str) -> None:
     RESULTS_DIR  = JUDGING_DIR / "results" / model_name
 
 # ── Constants ─────────────────────────────────────────────────────────────────
-MAX_CONCURRENCY  = 4
+MAX_CONCURRENCY  = 2   # reduced from 4; Windows IOCP hangs with high concurrency
 MAX_RETRIES      = 3
 MAX_TOKENS       = 400
 TEMPERATURE      = 0
@@ -698,7 +698,10 @@ def main():
         print("No items to process.", file=sys.stderr)
         sys.exit(1)
 
-    # Run
+    # Run — use SelectorEventLoop on Windows to avoid IOCP hang
+    import sys as _sys
+    if _sys.platform == "win32":
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     asyncio.run(run_judging(
         items        = items,
         prompt_types = args.prompt_types,
