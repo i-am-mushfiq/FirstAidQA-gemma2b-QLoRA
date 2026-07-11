@@ -189,6 +189,7 @@ def git_commit() -> str:
 def load_items(
     controls_only: bool = False,
     configs: list[str] | None = None,
+    limit: int | None = None,
 ) -> list[dict]:
     items = []
     with open(ITEMS_PATH, encoding="utf-8") as f:
@@ -202,6 +203,8 @@ def load_items(
             if configs and item["config"] not in configs:
                 continue
             items.append(item)
+    if limit is not None:
+        items = items[:limit]
     return items
 
 
@@ -304,17 +307,37 @@ def call_api_sync(
 
     for attempt in range(MAX_RETRIES + 2):
         try:
-            response = client.chat.completions.create(
+            # Gemini via OpenRouter does not support response_format=json_object;
+            # skip it for that model to avoid empty/None content.
+            use_json_fmt = cfg.get("json_mode", True) and ACTIVE_MODEL != "gemini"
+            create_kwargs: dict = dict(
                 model=model,
                 temperature=TEMPERATURE,
                 max_tokens=MAX_TOKENS,
-                response_format={"type": "json_object"},
                 messages=[{"role": "user", "content": prompt}],
                 extra_body=extra_body,
             )
+            if use_json_fmt:
+                create_kwargs["response_format"] = {"type": "json_object"}
+            response = client.chat.completions.create(**create_kwargs)
+            # Some models (e.g. Gemini via OpenRouter) return None in the
+            # content field when json_object mode is active or thinking is on.
+            # Fall back to reasoning_content, then empty string.
+            raw_content = response.choices[0].message.content
+            if not raw_content:
+                raw_content = getattr(
+                    response.choices[0].message, "reasoning_content", None
+                ) or ""
+            # Strip markdown code fences that some models (e.g. Gemini) wrap
+            # around JSON: ```json\n{...}\n``` → {...}
+            stripped = raw_content.strip()
+            if stripped.startswith("```"):
+                lines = stripped.splitlines()
+                end = len(lines) - 1 if lines[-1].strip() == "```" else len(lines)
+                raw_content = "\n".join(lines[1:end]).strip()
             return {
                 "model_returned": response.model,
-                "content": response.choices[0].message.content,
+                "content": raw_content,
                 "usage": {
                     "prompt_tokens":     response.usage.prompt_tokens,
                     "completion_tokens": response.usage.completion_tokens,
@@ -373,7 +396,7 @@ def judge_item_sync(
 
     for attempt in range(1, MAX_RETRIES + 1):
         raw_response = call_api_sync(client, model, prompt)
-        content = raw_response.get("content", "")
+        content = raw_response.get("content") or ""
 
         try:
             parsed = json.loads(content)
@@ -416,7 +439,9 @@ def judge_item_sync(
         "judged_at":      datetime.now(timezone.utc).isoformat(),
     }
 
-    save_cache(prompt_type, ckey, result)
+    # Do not cache INVALID results — they should be retried on the next run.
+    if status != "INVALID":
+        save_cache(prompt_type, ckey, result)
     return result
 
 
@@ -725,27 +750,15 @@ def main():
     items = load_items(
         controls_only=args.controls_only,
         configs=args.configs,
+        limit=args.limit,
     )
-    if args.limit:
-        items = items[:args.limit]
 
-    print(f"\nItems loaded: {len(items)}")
-    from collections import Counter
-    cfg_counts = Counter(i["config"] for i in items)
-    for cfg, n in sorted(cfg_counts.items()):
-        print(f"  {cfg:<30}  {n:>3}")
-
-    if not items:
-        print("No items to process.", file=sys.stderr)
-        sys.exit(1)
-
-    # Run (sync ThreadPoolExecutor — no asyncio needed)
     run_judging(
-        items        = items,
-        prompt_types = args.prompt_types,
-        run_tag      = args.run_tag,
-        nonce        = args.nonce,
-        verbose      = args.verbose,
+        items=items,
+        prompt_types=args.prompt_types,
+        run_tag=args.run_tag,
+        nonce=args.nonce,
+        verbose=args.verbose,
     )
 
 
