@@ -77,7 +77,7 @@ OVERRIDE_CATS   = JUDGING_DIR / "override_categories.json"
 MODEL_CONFIGS = {
     "deepseek": {
         "base_url":    "https://api.deepseek.com",
-        "model":       "deepseek-chat",
+        "model":       "deepseek-v4-pro",   # deepseek-chat aliased to v4-flash, deprecated 2026-07-24
         "api_key_env": "DEEPSEEK_API_KEY",
         # DeepSeek requires response_format=json_object AND "json" in prompt.
         # Claude and GPT-4o also support json_object mode.
