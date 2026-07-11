@@ -1,12 +1,19 @@
 """
 judging/judge_deepseek.py
 =========================
-Phase 3: Per-item LLM judge harness — DeepSeek API (OpenAI-compatible).
+Phase 3: Per-item LLM judge harness — multi-judge (DeepSeek / Claude / GPT-4o).
+All three judges use the same frozen prompt templates and items.jsonl.
 
 Usage
 -----
-    # Full run on items.jsonl
+    # Full run on items.jsonl (default: deepseek)
     python judging/judge_deepseek.py --run_tag CAMERA_READY_FINAL
+
+    # Run with Claude judge
+    python judging/judge_deepseek.py --model claude --run_tag CAMERA_READY_FINAL
+
+    # Run with GPT-4o judge
+    python judging/judge_deepseek.py --model gpt4o --run_tag CAMERA_READY_FINAL
 
     # Limit to first N items (plumbing test)
     python judging/judge_deepseek.py --run_tag TEST_PLUMBING --limit 10
@@ -26,7 +33,7 @@ Usage
 Design principles
 -----------------
 - temperature=0 for all calls (determinism)
-- Cache: one file per call at judging/cache/deepseek/<type>/<sha256>.json
+- Cache: one file per call at judging/cache/<model>/<type>/<sha256>.json
   Cache hits are skipped; pipeline is fully resumable.
 - Retry: up to 3x on invalid JSON / schema failures
 - Concurrency: asyncio with semaphore <= 4 parallel requests
@@ -60,21 +67,53 @@ REPO_ROOT       = Path(__file__).resolve().parent.parent
 JUDGING_DIR     = REPO_ROOT / "judging"
 ITEMS_PATH      = JUDGING_DIR / "items.jsonl"
 BLIND_MAP_PATH  = JUDGING_DIR / "blind_map.json"
-CACHE_DIR       = JUDGING_DIR / "cache" / "deepseek"
-RESULTS_DIR     = JUDGING_DIR / "results" / "deepseek"
 PROMPT_QUALITY  = JUDGING_DIR / "prompt_quality.txt"
 PROMPT_SAFETY   = JUDGING_DIR / "prompt_safety.txt"
 OVERRIDE_CATS   = JUDGING_DIR / "override_categories.json"
 
-# ── Model config (change here to add Claude/GPT-4o later) ────────────────────
+# ── Model configs ─────────────────────────────────────────────────────────────
+# ACTIVE_MODEL is set by --model CLI arg (default: "deepseek").
+# CACHE_DIR and RESULTS_DIR are computed from ACTIVE_MODEL in init_model().
 MODEL_CONFIGS = {
     "deepseek": {
-        "base_url": "https://api.deepseek.com",
-        "model":    "deepseek-chat",
+        "base_url":    "https://api.deepseek.com",
+        "model":       "deepseek-chat",
         "api_key_env": "DEEPSEEK_API_KEY",
+        # DeepSeek requires response_format=json_object AND "json" in prompt.
+        # Claude and GPT-4o also support json_object mode.
+        "json_mode":   True,
+    },
+    "claude": {
+        "base_url":    "https://api.anthropic.com/v1",
+        "model":       "claude-opus-4-5",
+        "api_key_env": "ANTHROPIC_API_KEY",
+        "json_mode":   True,
+    },
+    "gpt4o": {
+        "base_url":    "https://api.openai.com/v1",
+        "model":       "gpt-4o",
+        "api_key_env": "OPENAI_API_KEY",
+        "json_mode":   True,
     },
 }
-ACTIVE_MODEL = "deepseek"
+ACTIVE_MODEL = "deepseek"        # overridden by --model arg in main()
+CACHE_DIR    = None              # set by init_model() after arg parse
+RESULTS_DIR  = None              # set by init_model() after arg parse
+
+
+def init_model(model_name: str) -> None:
+    """
+    Set ACTIVE_MODEL, CACHE_DIR, RESULTS_DIR globals from the chosen model name.
+    Must be called once in main() before any other code that uses these globals.
+    """
+    global ACTIVE_MODEL, CACHE_DIR, RESULTS_DIR
+    if model_name not in MODEL_CONFIGS:
+        print(f"ERROR: unknown model '{model_name}'. "
+              f"Choose from: {list(MODEL_CONFIGS)}", file=sys.stderr)
+        sys.exit(1)
+    ACTIVE_MODEL = model_name
+    CACHE_DIR    = JUDGING_DIR / "cache"   / model_name
+    RESULTS_DIR  = JUDGING_DIR / "results" / model_name
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 MAX_CONCURRENCY  = 4
@@ -597,7 +636,12 @@ def self_review(quality_tmpl: str, safety_tmpl: str) -> bool:
 # ── CLI ───────────────────────────────────────────────────────────────────────
 
 def main():
-    parser = argparse.ArgumentParser(description="DeepSeek per-item judge harness")
+    parser = argparse.ArgumentParser(
+        description="Multi-judge per-item harness (DeepSeek / Claude / GPT-4o)"
+    )
+    parser.add_argument("--model",         default="deepseek",
+                        choices=list(MODEL_CONFIGS),
+                        help="Which judge model to use (default: deepseek)")
     parser.add_argument("--run_tag",       required=True,
                         help="Tag for this run (used as output subdirectory name)")
     parser.add_argument("--limit",         type=int, default=None,
@@ -616,6 +660,12 @@ def main():
     parser.add_argument("--review_only",   action="store_true",
                         help="Run self-review checklist only, no API calls")
     args = parser.parse_args()
+
+    # ── Must happen before anything that reads ACTIVE_MODEL / CACHE_DIR / RESULTS_DIR ──
+    init_model(args.model)
+    print(f"Judge model : {ACTIVE_MODEL}  ({MODEL_CONFIGS[ACTIVE_MODEL]['model']})")
+    print(f"Cache dir   : {CACHE_DIR}")
+    print(f"Results dir : {RESULTS_DIR}")
 
     quality_tmpl = PROMPT_QUALITY.read_text(encoding="utf-8")
     safety_tmpl  = PROMPT_SAFETY.read_text(encoding="utf-8")

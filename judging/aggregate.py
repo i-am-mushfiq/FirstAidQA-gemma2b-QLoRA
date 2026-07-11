@@ -15,12 +15,18 @@ Usage
     #   Edit judging/PRECOMMIT.md, then:
     #   git add judging/PRECOMMIT.md && git commit -m "Precommit contrasts"
 
-    # Step 2:
+    # Step 2 — DeepSeek (default):
     python judging/aggregate.py \\
         --run_tag CAMERA_READY_FINAL \\
         --rescore_tag TEST3_STABILITY_run1   # optional: for 10% rescore reliability
 
-Outputs (all under judging/results/deepseek/<run_tag>/)
+    # Step 2 — Claude judge:
+    python judging/aggregate.py --model claude --run_tag CAMERA_READY_FINAL
+
+    # Step 2 — GPT-4o judge:
+    python judging/aggregate.py --model gpt4o --run_tag CAMERA_READY_FINAL
+
+Outputs (all under judging/results/<model>/<run_tag>/)
 -------
     scores_per_question.csv    -- qid, config, sc_flag, category, quality_score,
                                   n_violations, violated_categories
@@ -46,8 +52,21 @@ JUDGING_DIR    = REPO_ROOT / "judging"
 BANK_PATH      = REPO_ROOT / "evaluations" / "eval_bank_v2_40q" / "eval_bank_v2.json"
 BLIND_MAP_PATH = JUDGING_DIR / "blind_map.json"
 CONTROLS_KEY   = JUDGING_DIR / "controls_key.json"
-RESULTS_DIR    = JUDGING_DIR / "results" / "deepseek"
 PRECOMMIT_PATH = JUDGING_DIR / "PRECOMMIT.md"
+
+# RESULTS_DIR is set by init_model() after --model arg is parsed.
+RESULTS_DIR    = None
+
+
+def init_model(model_name: str) -> None:
+    """Set RESULTS_DIR from chosen model name. Called once in main()."""
+    global RESULTS_DIR
+    valid = ["deepseek", "claude", "gpt4o"]
+    if model_name not in valid:
+        print(f"ERROR: unknown model '{model_name}'. Choose from: {valid}",
+              file=sys.stderr)
+        sys.exit(1)
+    RESULTS_DIR = JUDGING_DIR / "results" / model_name
 
 BOOTSTRAP_N    = 10_000
 BOOTSTRAP_SEED = 2026
@@ -529,11 +548,19 @@ def write_final_report(
 
 def main():
     parser = argparse.ArgumentParser(description="Phase 6: Aggregate judgments into final report")
+    parser.add_argument("--model",       default="deepseek",
+                        choices=["deepseek", "claude", "gpt4o"],
+                        help="Which judge's results to aggregate (default: deepseek)")
     parser.add_argument("--run_tag",     required=True,
                         help="Run tag for the judgments to aggregate (e.g. CAMERA_READY_FINAL)")
     parser.add_argument("--rescore_tag", default=None,
                         help="Run tag for 10% re-score reliability (optional)")
     args = parser.parse_args()
+
+    # Must happen before anything that reads RESULTS_DIR
+    init_model(args.model)
+    print(f"Aggregating results for judge: {args.model}")
+    print(f"Results dir: {RESULTS_DIR}")
 
     # Guard: PRECOMMIT.md must exist
     if not PRECOMMIT_PATH.exists():
