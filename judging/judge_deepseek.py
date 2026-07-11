@@ -43,7 +43,6 @@ Design principles
 """
 
 import argparse
-import asyncio
 import hashlib
 import json
 import os
@@ -57,7 +56,7 @@ from pathlib import Path
 
 # ── Deps: openai (pip install openai) ────────────────────────────────────────
 try:
-    from openai import AsyncOpenAI
+    from openai import OpenAI
 except ImportError:
     print("ERROR: openai package not installed. Run: pip install openai", file=sys.stderr)
     sys.exit(1)
@@ -253,7 +252,6 @@ def validate_safety(parsed: dict) -> tuple[bool, str]:
 
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from openai import OpenAI   # sync client
 
 _write_lock = threading.Lock()
 
@@ -265,6 +263,11 @@ def call_api_sync(
 ) -> dict:
     """Single synchronous API call with exponential backoff on 429/5xx."""
     backoff = BACKOFF_BASE
+    cfg = MODEL_CONFIGS[ACTIVE_MODEL]
+    # DeepSeek V4 Pro defaults to thinking mode, which breaks json_object output.
+    # Disable thinking explicitly so content is returned normally and temperature=0 works.
+    extra_body = {"thinking": {"type": "disabled"}} if "deepseek" in cfg.get("base_url", "") else {}
+
     for attempt in range(MAX_RETRIES + 2):
         try:
             response = client.chat.completions.create(
@@ -273,6 +276,7 @@ def call_api_sync(
                 max_tokens=MAX_TOKENS,
                 response_format={"type": "json_object"},
                 messages=[{"role": "user", "content": prompt}],
+                extra_body=extra_body if extra_body else None,
             )
             return {
                 "model_returned": response.model,

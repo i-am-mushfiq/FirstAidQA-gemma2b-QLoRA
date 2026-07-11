@@ -14,16 +14,20 @@ MODEL_CONFIGS = {
         "base_url":    "https://api.deepseek.com",
         "model":       "deepseek-v4-pro",
         "api_key_env": "DEEPSEEK_API_KEY",
+        # Disable thinking mode so json_object content is returned (not reasoning_content)
+        "extra_body":  {"thinking": {"type": "disabled"}},
     },
     "claude": {
         "base_url":    "https://api.anthropic.com/v1",
         "model":       "claude-opus-4-5",
         "api_key_env": "ANTHROPIC_API_KEY",
+        "extra_body":  None,
     },
     "gpt4o": {
         "base_url":    "https://api.openai.com/v1",
         "model":       "gpt-4o",
         "api_key_env": "OPENAI_API_KEY",
+        "extra_body":  None,
     },
 }
 
@@ -35,7 +39,7 @@ def test_one(name: str, cfg: dict):
     client = OpenAI(api_key=api_key, base_url=cfg["base_url"])
     t0 = time.time()
     try:
-        resp = client.chat.completions.create(
+        kwargs = dict(
             model=cfg["model"],
             temperature=0,
             max_tokens=30,
@@ -44,10 +48,16 @@ def test_one(name: str, cfg: dict):
                        "content": 'Reply with json only: {"ok": true}'}],
             timeout=30,
         )
+        if cfg.get("extra_body"):
+            kwargs["extra_body"] = cfg["extra_body"]
+        resp = client.chat.completions.create(**kwargs)
         content  = resp.choices[0].message.content
         model_r  = resp.model
         elapsed  = time.time() - t0
-        print(f"  [{name}] OK — model_returned={model_r!r}  content={content!r}  ({elapsed:.1f}s)")
+        if not content:
+            print(f"  [{name}] FAIL — content is empty (thinking mode issue?) model={model_r!r} ({elapsed:.1f}s)")
+        else:
+            print(f"  [{name}] OK — model={model_r!r}  content={content!r}  ({elapsed:.1f}s)")
     except Exception as e:
         print(f"  [{name}] ERROR — {type(e).__name__}: {e}")
 
