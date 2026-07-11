@@ -73,26 +73,62 @@ OVERRIDE_CATS   = JUDGING_DIR / "override_categories.json"
 # ── Model configs ─────────────────────────────────────────────────────────────
 # ACTIVE_MODEL is set by --model CLI arg (default: "deepseek").
 # CACHE_DIR and RESULTS_DIR are computed from ACTIVE_MODEL in init_model().
+# OpenRouter base URL shared by claude_or, gemini, gpt_or
+_OR_BASE = "https://openrouter.ai/api/v1"
+_OR_HEADERS = {
+    "HTTP-Referer": "https://github.com/first-aid-finetuning",
+    "X-Title":      "First Aid Judge",
+}
+
 MODEL_CONFIGS = {
+    # ── Direct APIs ───────────────────────────────────────────────────────────
     "deepseek": {
         "base_url":    "https://api.deepseek.com",
-        "model":       "deepseek-v4-pro",   # deepseek-chat aliased to v4-flash, deprecated 2026-07-24
+        "model":       "deepseek-v4-pro",
         "api_key_env": "DEEPSEEK_API_KEY",
-        # DeepSeek requires response_format=json_object AND "json" in prompt.
-        # Claude and GPT-4o also support json_object mode.
         "json_mode":   True,
+        # Disable thinking so json_object content field is populated
+        "extra_body":  {"thinking": {"type": "disabled"}},
     },
+    # ── OpenRouter-routed judges (smoke-tested 2026-07-11) ────────────────────
+    "claude_or": {
+        "base_url":    _OR_BASE,
+        "model":       "anthropic/claude-opus-4.8",
+        "api_key_env": "OPENROUTER_API_KEY",
+        "json_mode":   True,
+        "extra_body":  None,
+        "default_headers": _OR_HEADERS,
+    },
+    "gemini": {
+        "base_url":    _OR_BASE,
+        "model":       "google/gemini-3-pro-image",
+        "api_key_env": "OPENROUTER_API_KEY",
+        "json_mode":   True,
+        "extra_body":  None,
+        "default_headers": _OR_HEADERS,
+    },
+    "gpt": {
+        "base_url":    _OR_BASE,
+        "model":       "openai/gpt-5.6-sol",
+        "api_key_env": "OPENROUTER_API_KEY",
+        "json_mode":   True,
+        "extra_body":  None,
+        "default_headers": _OR_HEADERS,
+    },
+    # ── Legacy direct-API entries (kept for reference; require own keys) ──────
     "claude": {
         "base_url":    "https://api.anthropic.com/v1",
         "model":       "claude-opus-4-5",
         "api_key_env": "ANTHROPIC_API_KEY",
         "json_mode":   True,
+        "extra_body":  None,
     },
     "gpt4o": {
         "base_url":    "https://api.openai.com/v1",
         "model":       "gpt-4o",
         "api_key_env": "OPENAI_API_KEY",
         "json_mode":   True,
+        "extra_body":  None,
     },
 }
 ACTIVE_MODEL = "deepseek"        # overridden by --model arg in main()
@@ -264,9 +300,7 @@ def call_api_sync(
     """Single synchronous API call with exponential backoff on 429/5xx."""
     backoff = BACKOFF_BASE
     cfg = MODEL_CONFIGS[ACTIVE_MODEL]
-    # DeepSeek V4 Pro defaults to thinking mode, which breaks json_object output.
-    # Disable thinking explicitly so content is returned normally and temperature=0 works.
-    extra_body = {"thinking": {"type": "disabled"}} if "deepseek" in cfg.get("base_url", "") else {}
+    extra_body = cfg.get("extra_body") or None
 
     for attempt in range(MAX_RETRIES + 2):
         try:
@@ -276,7 +310,7 @@ def call_api_sync(
                 max_tokens=MAX_TOKENS,
                 response_format={"type": "json_object"},
                 messages=[{"role": "user", "content": prompt}],
-                extra_body=extra_body if extra_body else None,
+                extra_body=extra_body,
             )
             return {
                 "model_returned": response.model,
@@ -450,7 +484,10 @@ def run_judging(
 
     # One sync OpenAI client per thread (thread-safe: each thread owns its client)
     def make_client():
-        return OpenAI(api_key=api_key, base_url=cfg["base_url"])
+        kwargs = dict(api_key=api_key, base_url=cfg["base_url"])
+        if cfg.get("default_headers"):
+            kwargs["default_headers"] = cfg["default_headers"]
+        return OpenAI(**kwargs)
 
     thread_local = threading.local()
 
@@ -643,7 +680,9 @@ def main():
     )
     parser.add_argument("--model",         default="deepseek",
                         choices=list(MODEL_CONFIGS),
-                        help="Which judge model to use (default: deepseek)")
+                        help=("Which judge model to use (default: deepseek). "
+                              "OpenRouter models: claude_or, gemini, gpt. "
+                              "Direct API models: deepseek, claude, gpt4o."))
     parser.add_argument("--run_tag",       required=True,
                         help="Tag for this run (used as output subdirectory name)")
     parser.add_argument("--limit",         type=int, default=None,

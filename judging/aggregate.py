@@ -61,7 +61,7 @@ RESULTS_DIR    = None
 def init_model(model_name: str) -> None:
     """Set RESULTS_DIR from chosen model name. Called once in main()."""
     global RESULTS_DIR
-    valid = ["deepseek", "claude", "gpt4o"]
+    valid = ["deepseek", "claude_or", "gemini", "gpt", "claude", "gpt4o"]
     if model_name not in valid:
         print(f"ERROR: unknown model '{model_name}'. Choose from: {valid}",
               file=sys.stderr)
@@ -549,7 +549,7 @@ def write_final_report(
 def main():
     parser = argparse.ArgumentParser(description="Phase 6: Aggregate judgments into final report")
     parser.add_argument("--model",       default="deepseek",
-                        choices=["deepseek", "claude", "gpt4o"],
+                        choices=["deepseek", "claude_or", "gemini", "gpt", "claude", "gpt4o"],
                         help="Which judge's results to aggregate (default: deepseek)")
     parser.add_argument("--run_tag",     required=True,
                         help="Run tag for the judgments to aggregate (e.g. CAMERA_READY_FINAL)")
