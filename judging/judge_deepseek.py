@@ -73,7 +73,7 @@ OVERRIDE_CATS   = JUDGING_DIR / "override_categories.json"
 # ── Model configs ─────────────────────────────────────────────────────────────
 # ACTIVE_MODEL is set by --model CLI arg (default: "deepseek").
 # CACHE_DIR and RESULTS_DIR are computed from ACTIVE_MODEL in init_model().
-# OpenRouter base URL shared by claude_or, gemini, gpt_or
+# OpenRouter base URL shared by claude_or, gpt
 _OR_BASE = "https://openrouter.ai/api/v1"
 _OR_HEADERS = {
     "HTTP-Referer": "https://github.com/first-aid-finetuning",
@@ -99,14 +99,16 @@ MODEL_CONFIGS = {
         "extra_body":  None,
         "default_headers": _OR_HEADERS,
     },
-    "gemini": {
-        "base_url":    _OR_BASE,
-        "model":       "google/gemini-3-pro-image",
-        "api_key_env": "OPENROUTER_API_KEY",
-        "json_mode":   True,
-        "extra_body":  None,
-        "default_headers": _OR_HEADERS,
-    },
+    # "gemini" excluded: same model family as subject (Gemma/Google).
+    # Kept here for reference; not in active panel.
+    # "gemini": {
+    #     "base_url":    _OR_BASE,
+    #     "model":       "google/gemini-3-pro-image",
+    #     "api_key_env": "OPENROUTER_API_KEY",
+    #     "json_mode":   True,
+    #     "extra_body":  None,
+    #     "default_headers": _OR_HEADERS,
+    # },
     "gpt": {
         "base_url":    _OR_BASE,
         "model":       "openai/gpt-5.6-sol",
@@ -307,8 +309,8 @@ def call_api_sync(
 
     for attempt in range(MAX_RETRIES + 2):
         try:
-            # Gemini via OpenRouter does not support response_format=json_object;
-            # skip it for that model to avoid empty/None content.
+            # Skip response_format=json_object for models that do not support it
+            # (Gemini excluded from panel, but guard kept for safety).
             use_json_fmt = cfg.get("json_mode", True) and ACTIVE_MODEL != "gemini"
             create_kwargs: dict = dict(
                 model=model,
@@ -706,7 +708,7 @@ def main():
     parser.add_argument("--model",         default="deepseek",
                         choices=list(MODEL_CONFIGS),
                         help=("Which judge model to use (default: deepseek). "
-                              "OpenRouter models: claude_or, gemini, gpt. "
+                              "OpenRouter models: claude_or, gpt (gemini excluded: same family as subject). "
                               "Direct API models: deepseek, claude, gpt4o."))
     parser.add_argument("--run_tag",       required=True,
                         help="Tag for this run (used as output subdirectory name)")
