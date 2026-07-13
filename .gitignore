@@ -43,6 +43,6 @@ runs/
 # firstaidqa_v1_enriched*.json
 
 # Judging blinding artifacts (de-anonymize before release)
-judging/blind_map.json
 judging/cache/
-judging/results/
+# blind_map released with results
+# judging/results/ — included

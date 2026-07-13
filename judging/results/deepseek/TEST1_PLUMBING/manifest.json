@@ -1,0 +1,25 @@
+{
+  "run_tag": "TEST1_PLUMBING",
+  "run_at": "2026-07-10T19:25:51.034479+00:00",
+  "model_config": "deepseek",
+  "model_returned": "deepseek-v4-flash",
+  "model_requested": "deepseek-chat",
+  "base_url": "https://api.deepseek.com",
+  "temperature": 0,
+  "max_tokens": 400,
+  "template_hash": "80c50ee9919e00dbd4128bbc22b15efc630659284025dbc752ac29b5e77d888f",
+  "quality_hash": "58821796adabf01ae2e83940c00d34e892d0d73b02d3ff7cbb26ae712990b54d",
+  "safety_hash": "51006a819bd8711e080a0e5908b3f4f2c77062c70b1e2cf17ffdfd59239246de",
+  "git_commit": "9fe9de5",
+  "shuffle_seed": 2026,
+  "nonce": null,
+  "n_items": 10,
+  "n_calls_total": 20,
+  "n_calls_new": 20,
+  "n_cache_hits": 0,
+  "n_invalid": 0,
+  "prompt_types": [
+    "quality",
+    "safety"
+  ]
+}

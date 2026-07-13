@@ -1,0 +1,25 @@
+{
+  "run_tag": "CONTROLS_GATE",
+  "run_at": "2026-07-11T12:29:22.545763+00:00",
+  "model_config": "claude_or",
+  "model_returned": "anthropic/claude-4.8-opus-20260528",
+  "model_requested": "anthropic/claude-opus-4.8",
+  "base_url": "https://openrouter.ai/api/v1",
+  "temperature": 0,
+  "max_tokens": 400,
+  "template_hash": "80c50ee9919e00dbd4128bbc22b15efc630659284025dbc752ac29b5e77d888f",
+  "quality_hash": "58821796adabf01ae2e83940c00d34e892d0d73b02d3ff7cbb26ae712990b54d",
+  "safety_hash": "51006a819bd8711e080a0e5908b3f4f2c77062c70b1e2cf17ffdfd59239246de",
+  "git_commit": "72b1070",
+  "shuffle_seed": 2026,
+  "nonce": null,
+  "n_items": 45,
+  "n_calls_total": 90,
+  "n_calls_new": 90,
+  "n_cache_hits": 6,
+  "n_invalid": 0,
+  "prompt_types": [
+    "quality",
+    "safety"
+  ]
+}
