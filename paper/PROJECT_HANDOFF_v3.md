@@ -617,4 +617,71 @@ cd C:\Personal_Endeavours\Fine_Tuning
 
 ```powershell
 conda activate fine_tuning
-cd C:\Personal_Endeavours\Fine_
+cd C:\Personal_Endeavours\Fine_Tuning
+.\run_v2_baseline.ps1
+```
+
+Runs `train_v2.py` with `--quant 4bit --lora_r 16 --lora_alpha 32 --lr 1e-4 --patience 3 --seed 42`. Expect ~1.25 hours on a 12 GB GPU. Val loss should land within 0.01 of 1.3400.
+
+### ⚠️ Do Not Use `rag_inference.py` for Evaluation
+
+`rag_inference.py` is a legacy prototype: top-3 retrieval, no gap-question gate, dense retriever as primary. It will inject dangerous content for old-bank Q21 (infant choking) and old-bank Q22 (embedded object in wound) — the v2 bank equivalents are: no direct equivalent for infant choking; V2Q05 for embedded object. For all RAG evaluation use `enhanced_inference.py --rag_retriever bm25`.
+
+### Key File Locations
+
+| File | Purpose |
+|---|---|
+| `experiments/10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337/adapter/` | **Final adapter weights** |
+| `evaluations/eval_bank_v2_40q/eval_bank_v2.json` | **Current evaluation standard** — 41Q, offline references, SC=11 |
+| `evaluations/eval_bank_v2_40q/DESIGN_RATIONALE.md` | Statistical design documentation |
+| `rubric_v2.md` | Current offline-deployment judge rubric (EMS-only capped 2/5) |
+| `build_v2_judge_prompt.py` | Dynamic judge prompt builder with --exclude flag |
+| `evaluations/v2_comprehensive_20260606_200713/` | Current comprehensive eval run (6 configs, 4 judge files) |
+| `evaluations/v2_comprehensive_20260606_200713/llm_judge_v2_prompt.txt` | Generated judge prompt (4 configs, 157k chars) |
+| `evaluations/t4_t6_isolation_20260606_034402/` | T4/T6 isolation run (6 configs, 3 judge files + synthesis) |
+| `evaluations/t4_t6_isolation_20260606_034402/llm_judge_synthesis.md` | 3-judge panel synthesis (3/7 complete) |
+| `evaluations/v2_comprehensive_20260606_195711/` | Partial v2 comprehensive run (A_BASE_4BIT only — initial test run, superseded by 200713) |
+| `evaluations/second_opinion_reference_audit_prompt.txt` | Paste-ready audit prompt for all 41 references |
+| `evaluations/enhanced_eval_20260512_014658/run.json` | Phase1-A: BM25 RAG only (old rubric/refs) |
+| `evaluations/enhanced_eval_20260512_014930/run.json` | Phase1-B: BM25 RAG + T2 (old rubric/refs) |
+| `evaluations/eval_20260509_124559/run.json` | 4-bit vs 8-bit 40Q comparison (old rubric/refs) |
+| `paper/notes/four_opinion_synthesis.md` | Expert synthesis on inference techniques (May 2026) |
+| `paper/notes/inference_implementation_plan.md` | Phase 1–5 implementation checklist with code |
+| `splits/10cat/train.json` | BM25 knowledge base (4,441 Q&A pairs) |
+
+### Do Not Touch
+
+- `splits/10cat/test.json` — locked test split. Never used for training or evaluation. Reserved for final end-to-end assessment.
+- `experiments/10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337/adapter/` — confirmed final adapter. New experiments use new output directories.
+- `train.py`, `data.py` (v1 scripts) — preserved for v1 reproducibility.
+- `rag_inference.py` — legacy, no gap gate. See warning above.
+
+### Git State
+
+Remote: `https://github.com/i-am-mushfiq/FirstAidQA-gemma2b-QLoRA`  
+Current HEAD: `0793d77` (rebased July 1, 2026 over `5749209 Remove citation section from README`)  
+All project files committed. No uncommitted changes at session end (verify with `git status`).
+
+### Exact Metric Reference Table
+
+| Configuration | Val loss | ROUGE-L | SC ROUGE-L | Mean (judge/bank) | SC mean | tok/s | Dangerous |
+|---|---|---|---|---|---|---|---|
+| Base FP16 (no FT) | — | 0.1925 | 0.1841 | — | — | 53.6 | — |
+| FP16 LoRA (early, rejected) | — | 0.1560 | 0.1472 | — | — | 29.6 | — |
+| v1 r16 baseline | 1.3600 | 0.2526 | 0.2320 | — | — | 19.1 | — |
+| v1 r8 (broken α/r) | 1.3750 | 0.2390 | 0.2180 | — | — | 19.3 | — |
+| **v2 4-bit FINAL** | **1.3400** | **0.2352** | **0.2245** | 2.18 DS/40Q-v1 | 1.61 | 19.3 | 3/40 |
+| v2 8-bit (rejected) | 1.3614 | 0.2347 | 0.2214 | 1.80 DS/40Q-v1 | 1.19 | 10.6 | 5/40 |
+| T2+T4+T6 combined | — | 0.1963 | 0.1815 | ~1.52 | — | 4.1 | >3/40 |
+| Phase1-A (BM25 only) | — | 0.2194 | 0.2036 | pending old rubric | — | 18.8 | — |
+| Phase1-B (BM25+T2) | — | 0.2157 | 0.1974 | pending old rubric | — | 19.0 | — |
+| **v2 A BASE_4BIT** | — | — | — | 1.85 DS/41Q-v2 | 1.64 | — | 16/41 |
+| **v2 B FINETUNED_4BIT** | — | — | — | 2.78 DS/41Q-v2 | 2.18 | — | 7/41 |
+| **v2 E T6_IMPROVED** | — | — | — | 2.71 DS/41Q-v2 | 2.18 | — | 4/41 |
+| **v2 F RAG_BM25** | — | — | — | **3.22 DS/41Q-v2** | **3.18** | — | 5/41 |
+
+*DS = DeepSeek as primary scorer. v2 comprehensive scores use offline rubric + offline reference answers. v1-era scores use EMS-first rubric + EMS-first references. These two groups are not directly comparable. Cross-judge panel synthesis for v2 comprehensive is pending.*
+
+---
+
+*Document v3, July 2026. Supersedes PROJECT_HANDOFF_v2.md (May 2026). For detailed work log see paper/SESSION_LOG_v2_to_v3.md. GitHub: https://github.com/i-am-mushfiq/FirstAidQA-gemma2b-QLoRA at 0793d77.*

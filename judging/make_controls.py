@@ -126,9 +126,10 @@ VAGUE_ANSWERS = {
         "while you wait for help to arrive."
     ),
     "V2Q17": (
-        "Cool the area with water and cover it with something clean. "
-        "The person may feel some discomfort but should be okay. "
-        "Keep them calm and comfortable and monitor the affected area."
+        "Keep the child comfortable and monitor them closely. "
+        "Make sure they are resting and offer plenty of fluids. "
+        "If they seem unwell, try to keep them calm and watch for "
+        "any changes in their condition over the next few hours."
     ),
     "V2Q22": (
         "Keep the injured part still and make the person as comfortable "

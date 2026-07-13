@@ -370,4 +370,27 @@ The remaining 3 judges (Claude, Gemini, Kimi K2) have returned scores but per-qu
 
 **Additional gaps confirmed by v2 comprehensive evaluation (DeepSeek, all configs <= 2/5):**
 - AED protocol (V2Q11): full pad placement, shock-then-resume-compressions sequence absent in all configs (HIGH) — not in T4/T6 isolation bank
-- Seizure first aid (V2Q25): lower before fall, do not restrain, do not put anything 
+- Seizure first aid (V2Q25): lower before fall, do not restrain, do not put anything in mouth, recovery position post-seizure, timing for when to seek help — all configs gave incomplete or wrong protocols (HIGH) — note this is V2Q25 (seizure), not old bank Q25 (naloxone); both clinical topics need augmentation
+
+**T4 development track:**
+- Add n-gram repetition penalty (`no_repeat_ngram_size=4` or similar) to T4_IMPROVED
+- Add max-sentence-repeat guard (truncate and flag if identical sentence appears ≥3 times)
+- Rerun C config; must beat A on SC mean to proceed
+
+**T6 development track:**
+- Rewrite gate prompt anchored to rubric danger categories exactly (embedded object removal, spinal movement without log-roll, tourniquet removal, food/water to unconscious, 4-sided chest seal, abdominal thrusts on infant, CPR before back blows on conscious choker)
+- Add wrong-sequence detection (e.g., "compress before rescue breath" for drowning child)
+- Back-test against known false negatives: Q29, Q17, Q36, Q21
+- Target: true-positive rate ≥ 80%, false-positive rate ≤ 20% on labelled set
+- T6_IMPROVED is the only technique with 2/3 judge support for continuation
+
+**Phase infrastructure:**
+- Phase 2 (category-conditional system prompts) remains planned — see `paper/notes/inference_implementation_plan.md`
+- Phase 3 (post-generation safety filter) remains planned
+- Phase 4 (combined stack evaluation) remains planned
+- C_FINETUNED_8BIT evaluation: deferred, run separately when needed
+- D_T4_IMPROVED evaluation: deferred pending loop-fix
+
+---
+
+*Session log compiled July 2026. GitHub: `https://github.com/i-am-mushfiq/FirstAidQA-gemma2b-QLoRA` at `0793d77`.*

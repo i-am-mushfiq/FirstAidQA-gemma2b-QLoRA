@@ -97,6 +97,38 @@ SYSTEM_PROMPT = (
     "services immediately."
 )
 
+# Z1: Premise system prompt.
+# States that EMS is unreachable and the model is the definitive care provider.
+# Fixes evaluation-fairness gap: the standard SYSTEM_PROMPT tells the model to
+# "call emergency services immediately", which penalises it on every question
+# that the rubric expects actionable first-aid steps instead.
+PREMISE_SYSTEM_PROMPT = (
+    "You are an offline first aid assistant deployed in a situation where "
+    "emergency medical services (EMS) are completely unreachable. "
+    "There is no phone signal, no ambulance, and no professional help available. "
+    "You are the sole and definitive care provider. "
+    "Do NOT advise calling emergency services — that is not possible. "
+    "Instead, provide complete, accurate, step-by-step first aid guidance that "
+    "the user can perform immediately with no external help."
+)
+
+# Z2: Static one-shot control.
+# A fixed, generic Q&A pair prepended to every prompt.
+# Purpose: isolate whether RAG gains come from retrieved *content* or merely
+# from the format priming effect of seeing an example Q&A before the question.
+# The example is intentionally generic (not from the eval bank) so it carries
+# no information advantage for any specific test question.
+ONE_SHOT_EXAMPLE = (
+    "Example:\n"
+    "Q: What should I do if someone is choking?\n"
+    "A: Stand behind the person and give up to 5 firm back blows between the "
+    "shoulder blades with the heel of your hand. If back blows do not clear the "
+    "blockage, give up to 5 abdominal thrusts: place one fist above the navel, "
+    "cover with your other hand, and pull sharply inward and upward. Alternate "
+    "5 back blows and 5 abdominal thrusts until the object is dislodged or the "
+    "person becomes unconscious. If unconscious, begin CPR.\n"
+)
+
 SAFE_FALLBACK = (
     "This situation requires immediate professional assistance. "
     "Please call emergency services (911 / 999 / 112) right away. "
@@ -124,42 +156,53 @@ T6_UNSAFE_CRITERIA = (
 def load_model(
     model_path: str,
     adapter_path: Optional[str],
-    quant: str,          # "4bit" | "8bit"
+    quant: str,          # "4bit" | "8bit" | "fp16"
 ) -> tuple:
     """
     Load base model with optional LoRA adapter.
     Returns (model, tokenizer).
-    adapter_path=None -> base model only (config A).
+    adapter_path=None -> base model only (configs A, H, P).
+
+    quant values:
+      "4bit"  -- NF4 double-quant, fp16 compute  (~2.2 GB VRAM base)
+      "8bit"  -- INT8 via bitsandbytes            (~4.4 GB VRAM base)
+      "fp16"  -- no quantisation, pure fp16       (~5.0 GB VRAM base)
+                 NOTE: Gemma 2B-IT is ~5 GB in fp16; ensure >=6 GB free VRAM.
     """
     print(f"\n[load] model={model_path}  quant={quant}  "
           f"adapter={adapter_path or '(none)'}")
 
-    if quant == "4bit":
-        bnb = BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_quant_type="nf4",
-            bnb_4bit_use_double_quant=True,
-            bnb_4bit_compute_dtype=torch.float16,
-        )
-    elif quant == "8bit":
-        bnb = BitsAndBytesConfig(load_in_8bit=True)
-    else:
-        raise ValueError(f"Unknown quant: {quant}")
-
-    # Tokenizer: load from adapter dir if available (has chat template),
-    # otherwise load from model dir.
     tok_source = adapter_path if adapter_path else model_path
     tokenizer = AutoTokenizer.from_pretrained(tok_source)
     if tokenizer.pad_token is None:
         tokenizer.pad_token    = tokenizer.unk_token
         tokenizer.pad_token_id = tokenizer.unk_token_id
 
-    base = AutoModelForCausalLM.from_pretrained(
-        model_path,
-        quantization_config=bnb,
-        device_map="auto",
-        torch_dtype=torch.float16,
-    )
+    if quant == "fp16":
+        # No BitsAndBytes quantisation -- load directly in fp16.
+        base = AutoModelForCausalLM.from_pretrained(
+            model_path,
+            device_map="auto",
+            torch_dtype=torch.float16,
+        )
+    else:
+        if quant == "4bit":
+            bnb = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_quant_type="nf4",
+                bnb_4bit_use_double_quant=True,
+                bnb_4bit_compute_dtype=torch.float16,
+            )
+        elif quant == "8bit":
+            bnb = BitsAndBytesConfig(load_in_8bit=True)
+        else:
+            raise ValueError(f"Unknown quant: {quant!r}  (valid: '4bit', '8bit', 'fp16')")
+        base = AutoModelForCausalLM.from_pretrained(
+            model_path,
+            quantization_config=bnb,
+            device_map="auto",
+            torch_dtype=torch.float16,
+        )
 
     if adapter_path:
         model = PeftModel.from_pretrained(base, adapter_path)
@@ -263,6 +306,24 @@ def prompt_length_hint(question: str) -> str:
         f"{question}\n\n"
         f"Please provide a thorough, step-by-step response covering all key actions."
         f"<end_of_turn>\n"
+        f"<start_of_turn>model\n"
+    )
+
+
+def prompt_premise(question: str) -> str:
+    """Z1: Uses PREMISE_SYSTEM_PROMPT (EMS unreachable, model is sole provider)."""
+    return (
+        f"<start_of_turn>user\n{PREMISE_SYSTEM_PROMPT}\n\n{question}<end_of_turn>\n"
+        f"<start_of_turn>model\n"
+    )
+
+
+def prompt_oneshot(question: str) -> str:
+    """Z2: Static one-shot control -- generic Q&A prepended for format-priming baseline."""
+    return (
+        f"<start_of_turn>user\n{SYSTEM_PROMPT}\n\n"
+        f"{ONE_SHOT_EXAMPLE}\n"
+        f"Now answer this question:\n{question}<end_of_turn>\n"
         f"<start_of_turn>model\n"
     )
 
@@ -387,6 +448,36 @@ def run_t6_improved(model, tokenizer, q: dict, stop_ids: list, max_new: int) -> 
     }
 
 
+def run_premise(model, tokenizer, q: dict, stop_ids: list,
+                max_new: int, config_label: str) -> dict:
+    """
+    Z1 -- Premise system prompt (EMS unreachable, model is sole care provider).
+
+    Identical inference path to greedy, but PREMISE_SYSTEM_PROMPT replaces
+    SYSTEM_PROMPT.  Removes the structural EMS-referral penalty so we can
+    measure the model's true first-aid capability against the rubric.
+    """
+    r = generate(model, tokenizer, prompt_premise(q["question"]),
+                 max_new_tokens=max_new, stop_ids=stop_ids)
+    return {**r, "config": config_label, "meta": {"technique": "premise_prompt"}}
+
+
+def run_oneshot(model, tokenizer, q: dict, stop_ids: list,
+                max_new: int, config_label: str) -> dict:
+    """
+    Z2 -- Static one-shot control (format-priming baseline).
+
+    Prepends ONE_SHOT_EXAMPLE (a fixed generic Q&A, NOT from the eval bank)
+    before every question using the standard SYSTEM_PROMPT.
+
+    Ablation purpose: if BM25 RAG > Z2, the gain is from retrieved *content*.
+    If Z2 ≈ BM25 RAG, the gain is from *format priming* (seeing an example).
+    """
+    r = generate(model, tokenizer, prompt_oneshot(q["question"]),
+                 max_new_tokens=max_new, stop_ids=stop_ids)
+    return {**r, "config": config_label, "meta": {"technique": "oneshot_control"}}
+
+
 def run_rag_bm25(model, tokenizer, q: dict, stop_ids: list,
                  retriever: BM25GatedRetriever, max_new: int,
                  config_label: str = "F_RAG_BM25") -> dict:
@@ -458,19 +549,65 @@ def run_questions(
         sc_tag = " [SC]" if q["safety_critical"] else ""
         print(f"  [{config_label}] {qid}{sc_tag}  {q['question'][:55]}...")
         # Dispatch
-        if config_label == "A_BASE_4BIT":
-            r = run_base_4bit(model, tokenizer, q, stop_ids, max_new)
-        elif config_label in ("B_FINETUNED_4BIT", "C_FINETUNED_8BIT"):
+        # Greedy configs (base or fine-tuned, any quant -- just call generate)
+        if config_label in (
+            "A_BASE_4BIT",
+            "H_BASE_8BIT",
+            "P_BASE_FP16",
+        ):
             r = run_finetuned_greedy(model, tokenizer, q, stop_ids, max_new, config_label)
-        elif config_label == "D_T4_IMPROVED":
+        elif config_label in (
+            "B_FINETUNED_4BIT",
+            "C_FINETUNED_8BIT",
+            # 8-bit base + 4-bit-trained adapter (quant mismatch but PEFT supports it)
+            "I_FT4ON8_GREEDY",
+            # fp16 base + adapter
+            "Q_FT4ON16_GREEDY",
+            # 8-bit-trained adapter on 8-bit base
+            "R_FT8ON8_GREEDY",
+            # 8-bit-trained adapter on 4-bit base
+            "S_FT8ON4_GREEDY",
+        ):
+            r = run_finetuned_greedy(model, tokenizer, q, stop_ids, max_new, config_label)
+        # T4 soft-retry configs
+        elif config_label in (
+            "D_T4_IMPROVED",       # 4-bit base + canonical 4-bit adapter
+            "J_8BIT_T4",           # 8-bit base + canonical 4-bit adapter
+            "K_BASE8_T4",          # 8-bit base, no adapter
+            "T_FT4ON16_T4",        # fp16 base + canonical 4-bit adapter
+            "U_BASE16_T4",         # fp16 base, no adapter
+        ):
             r = run_t4_improved(model, tokenizer, q, stop_ids, floor_map or {}, max_new)
-        elif config_label == "E_T6_IMPROVED":
+            r = {**r, "config": config_label}
+        # T6 safety gate configs
+        elif config_label in (
+            "E_T6_IMPROVED",       # 4-bit base + canonical 4-bit adapter
+            "L_8BIT_T6",           # 8-bit base + canonical 4-bit adapter
+            "M_BASE8_T6",          # 8-bit base, no adapter
+            "V_FT4ON16_T6",        # fp16 base + canonical 4-bit adapter
+            "W_BASE16_T6",         # fp16 base, no adapter
+        ):
             r = run_t6_improved(model, tokenizer, q, stop_ids, max_new)
-        elif config_label in ("F_RAG_BM25", "G_BASE_RAG"):
+            r = {**r, "config": config_label}
+        # BM25 RAG configs
+        elif config_label in (
+            "F_RAG_BM25",          # 4-bit base + canonical 4-bit adapter + BM25
+            "G_BASE_RAG",          # 4-bit base, no adapter + BM25
+            "N_8BIT_RAG",          # 8-bit base + canonical 4-bit adapter + BM25
+            "O_BASE8_RAG",         # 8-bit base, no adapter + BM25
+            "X_FT4ON16_RAG",       # fp16 base + canonical 4-bit adapter + BM25
+            "Y_BASE16_RAG",        # fp16 base, no adapter + BM25
+        ):
             r = run_rag_bm25(model, tokenizer, q, stop_ids, retriever, max_new,
                              config_label=config_label)
+        # Z1 -- premise system prompt (EMS unreachable)
+        elif config_label in ("Z1_PREMISE_4BIT",):
+            r = run_premise(model, tokenizer, q, stop_ids, max_new, config_label)
+        # Z2 -- static one-shot control (format-priming baseline)
+        elif config_label in ("Z2_ONESHOT_4BIT",):
+            r = run_oneshot(model, tokenizer, q, stop_ids, max_new, config_label)
         else:
-            raise ValueError(f"Unknown config: {config_label}")
+            raise ValueError(f"Unknown config: {config_label!r}")
 
         record = {
             "question_id":              qid,
@@ -594,19 +731,66 @@ def save_run_json(out_dir: str, all_results: dict, args_dict: dict):
 # Main
 # ---------------------------------------------------------------------------
 # Camera-ready run excludes D (loop-fix pending) and uses A,B,C,E,F,G.
-ALL_CONFIGS = ["A", "B", "C", "D", "E", "F", "G"]
-CONFIG_MAP  = {
-    "A": "A_BASE_4BIT",
-    "B": "B_FINETUNED_4BIT",
-    "C": "C_FINETUNED_8BIT",
-    "D": "D_T4_IMPROVED",
-    "E": "E_T6_IMPROVED",
-    "F": "F_RAG_BM25",
-    "G": "G_BASE_RAG",
+# ---------------------------------------------------------------------------
+# Config registry
+# Naming convention:  <letter>_<BASE_QUANT><_ADAPTER?><_TECHNIQUE?>
+#
+# Letter groups:
+#   A–G   Camera-ready core configs (4-bit base)
+#   H–O   8-bit base variants
+#   P–Y   fp16 base variants
+#
+# Techniques:  (none)=greedy  T4=soft-retry  T6=safety-gate  RAG=BM25
+# Base quants: 4bit  8bit  fp16
+# Adapters:    none (base only) | canonical 4-bit v2 | canonical 8-bit
+# ---------------------------------------------------------------------------
+CONFIG_MAP = {
+    # ── 4-bit base ──────────────────────────────────────────────────────────
+    "A": "A_BASE_4BIT",         # base 4-bit, no adapter, greedy
+    "B": "B_FINETUNED_4BIT",   # 4-bit base + canonical 4-bit adapter, greedy
+    "C": "C_FINETUNED_8BIT",   # 8-bit base + canonical 4-bit adapter, greedy  ← NOTE: quant=8bit
+    "D": "D_T4_IMPROVED",      # 4-bit base + canonical 4-bit adapter, T4
+    "E": "E_T6_IMPROVED",      # 4-bit base + canonical 4-bit adapter, T6
+    "F": "F_RAG_BM25",         # 4-bit base + canonical 4-bit adapter, BM25
+    "G": "G_BASE_RAG",         # 4-bit base, no adapter, BM25
+    # ── 8-bit base ──────────────────────────────────────────────────────────
+    "H": "H_BASE_8BIT",        # 8-bit base, no adapter, greedy
+    "I": "I_FT4ON8_GREEDY",    # 8-bit base + canonical 4-bit adapter, greedy
+    "J": "J_8BIT_T4",          # 8-bit base + canonical 4-bit adapter, T4
+    "K": "K_BASE8_T4",         # 8-bit base, no adapter, T4
+    "L": "L_8BIT_T6",          # 8-bit base + canonical 4-bit adapter, T6
+    "M": "M_BASE8_T6",         # 8-bit base, no adapter, T6
+    "N": "N_8BIT_RAG",         # 8-bit base + canonical 4-bit adapter, BM25
+    "O": "O_BASE8_RAG",        # 8-bit base, no adapter, BM25
+    # ── fp16 base (no quantisation) ─────────────────────────────────────────
+    "P": "P_BASE_FP16",        # fp16 base, no adapter, greedy
+    "Q": "Q_FT4ON16_GREEDY",   # fp16 base + canonical 4-bit adapter, greedy
+    "R": "R_FT8ON8_GREEDY",    # 8-bit base + 8-bit-trained adapter, greedy
+    "S": "S_FT8ON4_GREEDY",    # 4-bit base + 8-bit-trained adapter, greedy
+    "T": "T_FT4ON16_T4",       # fp16 base + canonical 4-bit adapter, T4
+    "U": "U_BASE16_T4",        # fp16 base, no adapter, T4
+    "V": "V_FT4ON16_T6",       # fp16 base + canonical 4-bit adapter, T6
+    "W": "W_BASE16_T6",        # fp16 base, no adapter, T6
+    "X": "X_FT4ON16_RAG",      # fp16 base + canonical 4-bit adapter, BM25
+    "Y": "Y_BASE16_RAG",       # fp16 base, no adapter, BM25
+    # ── technique variants ───────────────────────────────────────────────────
+    # Z1/Z2 are registered for 4-bit base + canonical 4-bit adapter initially.
+    # Extend to other (quant × adapter) slots after the two clarifying questions
+    # are answered (which combos? stack with T4/T6/BM25?).
+    "Z1": "Z1_PREMISE_4BIT",    # 4-bit base + canonical adapter, premise prompt
+    "Z2": "Z2_ONESHOT_4BIT",    # 4-bit base + canonical adapter, one-shot control
 }
+ALL_CONFIGS = sorted(CONFIG_MAP.keys())
 
-# Default camera-ready set: D excluded (loop-fix pending)
+# Default camera-ready set (original 6; D excluded — loop-fix pending)
 CAMERA_READY_CONFIGS = ["A", "B", "C", "E", "F", "G"]
+
+# Convenience groups for sweep runner
+CONFIGS_4BIT_BASE   = ["A", "B", "D", "E", "F", "G"]
+CONFIGS_8BIT_BASE   = ["H", "I", "J", "K", "L", "M", "N", "O"]
+CONFIGS_FP16_BASE   = ["P", "Q", "T", "U", "V", "W", "X", "Y"]
+CONFIGS_8BIT_ADAPTER = ["R", "S"]  # 8-bit-trained adapter on different base quants
+CONFIGS_TECHNIQUE    = ["Z1", "Z2"]  # premise prompt and one-shot control
 
 
 def parse_args():
@@ -617,11 +801,19 @@ def parse_args():
     p.add_argument("--questions",     default=DEFAULT_QBANK)
     p.add_argument("--configs",       nargs="+", default=CAMERA_READY_CONFIGS,
                    choices=ALL_CONFIGS,
-                   help="Configs to run. Default: A B C E F G (D excluded). "
-                        "A=base, B=ft4, C=ft8, D=T4(excl), E=T6, F=RAG-ft, G=RAG-base")
+                   help=(
+                       "Configs to run. Default: A B C E F G (camera-ready core). "
+                       "4-bit base: A B C D E F G  |  "
+                       "8-bit base: H I J K L M N O  |  "
+                       "fp16 base:  P Q T U V W X Y  |  "
+                       "8-bit adapter: R S"
+                   ))
     p.add_argument("--max_new_tokens",type=int, default=MAX_NEW_TOKENS)
     p.add_argument("--camera_ready",  action="store_true",
                    help="Tag output directory CAMERA_READY_<timestamp>")
+    p.add_argument("--sweep_label",   default="",
+                   help="If set, output directory is named SWEEP_<label>_<timestamp> "
+                        "instead of v2_comprehensive_<timestamp>. Used by run_adapter_sweep.ps1.")
     return p.parse_args()
 
 
@@ -650,6 +842,11 @@ def main():
     ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
     if getattr(args, "camera_ready", False):
         dir_name = f"CAMERA_READY_{ts}"
+    elif getattr(args, "sweep_label", ""):
+        # Sanitise label: replace characters invalid in directory names
+        import re as _re
+        safe_label = _re.sub(r"[^\w\-]", "_", args.sweep_label)
+        dir_name = f"SWEEP_{safe_label}_{ts}"
     else:
         dir_name = f"v2_comprehensive_{ts}"
     out_dir = os.path.join(EVAL_OUT_DIR, dir_name)
@@ -659,54 +856,38 @@ def main():
     all_results: dict[str, list] = {}
     all_metrics: dict[str, dict] = {}
 
-    # Build BM25 retriever once if any RAG config is requested (F or G).
-    # The topic-gated BM25GatedRetriever is shared between F and G -- the only
-    # difference is which model is loaded for generation.
-    rag_configs_requested = [c for c in ["F_RAG_BM25", "G_BASE_RAG"] if c in requested]
-    retriever: BM25GatedRetriever | None = None
-    if rag_configs_requested:
+    # ---------------------------------------------------------------------------
+    # Build BM25 retriever once -- shared by all RAG configs regardless of quant.
+    # ---------------------------------------------------------------------------
+    ALL_RAG_CONFIGS = {
+        "F_RAG_BM25", "G_BASE_RAG",
+        "N_8BIT_RAG", "O_BASE8_RAG",
+        "X_FT4ON16_RAG", "Y_BASE16_RAG",
+    }
+    rag_needed = [c for c in requested if c in ALL_RAG_CONFIGS]
+    retriever = None
+    if rag_needed:
         if not os.path.exists(TRAIN_SPLIT):
             print(f"[RAG] WARNING: train split not found at {TRAIN_SPLIT}")
-            print(f"[RAG] Excluding RAG configs: {rag_configs_requested}")
-            requested = [c for c in requested if c not in rag_configs_requested]
+            print(f"[RAG] Excluding RAG configs: {rag_needed}")
+            requested = [c for c in requested if c not in ALL_RAG_CONFIGS]
         else:
             retriever = BM25GatedRetriever(TRAIN_SPLIT, gap_gate=True, verbose=False)
             print(f"[RAG] Topic-gated BM25 retriever ready ({len(retriever._questions):,} docs)")
 
-    # -- Pass 1: Base model 4-bit (no adapter) -- runs A and G ------------
-    pass1_configs = [c for c in ["A_BASE_4BIT", "G_BASE_RAG"] if c in requested]
-    if pass1_configs:
-        print("\n" + "=" * 60)
-        print(f"  PASS 1 -- Base model 4-bit (no adapter): {pass1_configs}")
-        print("=" * 60)
-        model, tokenizer = load_model(args.model_path, None, "4bit")
+    def _run_pass(pass_label, model_quant, adapter_path, config_labels):
+        """Load model once, run all configs in config_labels, unload."""
+        if not config_labels:
+            return
+        cfgs = [c for c in config_labels if c in requested]
+        if not cfgs:
+            return
+        print("\n" + "=" * 64)
+        print(f"  {pass_label}  configs={cfgs}")
+        print("=" * 64)
+        model, tokenizer = load_model(args.model_path, adapter_path, model_quant)
         stop_ids = get_stop_ids(tokenizer)
-
-        for config_label in pass1_configs:
-            print(f"\n{'-'*60}\n  Config {config_label}\n{'-'*60}")
-            res = run_questions(
-                config_label, model, tokenizer, questions,
-                stop_ids, args.max_new_tokens,
-                retriever=retriever,
-            )
-            all_results[config_label] = res
-            all_metrics[config_label] = compute_metrics(res)
-            save_config_json(out_dir, config_label, res, args_dict)
-
-        unload(model)
-
-    # -- Pass 2: Fine-tuned 4-bit (B, D, E, F) ----------------------------
-    pass2_configs = [c for c in ["B_FINETUNED_4BIT", "D_T4_IMPROVED",
-                                  "E_T6_IMPROVED", "F_RAG_BM25"]
-                     if c in requested]
-    if pass2_configs:
-        print("\n" + "=" * 60)
-        print(f"  PASS 2 -- Fine-tuned 4-bit: {pass2_configs}")
-        print("=" * 60)
-        model, tokenizer = load_model(args.model_path, args.adapter_4bit, "4bit")
-        stop_ids = get_stop_ids(tokenizer)
-
-        for config_label in pass2_configs:
+        for config_label in cfgs:
             print(f"\n{'-'*60}\n  Config {config_label}\n{'-'*60}")
             res = run_questions(
                 config_label, model, tokenizer, questions,
@@ -716,22 +897,77 @@ def main():
             all_results[config_label] = res
             all_metrics[config_label] = compute_metrics(res)
             save_config_json(out_dir, config_label, res, args_dict)
-
         unload(model)
 
-    # -- Pass 3: Fine-tuned 8-bit (C) -------------------------------------
-    if "C_FINETUNED_8BIT" in requested:
-        print("\n" + "=" * 60)
-        print("  PASS 3 -- Fine-tuned 8-bit")
-        print("=" * 60)
-        model, tokenizer = load_model(args.model_path, args.adapter_8bit, "8bit")
-        stop_ids = get_stop_ids(tokenizer)
-        res = run_questions("C_FINETUNED_8BIT", model, tokenizer, questions,
-                            stop_ids, args.max_new_tokens)
-        all_results["C_FINETUNED_8BIT"] = res
-        all_metrics["C_FINETUNED_8BIT"] = compute_metrics(res)
-        save_config_json(out_dir, "C_FINETUNED_8BIT", res, args_dict)
-        unload(model)
+    # ── Model loading passes ─────────────────────────────────────────────────
+    # Each pass loads the GPU once with (base_quant, adapter_path), runs all
+    # requested configs that share that (quant, adapter) pairing, then unloads.
+    # The _run_pass helper silently skips any label not in `requested`, so it is
+    # safe to list every possible config for a given (quant, adapter) slot.
+    #
+    # Pass order is chosen to keep VRAM usage low: 4-bit first, then 8-bit,
+    # then fp16 (largest).  Within each quant, no-adapter comes before adapter
+    # so config A (base 4-bit) always runs before config B (ft 4-bit).
+
+    # PASS 1 -- 4-bit base, no adapter
+    #   Greedy: A   BM25: G
+    _run_pass("PASS 1  4-bit base, no adapter",
+              "4bit", None,
+              ["A_BASE_4BIT", "G_BASE_RAG"])
+
+    # PASS 2 -- 4-bit base + canonical 4-bit adapter
+    #   Greedy: B   T4: D   T6: E   BM25: F
+    _run_pass("PASS 2  4-bit base + canonical 4-bit adapter",
+              "4bit", args.adapter_4bit,
+              ["B_FINETUNED_4BIT", "D_T4_IMPROVED", "E_T6_IMPROVED", "F_RAG_BM25"])
+
+    # PASS 3 -- 4-bit base + canonical 8-bit adapter
+    #   Greedy: S   (PEFT supports loading an 8-bit-trained adapter onto 4-bit base)
+    _run_pass("PASS 3  4-bit base + canonical 8-bit adapter",
+              "4bit", args.adapter_8bit,
+              ["S_FT8ON4_GREEDY"])
+
+    # PASS 4 -- 8-bit base, no adapter
+    #   Greedy: H   T4: K   T6: M   BM25: O
+    _run_pass("PASS 4  8-bit base, no adapter",
+              "8bit", None,
+              ["H_BASE_8BIT", "K_BASE8_T4", "M_BASE8_T6", "O_BASE8_RAG"])
+
+    # PASS 5 -- 8-bit base + canonical 4-bit adapter
+    #   Greedy: C/I   T4: J   T6: L   BM25: N
+    #   NOTE: C_FINETUNED_8BIT and I_FT4ON8_GREEDY are identical configs --
+    #   C is the camera-ready label; I is the extended-sweep alias.  Both
+    #   dispatch to run_finetuned_greedy so only one should be requested at a time.
+    _run_pass("PASS 5  8-bit base + canonical 4-bit adapter",
+              "8bit", args.adapter_4bit,
+              ["C_FINETUNED_8BIT", "I_FT4ON8_GREEDY",
+               "J_8BIT_T4", "L_8BIT_T6", "N_8BIT_RAG"])
+
+    # PASS 6 -- 8-bit base + canonical 8-bit adapter
+    #   Greedy: R
+    _run_pass("PASS 6  8-bit base + canonical 8-bit adapter",
+              "8bit", args.adapter_8bit,
+              ["R_FT8ON8_GREEDY"])
+
+    # PASS 7 -- fp16 base, no adapter
+    #   Greedy: P   T4: U   T6: W   BM25: Y
+    #   VRAM: ~5 GB fp16 base -- ensure sufficient free VRAM before requesting.
+    _run_pass("PASS 7  fp16 base, no adapter",
+              "fp16", None,
+              ["P_BASE_FP16", "U_BASE16_T4", "W_BASE16_T6", "Y_BASE16_RAG"])
+
+    # PASS 8 -- fp16 base + canonical 4-bit adapter
+    #   Greedy: Q   T4: T   T6: V   BM25: X
+    _run_pass("PASS 8  fp16 base + canonical 4-bit adapter",
+              "fp16", args.adapter_4bit,
+              ["Q_FT4ON16_GREEDY", "T_FT4ON16_T4", "V_FT4ON16_T6", "X_FT4ON16_RAG"])
+
+    # PASS 9 -- 4-bit base + canonical 4-bit adapter, technique variants
+    #   Z1: premise system prompt (EMS unreachable -- fixes evaluation-fairness gap)
+    #   Z2: static one-shot control (format-priming ablation baseline for RAG)
+    _run_pass("PASS 9  4-bit base + adapter, technique variants (Z1/Z2)",
+              "4bit", args.adapter_4bit,
+              ["Z1_PREMISE_4BIT", "Z2_ONESHOT_4BIT"])
 
     # -- Save & report -----------------------------------------------------
     # Add package versions to args_dict for reproducibility
