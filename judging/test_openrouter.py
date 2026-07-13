@@ -92,7 +92,7 @@ def test_model(family: str, model_id: str, client: OpenAI) -> dict:
 def main():
     api_key = os.environ.get("OPENROUTER_API_KEY", "")
     if not api_key:
-        api_key = "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"
+        sys.exit("ERROR: OPENROUTER_API_KEY environment variable not set")
 
     client = OpenAI(
         api_key=api_key,

@@ -12,8 +12,9 @@ except ImportError:
     print("ERROR: pip install openai"); sys.exit(1)
 
 BASE_URL = "https://openrouter.ai/api/v1"
-API_KEY  = os.environ.get("OPENROUTER_API_KEY",
-           "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")
+API_KEY  = os.environ.get("OPENROUTER_API_KEY", "")
+if not API_KEY:
+    sys.exit("ERROR: OPENROUTER_API_KEY environment variable not set")
 
 GOOGLE_MODELS = [
     "google/gemini-3-pro-image",
