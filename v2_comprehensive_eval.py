@@ -280,20 +280,31 @@ def generate(
 
 def _truncate_repetition(text: str,
                          max_repeats: int = REPETITION_MAX_REPEATS) -> str:
-    """Truncate at the point where any sentence repeats max_repeats times."""
-    sentences = re.split(r'(?<=[.!?])\s+', text)
+    """
+    Truncate at the point where any sentence repeats max_repeats times.
+
+    Returns the input UNCHANGED when nothing repeats that often. This is why it
+    slices the original string instead of splitting and re-joining: joining the
+    parts with a single space reflowed every multi-line answer, so
+    "1. Call for help.\\n2. Start CPR." came back as one paragraph with the
+    step structure destroyed -- on answers where no repetition existed at all.
+    That also made the repetition_truncated flag fire on almost every answer,
+    which defeats the point of recording it.
+
+    Sentence boundaries are punctuation followed by whitespace, the same rule
+    as before, which correctly leaves "e.g." and "5 p.m." intact.
+    """
+    starts = [0] + [m.end() for m in re.finditer(r"(?<=[.!?])\s+", text)]
     seen: dict[str, int] = {}
-    out: list[str] = []
-    for s in sentences:
-        key = s.strip().lower()
+    for index, start in enumerate(starts):
+        end = starts[index + 1] if index + 1 < len(starts) else len(text)
+        key = text[start:end].strip().lower()
         if not key:
-            out.append(s)
             continue
         seen[key] = seen.get(key, 0) + 1
         if seen[key] >= max_repeats:
-            break
-        out.append(s)
-    return " ".join(out)
+            return text[:start].rstrip()
+    return text
 
 
 # ---------------------------------------------------------------------------
