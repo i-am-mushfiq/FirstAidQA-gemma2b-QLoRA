@@ -17,12 +17,12 @@
     "expected_questions": 41
   },
   "judging": {
-    "script": "judge_per_item.py",
+    "script": "internal_eval/judge_per_item.py",
     "judges": ["gpt4o", "claude", "gemini", "grok", "deepseek", "kimi"],
     "analysis_suffix": "_ANALYSIS"
   },
   "analysis": {
-    "script": "stats_v2.py"
+    "script": "internal_eval/stats_v2.py"
   },
   "optional_manual_protocol": {
     "script": "build_v2_judge_prompt.py",

@@ -28,23 +28,36 @@ import csv
 import json
 import math
 import os
-import random
 import sys
+
+import numpy as np
 from collections import defaultdict
 from itertools import combinations
 from pathlib import Path
-from typing import Optional
 
-from build_v2_judge_prompt import RUBRIC
-from evaluation_protocol import (
+# This module lives in internal_eval/ but reads and writes repo-root paths
+# (evaluations/, the canonical rubric, the protocol contracts), so the root is
+# both the import root and the base for every relative path below.
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from build_v2_judge_prompt import RUBRIC  # noqa: E402
+from evaluation_protocol import (  # noqa: E402
     CAMERA_READY_CONFIG_RESOLUTION,
     default_analysis_dir,
     frozen_questions_from_run,
+    latest_run_dir,
     validate_camera_config_resolution,
     validate_run_prompt_provenance,
     validate_run_question_provenance,
 )
-from judge_per_item import JUDGES as JUDGE_CONFIGS, score_input_sha256
+# Imported by package path, not bare name, so this module and the test suite
+# share one judge_per_item module object rather than loading it twice.
+from internal_eval.judge_per_item import (  # noqa: E402
+    JUDGES as JUDGE_CONFIGS,
+    score_input_sha256,
+)
 
 # ---------------------------------------------------------------------------
 # Constants (must match judge_per_item.py and eval bank)
@@ -96,13 +109,18 @@ ALPHA = 0.05
 # ---------------------------------------------------------------------------
 
 def load_scores(analysis_dir: Path, bank: list, run: dict,
-                rubric_text: str) -> dict:
+                rubric_text: str, judges: list[str] | None = None) -> dict:
     """
     Load per-item scores from judgments/<judge>/<config>/<qid>.json.
+
+    *judges* is the panel to require; it defaults to all six configured judges.
+    Pass a subset to analyse a partial panel — the panel must still be complete
+    for every judge in it, so a half-scored judge is still refused.
 
     Returns:
       scores[config][qid][judge_id] = int score (0-5)
     """
+    panel = list(judges) if judges else list(JUDGES)
     judgment_dir = analysis_dir / "judgments"
     scores: dict = defaultdict(lambda: defaultdict(dict))
     errors = []
@@ -115,7 +133,7 @@ def load_scores(analysis_dir: Path, bank: list, run: dict,
             for answer in variants.get(cfg, {}).get("answers", [])
         }
         for qid, question in q_by_id.items():
-            for judge_id in JUDGES:
+            for judge_id in panel:
                 path = judgment_dir / judge_id / cfg / f"{qid}.json"
                 if not path.exists():
                     errors.append(f"missing {judge_id}/{cfg}/{qid}")
@@ -168,47 +186,39 @@ def panel_means(scores: dict, bank: list) -> dict:
     return pm
 
 
-def config_vectors(pm: dict, bank: list,
-                   sc_only: bool = False) -> dict:
-    """
-    Return dict[config] = list of panel-mean scores (one per question).
-    Questions are ordered by bank; missing scores are omitted.
-    """
-    sc_set = {q["question_id"] for q in bank if q.get("safety_critical")}
-    qids = [q["question_id"] for q in bank
-            if (not sc_only or q["question_id"] in sc_set)]
-
-    result = {}
-    for cfg in CAMERA_READY_CONFIGS:
-        cfg_pm = pm.get(cfg, {})
-        present_qids = [qid for qid in qids if qid in cfg_pm]
-        vec = [cfg_pm[qid] for qid in present_qids]
-        if vec:
-            result[cfg] = (vec, present_qids)
-    return result
-
 # ---------------------------------------------------------------------------
 # Bootstrap CI
 # ---------------------------------------------------------------------------
+
+def _percentile_indices(n_resamples: int, alpha: float) -> tuple[int, int]:
+    """Clamped percentile indices into a sorted resample array."""
+    lo = int(math.floor(alpha / 2 * n_resamples))
+    hi = int(math.ceil((1 - alpha / 2) * n_resamples)) - 1
+    return max(0, min(lo, n_resamples - 1)), max(0, min(hi, n_resamples - 1))
+
 
 def bootstrap_mean_ci(values: list[float],
                       n_resamples: int = BOOTSTRAP_RESAMPLES,
                       seed: int = BOOTSTRAP_SEED,
                       alpha: float = ALPHA) -> tuple[float, float, float]:
-    """Returns (point_estimate, ci_lo, ci_hi)."""
-    rng = random.Random(seed)
+    """
+    Returns (point_estimate, ci_lo, ci_hi) from a percentile bootstrap.
+
+    The seed is fixed for reproducibility, which means every config draws the
+    same resample index pattern. Each interval is still valid marginally, but
+    the intervals are not independent across configs: do not read overlap
+    between two configs' CIs as a hypothesis test. Use bootstrap_delta_ci,
+    which resamples the paired differences, for comparisons.
+    """
     n = len(values)
     if n == 0:
         return (float("nan"),) * 3
     point = sum(values) / n
-    resample_means = []
-    for _ in range(n_resamples):
-        sample = [rng.choice(values) for _ in range(n)]
-        resample_means.append(sum(sample) / len(sample))
-    resample_means.sort()
-    lo_idx = int(math.floor(alpha / 2 * n_resamples))
-    hi_idx = int(math.ceil((1 - alpha / 2) * n_resamples)) - 1
-    return point, resample_means[lo_idx], resample_means[hi_idx]
+    rng = np.random.default_rng(seed)
+    draws = rng.integers(0, n, size=(n_resamples, n))
+    resample_means = np.sort(np.asarray(values, dtype=float)[draws].mean(axis=1))
+    lo_idx, hi_idx = _percentile_indices(n_resamples, alpha)
+    return point, float(resample_means[lo_idx]), float(resample_means[hi_idx])
 
 
 def bootstrap_delta_ci(vec_x: list[float], vec_y: list[float],
@@ -220,20 +230,16 @@ def bootstrap_delta_ci(vec_x: list[float], vec_y: list[float],
     vec_x and vec_y must be same length and aligned by question.
     Returns (delta, ci_lo, ci_hi).
     """
-    rng = random.Random(seed)
     n = min(len(vec_x), len(vec_y))
     if n == 0:
         return (float("nan"),) * 3
-    pairs = list(zip(vec_x[:n], vec_y[:n]))
-    point = sum(x - y for x, y in pairs) / n
-    deltas = []
-    for _ in range(n_resamples):
-        sample = [rng.choice(pairs) for _ in range(n)]
-        deltas.append(sum(x - y for x, y in sample) / n)
-    deltas.sort()
-    lo_idx = int(math.floor(alpha / 2 * n_resamples))
-    hi_idx = int(math.ceil((1 - alpha / 2) * n_resamples)) - 1
-    return point, deltas[lo_idx], deltas[hi_idx]
+    diffs = np.asarray(vec_x[:n], dtype=float) - np.asarray(vec_y[:n], dtype=float)
+    point = float(diffs.mean())
+    rng = np.random.default_rng(seed)
+    draws = rng.integers(0, n, size=(n_resamples, n))
+    deltas = np.sort(diffs[draws].mean(axis=1))
+    lo_idx, hi_idx = _percentile_indices(n_resamples, alpha)
+    return point, float(deltas[lo_idx]), float(deltas[hi_idx])
 
 # ---------------------------------------------------------------------------
 # Sign test (exact binomial)
@@ -246,7 +252,6 @@ def binomial_exact_twosided(n_wins: int, n: int,
         return float("nan")
     # Exact using math.comb for small n; normal approximation otherwise
     if n <= 100:
-        from functools import reduce
         def binom_pmf(k, n, p):
             return math.comb(n, k) * (p ** k) * ((1 - p) ** (n - k))
         observed_p = binom_pmf(n_wins, n, p0)
@@ -265,10 +270,28 @@ def _norm_sf(z: float) -> float:
     return 0.5 * math.erfc(z / math.sqrt(2))
 
 
-def sign_test(vec_x: list[float], vec_y: list[float]) -> dict:
+def _median(values: list[float]) -> float:
+    """True median: the mean of the two central values when n is even."""
+    if not values:
+        return float("nan")
+    ordered = sorted(values)
+    n = len(ordered)
+    mid = n // 2
+    if n % 2:
+        return ordered[mid]
+    return (ordered[mid - 1] + ordered[mid]) / 2
+
+
+def sign_test(vec_x: list[float], vec_y: list[float],
+              expected_direction: str = "positive") -> dict:
     """
-    Paired sign test for x > y.
-    Returns wins, ties, losses, n_effective, p_value.
+    Paired sign test on x - y.
+
+    `significant` is the two-sided test as precommitted. `direction_match`
+    records whether the observed sign agrees with *expected_direction*, so a
+    result that is significant in the OPPOSITE direction cannot be read as
+    support for a hypothesis labelled "X > Y". Pass "either" for exploratory
+    comparisons that predict no direction.
     """
     wins = losses = ties = 0
     for x, y in zip(vec_x, vec_y):
@@ -277,9 +300,13 @@ def sign_test(vec_x: list[float], vec_y: list[float]) -> dict:
         else:       ties += 1
     n_eff = wins + losses
     p = binomial_exact_twosided(wins, n_eff) if n_eff > 0 else float("nan")
+    observed = "positive" if wins > losses else "negative" if losses > wins else "zero"
     return {"wins": wins, "ties": ties, "losses": losses,
             "n_effective": n_eff, "p_value": round(p, 4) if not math.isnan(p) else None,
-            "significant": bool(not math.isnan(p) and p < ALPHA)}
+            "significant": bool(not math.isnan(p) and p < ALPHA),
+            "observed_direction": observed,
+            "expected_direction": expected_direction,
+            "direction_match": expected_direction == "either" or observed == expected_direction}
 
 # ---------------------------------------------------------------------------
 # Judge agreement
@@ -337,19 +364,20 @@ def spearman_rho(x: list[float], y: list[float]) -> float:
     return numerator / denominator if denominator > 0 else float("nan")
 
 
-def compute_judge_agreement(scores: dict, bank: list) -> list[dict]:
+def compute_judge_agreement(scores: dict, bank: list,
+                            panel: list[str] | None = None) -> list[dict]:
     """
     For each pair of judges:
       - Kendall's tau over the 6 configs' mean-score rankings
       - Spearman rho over per-question panel means
     Returns list of row dicts.
     """
-    pm = panel_means(scores, bank)
+    judges = list(panel) if panel else list(JUDGES)
     all_qids = [q["question_id"] for q in bank]
 
     # Per-judge config ranking (by mean over their questions)
     judge_config_means: dict = {}
-    for j in JUDGES:
+    for j in judges:
         cfg_means = []
         for cfg in CAMERA_READY_CONFIGS:
             vals = [scores[cfg][qid].get(j)
@@ -361,7 +389,7 @@ def compute_judge_agreement(scores: dict, bank: list) -> list[dict]:
 
     # Per-judge per-question score vectors
     judge_q_vecs: dict = {}
-    for j in JUDGES:
+    for j in judges:
         vec = []
         for qid in all_qids:
             scores_for_q = []
@@ -374,7 +402,7 @@ def compute_judge_agreement(scores: dict, bank: list) -> list[dict]:
         judge_q_vecs[j] = vec
 
     rows = []
-    for j1, j2 in combinations(JUDGES, 2):
+    for j1, j2 in combinations(judges, 2):
         tau = kendalls_tau(judge_config_means[j1], judge_config_means[j2])
 
         # Spearman: filter to questions where both judges have a score
@@ -430,7 +458,7 @@ def compute_flag_counts(run_dir: Path) -> list[dict]:
     run_json = run_dir / "run.json"
     if not run_json.exists():
         return []
-    with open(run_json) as f:
+    with open(run_json, encoding="utf-8") as f:
         run = json.load(f)
 
     rows = []
@@ -458,7 +486,7 @@ def compute_flag_counts(run_dir: Path) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 def run_analysis(run_dir: Path, analysis_dir: Path, out_dir: Path,
-                 rubric_text: str) -> None:
+                 rubric_text: str, panel: list[str] | None = None) -> None:
     with open(run_dir / "run.json", encoding="utf-8") as f:
         run_meta = json.load(f)
     prompt_errors = validate_run_prompt_provenance(run_meta)
@@ -485,16 +513,24 @@ def run_analysis(run_dir: Path, analysis_dir: Path, out_dir: Path,
     bank = frozen_questions_from_run(run_meta)
 
     print(f"\nLoading per-item scores from {analysis_dir / 'judgments'} ...")
-    scores = load_scores(analysis_dir, bank, run_meta, rubric_text)
+    panel = list(panel) if panel else list(JUDGES)
+    scores = load_scores(analysis_dir, bank, run_meta, rubric_text, judges=panel)
 
     n_loaded = sum(
         len(scores[c][q]) for c in scores for q in scores[c]
     )
     print(f"  Loaded {n_loaded} individual judge scores")
 
-    expected_loaded = len(JUDGES) * len(CAMERA_READY_CONFIGS) * len(bank)
+    expected_loaded = len(panel) * len(CAMERA_READY_CONFIGS) * len(bank)
     if n_loaded != expected_loaded:
-        raise ValueError(f"Expected {expected_loaded} valid scores, loaded {n_loaded}")
+        raise ValueError(
+            f"Expected {expected_loaded} valid scores "
+            f"({len(panel)} judges x {len(CAMERA_READY_CONFIGS)} configs x {len(bank)} "
+            f"questions), loaded {n_loaded}"
+        )
+    if len(panel) < len(JUDGES):
+        print(f"  NOTE: analysing a {len(panel)}-judge panel ({', '.join(panel)}); "
+              f"paper/PRECOMMIT_STATS_v2.md specifies all {len(JUDGES)}.")
 
     pm = panel_means(scores, bank)
     all_qids = [q["question_id"] for q in bank]
@@ -513,9 +549,10 @@ def run_analysis(run_dir: Path, analysis_dir: Path, out_dir: Path,
         mean_sc,  ci_lo_sc,  ci_hi_sc  = bootstrap_mean_ci(sc_vals)
         mean_nsc, ci_lo_nsc, ci_hi_nsc = bootstrap_mean_ci(nsc_vals)
 
-        sd = (math.sqrt(sum((v - mean_all)**2 for v in all_vals) / len(all_vals))
+        # Sample SD (n-1): these are 41 sampled questions, not a population.
+        sd = (math.sqrt(sum((v - mean_all)**2 for v in all_vals) / (len(all_vals) - 1))
               if len(all_vals) > 1 else float("nan"))
-        med = sorted(all_vals)[len(all_vals)//2] if all_vals else float("nan")
+        med = _median(all_vals)
 
         print(f"  {CONFIG_LABELS.get(cfg, cfg):<22} "
               f"mean={mean_all:.3f} [{ci_lo_all:.3f},{ci_hi_all:.3f}]  "
@@ -569,13 +606,17 @@ def run_analysis(run_dir: Path, analysis_dir: Path, out_dir: Path,
                 continue
 
             delta, ci_lo, ci_hi = bootstrap_delta_ci(vx, vy)
-            st = sign_test(vx, vy)
+            # Primary hypotheses are directional ("H1: F > B"); secondary
+            # comparisons are exploratory and predict no direction.
+            st = sign_test(vx, vy, "positive" if is_primary else "either")
 
             marker = "(PRIMARY)" if is_primary else "(secondary)"
-            sig_str = "p={:.4f} {}".format(
-                st["p_value"] or float("nan"),
-                "[SIGNIFICANT]" if is_primary and st["significant"] else ""
-            )
+            p_display = float("nan") if st["p_value"] is None else st["p_value"]
+            verdict = ""
+            if is_primary and st["significant"]:
+                verdict = ("[SIGNIFICANT]" if st["direction_match"]
+                           else "[SIGNIFICANT, OPPOSITE DIRECTION]")
+            sig_str = f"p={p_display:.4f} {verdict}"
             print(f"  {label:<30} delta={delta:+.3f} [{ci_lo:+.3f},{ci_hi:+.3f}]  "
                   f"W/T/L={st['wins']}/{st['ties']}/{st['losses']}  "
                   f"{sig_str}  {marker}")
@@ -596,6 +637,9 @@ def run_analysis(run_dir: Path, analysis_dir: Path, out_dir: Path,
                 "n_effective": st["n_effective"],
                 "sign_test_p": st["p_value"],
                 "significant_at_alpha_0.05": st["significant"] if is_primary else "N/A",
+                "direction_match": st["direction_match"] if is_primary else "N/A",
+                "supports_hypothesis": (st["significant"] and st["direction_match"])
+                                       if is_primary else "N/A",
             }
             pairwise_rows.append(row)
 
@@ -604,7 +648,7 @@ def run_analysis(run_dir: Path, analysis_dir: Path, out_dir: Path,
 
     # ── Judge agreement ───────────────────────────────────────────────────────
     print("\nJudge agreement:")
-    agreement_rows = compute_judge_agreement(scores, bank)
+    agreement_rows = compute_judge_agreement(scores, bank, panel)
     taus = [r["kendall_tau"] for r in agreement_rows if r["kendall_tau"] is not None]
     rhos = [r["spearman_rho"] for r in agreement_rows if r["spearman_rho"] is not None]
 
@@ -644,7 +688,8 @@ def run_analysis(run_dir: Path, analysis_dir: Path, out_dir: Path,
 
     # ── LaTeX tables ──────────────────────────────────────────────────────────
     _write_latex(out_dir / "stats_v2_latex.tex", results_rows, pairwise_rows,
-                 agreement_rows, flag_rows)
+                 agreement_rows, flag_rows,
+                 n_questions=len(all_qids), n_sc=len(sc_qids), panel=panel)
     print("  Saved: stats_v2_latex.tex")
 
     print("\nAnalysis complete.")
@@ -658,7 +703,7 @@ def _write_csv(path: Path, rows: list[dict]) -> None:
     if not rows:
         return
     path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w", newline="", encoding="ascii", errors="replace") as f:
+    with open(path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
         writer.writeheader()
         writer.writerows(rows)
@@ -673,17 +718,28 @@ def _fmt(v, decimals=3):
 
 
 def _write_latex(path: Path, results: list, pairwise: list,
-                 agreement: list, flags: list) -> None:
+                 agreement: list, flags: list,
+                 n_questions: int = 0, n_sc: int = 0,
+                 panel: list[str] | None = None) -> None:
+    # Counts are interpolated, never hardcoded: the safety-critical labels have
+    # been repatched before (see verify_camera_ready.SC_PATCHES), and a caption
+    # asserting "n=11" over a table computed from different data is a defect a
+    # reader cannot see.
+    panel = panel or []
+    n_nsc = n_questions - n_sc
     lines = [
-        "% Auto-generated by stats_v2.py — DO NOT EDIT",
+        "% Auto-generated by internal_eval/stats_v2.py -- DO NOT EDIT",
         "% Pre-commitment: paper/PRECOMMIT_STATS_v2.md",
+        f"% Panel: {', '.join(panel) if panel else 'unspecified'}",
+        "% Internal decision lane. Published results come from judging/.",
         "",
         "% Table: Per-config summary (Table 3 replacement)",
         r"\begin{table}[t]",
         r"\centering",
         r"\caption{Per-configuration mean panel score (0--5) with 95\% bootstrap CI "
-        r"(10,000 resamples, paired by question). SC = safety-critical subset (n=11). "
-        r"Non-SC = remaining 30 questions.}",
+        r"(" + f"{BOOTSTRAP_RESAMPLES:,}" + r" resamples, paired by question). "
+        r"SC = safety-critical subset (n=" + str(n_sc) + r"). "
+        r"Non-SC = remaining " + str(n_nsc) + r" questions.}",
         r"\label{tab:config_summary}",
         r"\begin{tabular}{lcccccc}",
         r"\toprule",
@@ -756,23 +812,27 @@ def parse_args():
                    help="Rubric used for judging (default: canonical runtime rubric)")
     p.add_argument("--out_dir", default=None,
                    help="Statistics output dir (default: <analysis_dir>/stats/)")
+    p.add_argument("--judges", nargs="+", default=None, choices=JUDGES,
+                   help="Panel to analyse (default: all six, per "
+                        "paper/PRECOMMIT_STATS_v2.md). A subset must still be "
+                        "complete for every judge named.")
     return p.parse_args()
 
 
-def main():
+def main() -> int:
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, OSError):
+            pass
+
     args = parse_args()
-    HERE = Path(__file__).parent
 
     if args.run_dir is None:
-        eval_dir = HERE / "evaluations"
-        candidates = sorted(
-            d for d in eval_dir.iterdir()
-            if d.is_dir() and d.name.startswith("CAMERA_READY_")
-        )
-        if not candidates:
-            print("ERROR: No CAMERA_READY_* directory found.")
+        run_dir = latest_run_dir(ROOT / "evaluations")
+        if run_dir is None:
+            print("ERROR: No CAMERA_READY_* run directory found.")
             sys.exit(1)
-        run_dir = candidates[-1]
         print(f"[auto] Using run: {run_dir.name}")
     else:
         run_dir = Path(args.run_dir)
@@ -782,8 +842,13 @@ def main():
     out_dir = Path(args.out_dir) if args.out_dir else analysis_dir / "stats"
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    run_analysis(run_dir, analysis_dir, out_dir, rubric_text)
+    try:
+        run_analysis(run_dir, analysis_dir, out_dir, rubric_text, panel=args.judges)
+    except ValueError as exc:
+        print(f"\nERROR: {exc}", file=sys.stderr)
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

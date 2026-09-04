@@ -167,6 +167,8 @@ def command_analyze(protocol: dict, args: argparse.Namespace) -> int:
     ]
     if args.rubric:
         command += ["--rubric", str(repo_path(args.rubric))]
+    if args.judges:
+        command += ["--judges", *args.judges]
     return run_command(command)
 
 
@@ -252,6 +254,8 @@ def build_parser() -> argparse.ArgumentParser:
     analyze = sub.add_parser("analyze", help="analyze a complete judgment panel")
     analyze.add_argument("--run")
     analyze.add_argument("--rubric")
+    analyze.add_argument("--judges", nargs="+",
+                         help="Panel subset to analyse (default: all six)")
 
     manual = sub.add_parser("manual-prompt", help="build the optional unblinded protocol")
     manual.add_argument("--run")

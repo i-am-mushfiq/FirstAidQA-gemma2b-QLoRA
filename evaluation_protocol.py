@@ -61,8 +61,8 @@ CAMERA_SOURCE_FILES = [
     "audit_gap_gate.py",
     "verify_camera_ready.py",
     "build_v2_judge_prompt.py",
-    "judge_per_item.py",
-    "stats_v2.py",
+    "internal_eval/judge_per_item.py",
+    "internal_eval/stats_v2.py",
     "rubric_v2.md",
     "run_camera_ready.ps1",
     "test_camera_ready_pipeline.py",
@@ -162,6 +162,29 @@ def default_analysis_dir(run_dir: str | Path) -> Path:
     """Return the sibling output directory, keeping the generation run immutable."""
     run_path = Path(run_dir).resolve()
     return run_path.parent / f"{run_path.name}_ANALYSIS"
+
+
+def latest_run_dir(evaluations_dir: str | Path,
+                   prefix: str = "CAMERA_READY_") -> Path | None:
+    """
+    Return the newest generation run directory matching *prefix*, or None.
+
+    A run directory is one that contains run.json. Analysis siblings are
+    excluded: default_analysis_dir() creates <run>_ANALYSIS beside the run, and
+    "_" sorts after "", so a plain sorted(...)[-1] over the same prefix starts
+    selecting the analysis directory as soon as any judging has been done.
+    """
+    root = Path(evaluations_dir)
+    if not root.is_dir():
+        return None
+    candidates = sorted(
+        path for path in root.iterdir()
+        if path.is_dir()
+        and path.name.startswith(prefix)
+        and not path.name.endswith("_ANALYSIS")
+        and (path / "run.json").exists()
+    )
+    return candidates[-1] if candidates else None
 
 
 def validate_prompt_metadata(meta: object) -> list[str]:

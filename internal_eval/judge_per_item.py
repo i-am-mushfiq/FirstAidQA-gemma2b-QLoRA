@@ -64,11 +64,19 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
-from evaluation_protocol import (
+# This module lives in internal_eval/ but reads and writes repo-root paths
+# (evaluations/, the canonical rubric, the protocol contracts), so the root is
+# both the import root and the base for every relative path below.
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from evaluation_protocol import (  # noqa: E402
     CAMERA_READY_CONFIG_RESOLUTION,
     canonical_json_sha256,
     default_analysis_dir,
     frozen_questions_from_run,
+    latest_run_dir,
     validate_camera_config_resolution,
     validate_run_prompt_provenance,
     validate_run_question_provenance,
@@ -200,22 +208,91 @@ def validate_response(obj: dict) -> list[str]:
         errors.append("'score' must be an integer, not a boolean")
     return errors
 
+def strip_code_fence(text: str) -> str:
+    """Remove a surrounding markdown code fence, which some judges always add."""
+    stripped = text.strip()
+    if not stripped.startswith("```"):
+        return stripped
+    lines = stripped.splitlines()
+    end = len(lines) - 1 if lines[-1].strip() == "```" else len(lines)
+    return "\n".join(lines[1:end]).strip()
+
+
 def extract_json(text: str) -> Optional[dict]:
-    """Extract the first JSON object from a model response."""
-    m = re.search(r"\{[^{}]*\}", text, re.S)
-    if not m:
-        return None
+    """
+    Extract the scoring object from a judge response.
+
+    A brace-matching regex is not enough: `\\{[^{}]*\\}` cannot span a nested
+    object, so a reply carrying an extra structured field matches the innermost
+    brace group instead (e.g. {"detail":{"seq":1}} yields {"seq": 1}, which then
+    fails schema validation and burns the retry budget on a valid score). A
+    rationale containing a literal brace defeats it the same way.
+
+    Strategy: parse the whole (fence-stripped) payload first, which is what a
+    compliant judge returns. Only if that fails, scan for balanced objects with
+    the JSON decoder itself and take the first one carrying a "score" field.
+    """
+    payload = strip_code_fence(text)
     try:
-        return json.loads(m.group())
+        value = json.loads(payload)
     except json.JSONDecodeError:
-        return None
+        value = None
+    if isinstance(value, dict):
+        return value
+
+    decoder = json.JSONDecoder()
+    fallback: Optional[dict] = None
+    for index, char in enumerate(payload):
+        if char != "{":
+            continue
+        try:
+            candidate, _end = decoder.raw_decode(payload[index:])
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(candidate, dict):
+            continue
+        if "score" in candidate or "winner" in candidate:
+            return candidate
+        if fallback is None:
+            fallback = candidate
+    return fallback
 
 # ---------------------------------------------------------------------------
 # API callers (one per provider)
 # ---------------------------------------------------------------------------
 
-def _call_openai(judge_cfg: dict, system: str, user: str) -> tuple[str, str]:
-    """Returns (raw_text, model_version_string)."""
+def is_retryable_api_error(exc: Exception) -> bool:
+    """
+    True for rate-limit (429) and server-side (5xx) failures.
+
+    Prefers the SDK's numeric status_code. The message is only a fallback, and
+    the code must be label-adjacent: SDK errors render as "Error code: 503 - ..."
+    while a bare three-digit number is usually a token count or a model version.
+    """
+    status = getattr(exc, "status_code", None)
+    if isinstance(status, int):
+        return status == 429 or 500 <= status < 600
+    return bool(re.search(
+        r"(?:error\s*code|status(?:\s*code)?|http)\D{0,4}(?:429|5\d\d)\b",
+        str(exc), re.I,
+    ))
+
+
+def _rejects_json_mode(exc: Exception) -> bool:
+    """True only for a request-shape rejection of response_format."""
+    status = getattr(exc, "status_code", None)
+    if isinstance(status, int) and status not in (400, 404, 422):
+        return False
+    message = str(exc).lower()
+    if not isinstance(status, int) and not re.search(
+        r"(?:error\s*code|status(?:\s*code)?|http)\D{0,4}(?:400|404|422)\b", message
+    ):
+        return False
+    return "response_format" in message or "json_object" in message or "json mode" in message
+
+
+def _call_openai(judge_cfg: dict, system: str, user: str) -> tuple[str, str, bool]:
+    """Returns (raw_text, model_version_string, json_mode_used)."""
     import openai
     client = openai.OpenAI(api_key=os.environ[judge_cfg["env_key"]])
     resp = client.chat.completions.create(
@@ -225,10 +302,10 @@ def _call_openai(judge_cfg: dict, system: str, user: str) -> tuple[str, str]:
                   {"role": "user",   "content": user}],
         response_format={"type": "json_object"},
     )
-    return resp.choices[0].message.content, resp.model
+    return resp.choices[0].message.content, resp.model, True
 
 
-def _call_anthropic(judge_cfg: dict, system: str, user: str) -> tuple[str, str]:
+def _call_anthropic(judge_cfg: dict, system: str, user: str) -> tuple[str, str, bool]:
     import anthropic
     client = anthropic.Anthropic(api_key=os.environ[judge_cfg["env_key"]])
     resp = client.messages.create(
@@ -238,10 +315,10 @@ def _call_anthropic(judge_cfg: dict, system: str, user: str) -> tuple[str, str]:
         system=system,
         messages=[{"role": "user", "content": user}],
     )
-    return resp.content[0].text, resp.model
+    return resp.content[0].text, resp.model, False
 
 
-def _call_google(judge_cfg: dict, system: str, user: str) -> tuple[str, str]:
+def _call_google(judge_cfg: dict, system: str, user: str) -> tuple[str, str, bool]:
     import google.generativeai as genai
     genai.configure(api_key=os.environ[judge_cfg["env_key"]])
     model = genai.GenerativeModel(
@@ -253,11 +330,11 @@ def _call_google(judge_cfg: dict, system: str, user: str) -> tuple[str, str]:
         ),
     )
     resp = model.generate_content(user)
-    return resp.text, judge_cfg["model"]
+    return resp.text, judge_cfg["model"], True
 
 
 def _call_openai_compat(judge_cfg: dict, system: str, user: str,
-                         base_url: str) -> tuple[str, str]:
+                         base_url: str) -> tuple[str, str, bool]:
     """OpenAI-compatible endpoint (xAI Grok, DeepSeek, Moonshot/Kimi)."""
     import openai
     client = openai.OpenAI(
@@ -270,14 +347,20 @@ def _call_openai_compat(judge_cfg: dict, system: str, user: str,
         messages=[{"role": "system", "content": system},
                   {"role": "user",   "content": user}],
     )
-    # Request JSON output where supported
+    # Request JSON output where supported, and fall back only when the endpoint
+    # rejects the request shape itself. Catching every exception here silently
+    # downgraded rate limits and timeouts into non-JSON retries, so some calls
+    # in a run used JSON mode and others did not with nothing recording which.
     try:
-        kwargs["response_format"] = {"type": "json_object"}
+        resp = client.chat.completions.create(
+            **kwargs, response_format={"type": "json_object"}
+        )
+        return resp.choices[0].message.content, resp.model, True
+    except Exception as exc:
+        if not _rejects_json_mode(exc):
+            raise
         resp = client.chat.completions.create(**kwargs)
-    except Exception:
-        del kwargs["response_format"]
-        resp = client.chat.completions.create(**kwargs)
-    return resp.choices[0].message.content, resp.model
+        return resp.choices[0].message.content, resp.model, False
 
 
 PROVIDER_BASE_URLS = {
@@ -287,8 +370,8 @@ PROVIDER_BASE_URLS = {
 }
 
 
-def call_judge(judge_id: str, system: str, user: str) -> tuple[str, str]:
-    """Dispatch to the right provider. Returns (raw_text, model_version)."""
+def call_judge(judge_id: str, system: str, user: str) -> tuple[str, str, bool]:
+    """Dispatch to the right provider. Returns (raw_text, model_version, json_mode)."""
     cfg = JUDGES[judge_id]
     provider = cfg["provider"]
     if provider == "openai":
@@ -402,7 +485,9 @@ def score_one(judge_id: str, q: dict, answer_text: str,
     for attempt in range(1, MAX_RETRIES + 1):
         t0 = time.time()
         try:
-            raw, model_version = call_judge(judge_id, SYSTEM_PROMPT, user_prompt)
+            raw, model_version, json_mode = call_judge(
+                judge_id, SYSTEM_PROMPT, user_prompt
+            )
             elapsed_ms = int((time.time() - t0) * 1000)
 
             parsed = extract_json(raw)
@@ -419,6 +504,7 @@ def score_one(judge_id: str, q: dict, answer_text: str,
                 "rationale": parsed["rationale"],
                 "raw_response": raw,
                 "model_version": model_version,
+                "json_mode": json_mode,
                 "call_ms": elapsed_ms,
                 "judge_id": judge_id,
                 "config_label": config_label,
@@ -447,7 +533,12 @@ def score_one(judge_id: str, q: dict, answer_text: str,
             last_err = e
             print(f"  [{judge_id}] {config_label}/{qid}: attempt {attempt} failed: {e}")
             if attempt < MAX_RETRIES:
-                time.sleep(RETRY_DELAY * attempt)
+                # Rate limits and server errors need room to clear; a schema
+                # violation is deterministic and worth retrying immediately.
+                delay = RETRY_DELAY * attempt
+                if is_retryable_api_error(e):
+                    delay = RETRY_DELAY * (2 ** (attempt - 1))
+                time.sleep(delay)
 
     print(f"  [{judge_id}] {config_label}/{qid}: FAILED after {MAX_RETRIES} attempts: {last_err}",
           file=sys.stderr)
@@ -459,23 +550,32 @@ def score_one(judge_id: str, q: dict, answer_text: str,
 
 def run_scoring(run_dir: Path, rubric_text: str,
                 judge_ids: list[str], config_labels: list[str],
-                out_dir: Path, dry_run: bool = False) -> None:
-    """Score all (question, config, judge) triples, randomised per judge."""
+                out_dir: Path, dry_run: bool = False) -> int:
+    """
+    Score all (question, config, judge) triples, randomised per judge.
 
-    with open(run_dir / "run.json") as f:
+    Returns the number of items that could not be scored, so the caller can
+    exit non-zero. A run where every call failed used to print "Scoring
+    complete." and exit 0.
+    """
+    with open(run_dir / "run.json", encoding="utf-8") as f:
         run = json.load(f)
     bank = frozen_questions_from_run(run)
     bank_by_id = {q["question_id"]: q for q in bank}
     variants = run.get("variants", {})
     manifest = load_manifest(out_dir)
+    failures: list[str] = []
+    skipped_judges: list[str] = []
 
     for judge_id in judge_ids:
         if judge_id not in JUDGES:
             print(f"Unknown judge: {judge_id}", file=sys.stderr)
+            failures.append(f"{judge_id}: unknown judge")
             continue
         api_key = JUDGES[judge_id]["env_key"]
         if not os.environ.get(api_key) and not dry_run:
             print(f"SKIP {judge_id}: {api_key} not set", file=sys.stderr)
+            skipped_judges.append(judge_id)
             continue
 
         print(f"\n{'='*60}")
@@ -503,14 +603,32 @@ def run_scoring(run_dir: Path, rubric_text: str,
         print(f"  {len(work)} items to score (skipping cached)")
 
         for cfg, q, answer_text in work:
-            score_one(judge_id, q, answer_text, rubric_text,
-                      out_dir, cfg, manifest, dry_run=dry_run)
+            result = score_one(judge_id, q, answer_text, rubric_text,
+                               out_dir, cfg, manifest, dry_run=dry_run)
+            if result is None and not dry_run:
+                failures.append(f"{judge_id}/{cfg}/{q['question_id']}")
             save_manifest(out_dir, manifest)
 
-    print("\nScoring complete.")
+    if failures:
+        print(f"\nScoring finished with {len(failures)} unscored item(s):",
+              file=sys.stderr)
+        for item in failures[:20]:
+            print(f"  {item}", file=sys.stderr)
+        if len(failures) > 20:
+            print(f"  ... and {len(failures) - 20} more", file=sys.stderr)
+    else:
+        print("\nScoring complete.")
+    if skipped_judges:
+        print(f"Judges skipped for missing API keys: {', '.join(skipped_judges)}")
+
+    # Always report the full panel, never only the judges of this invocation:
+    # a scoped `--judges claude` run used to rewrite the matrix with one row and
+    # `pipeline.py status` reads this file as ground truth.
     write_completion_matrix(
-        out_dir, judge_ids, config_labels, variants, bank, rubric_text
+        out_dir, list(JUDGES), list(CAMERA_READY_CONFIG_RESOLUTION),
+        variants, bank, rubric_text,
     )
+    return len(failures)
 
 # ---------------------------------------------------------------------------
 # Pairwise F-vs-B check (41 q × 2 orders × 6 judges = 492 calls)
@@ -543,7 +661,7 @@ def run_pairwise(run_dir: Path,
     Pairwise F-vs-B for all 41 questions in both presentation orders.
     Results written to out_dir/pairwise_F_vs_B.json.
     """
-    with open(run_dir / "run.json") as f:
+    with open(run_dir / "run.json", encoding="utf-8") as f:
         run = json.load(f)
     bank = frozen_questions_from_run(run)
 
@@ -591,10 +709,9 @@ def run_pairwise(run_dir: Path,
                 })
 
                 if path.exists():
-                    with open(path) as f2:
+                    with open(path, encoding="utf-8") as f2:
                         cached = json.load(f2)
                     if cached.get("input_sha256") == input_sha256:
-                        results.append(cached)
                         continue
 
                 if dry_run:
@@ -610,7 +727,9 @@ def run_pairwise(run_dir: Path,
 
                 for attempt in range(1, MAX_RETRIES + 1):
                     try:
-                        raw, model_version = call_judge(judge_id, SYSTEM_PROMPT, user)
+                        raw, model_version, _json_mode = call_judge(
+                            judge_id, SYSTEM_PROMPT, user
+                        )
                         parsed = extract_json(raw)
                         if parsed is None or str(parsed.get("winner", "")).upper() not in {"A", "B", "TIE"}:
                             raise ValueError(f"Bad pairwise response: {raw[:150]}")
@@ -639,9 +758,8 @@ def run_pairwise(run_dir: Path,
                             "input_sha256": input_sha256,
                             "ts": datetime.now(timezone.utc).isoformat(),
                         }
-                        with open(path, "w") as f2:
+                        with open(path, "w", encoding="utf-8") as f2:
                             json.dump(rec, f2, indent=2)
-                        results.append(rec)
 
                         if judge_id not in manifest:
                             manifest[judge_id] = {
@@ -655,10 +773,39 @@ def run_pairwise(run_dir: Path,
                     except Exception as e:
                         print(f"  [{judge_id}] pairwise {qid} order={order}: attempt {attempt} failed: {e}")
                         if attempt < MAX_RETRIES:
-                            time.sleep(RETRY_DELAY)
+                            delay = RETRY_DELAY
+                            if is_retryable_api_error(e):
+                                delay = RETRY_DELAY * (2 ** (attempt - 1))
+                            time.sleep(delay)
 
-    # Aggregate pairwise results
-    _aggregate_pairwise(results, out_dir)
+    # Aggregate from the cache on disk, not from this invocation's results:
+    # `--pairwise --judges claude` used to rewrite the summary with one judge,
+    # discarding the other judges' completed comparisons from the report.
+    _aggregate_pairwise(load_pairwise_cache(out_dir), out_dir)
+
+
+def load_pairwise_cache(out_dir: Path) -> list[dict]:
+    """
+    Load every cached pairwise comparison, regardless of which judges ran now.
+
+    The summary is a panel-level artifact, so it must be rebuilt from all
+    completed work rather than from one invocation's in-memory results.
+    """
+    cache_dir = out_dir / "judgments" / "pairwise"
+    if not cache_dir.is_dir():
+        return []
+    records = []
+    for path in sorted(cache_dir.glob("*.json")):
+        try:
+            with open(path, encoding="utf-8") as handle:
+                record = json.load(handle)
+        except (OSError, json.JSONDecodeError):
+            print(f"  WARN unreadable pairwise cache entry: {path.name}",
+                  file=sys.stderr)
+            continue
+        if {"judge_id", "order", "actual_winner"} <= set(record):
+            records.append(record)
+    return records
 
 
 def _aggregate_pairwise(results: list[dict], out_dir: Path) -> None:
@@ -860,7 +1007,7 @@ def write_completion_matrix(out_dir: Path, judge_ids: list[str],
             rows.append(f"{j},{cfg},{done},{n_total},{pct}\n")
 
     path = out_dir / "completion_matrix.csv"
-    with open(path, "w", encoding="ascii") as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write("judge,config,n_complete,n_total,pct\n")
         f.writelines(rows)
 
@@ -905,23 +1052,25 @@ def parse_args():
     return p.parse_args()
 
 
-def main():
+def main() -> int:
+    # Judge rationales and API error messages contain characters outside cp1252
+    # (the Windows console default). Without this, the print inside the retry
+    # handler raises UnicodeEncodeError and kills the run mid-panel.
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, OSError):
+            pass
+
     args = parse_args()
     random.seed(args.seed)
 
     # ── Resolve paths ─────────────────────────────────────────────────────────
-    HERE = Path(__file__).parent
-
     if args.run_dir is None:
-        eval_dir = HERE / "evaluations"
-        candidates = sorted(
-            d for d in eval_dir.iterdir()
-            if d.is_dir() and d.name.startswith("CAMERA_READY_")
-        )
-        if not candidates:
-            print("ERROR: No CAMERA_READY_* directory found.", file=sys.stderr)
+        run_dir = latest_run_dir(ROOT / "evaluations")
+        if run_dir is None:
+            print("ERROR: No CAMERA_READY_* run directory found.", file=sys.stderr)
             sys.exit(1)
-        run_dir = candidates[-1]
         print(f"[auto] Using run: {run_dir.name}")
     else:
         run_dir = Path(args.run_dir)
@@ -971,19 +1120,20 @@ def main():
     print()
 
     # ── Run selected mode ─────────────────────────────────────────────────────
+    n_failed = 0
     if args.pairwise:
         run_pairwise(run_dir,
                      args.judges, out_dir, dry_run=args.dry_run)
 
     elif args.correlation:
         mega_run_dir = Path(args.mega_run) if args.mega_run else \
-            HERE / "evaluations" / "v2_comprehensive_20260606_200713"
+            ROOT / "evaluations" / "v2_comprehensive_20260606_200713"
         run_correlation(run_dir, mega_run_dir, out_dir)
 
     else:
-        run_scoring(run_dir, rubric_text,
-                    args.judges, args.configs, out_dir,
-                    dry_run=args.dry_run)
+        n_failed = run_scoring(run_dir, rubric_text,
+                               args.judges, args.configs, out_dir,
+                               dry_run=args.dry_run)
 
     # Final manifest summary
     manifest = load_manifest(out_dir)
@@ -993,6 +1143,11 @@ def main():
             print(f"  {info.get('label','?'):<14} model={info.get('model_version','?')}"
                   f"  first_call={info.get('first_call_ts','?')[:19]}")
 
+    if n_failed:
+        print(f"\nExiting non-zero: {n_failed} item(s) could not be scored.",
+              file=sys.stderr)
+    return 1 if n_failed else 0
+
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

@@ -1,6 +1,7 @@
 """Regression tests for the immutable camera-ready evaluation contracts."""
 
 import json
+import math
 import tempfile
 import unittest
 from pathlib import Path
@@ -13,12 +14,13 @@ from evaluation_protocol import (
     CAMERA_READY_CONFIG_RESOLUTION,
     PROMPT_POLICY,
     default_analysis_dir,
+    latest_run_dir,
     prompt_metadata,
     question_bank_metadata,
     validate_run_question_provenance,
 )
-from judge_per_item import JUDGES, score_input_sha256, validate_response
-from stats_v2 import CAMERA_READY_CONFIGS, load_scores, spearman_rho
+from internal_eval.judge_per_item import JUDGES, score_input_sha256, validate_response
+from internal_eval.stats_v2 import CAMERA_READY_CONFIGS, load_scores, spearman_rho
 
 
 ROOT = Path(__file__).parent
@@ -119,6 +121,33 @@ class CameraReadyPipelineTests(unittest.TestCase):
             run_dir.parent / f"{run_dir.name}_ANALYSIS",
         )
 
+    def test_auto_detect_never_selects_an_analysis_sibling(self):
+        """The analysis dir sorts after its run, so a naive sort picks the wrong one."""
+        with tempfile.TemporaryDirectory() as temp:
+            evaluations = Path(temp)
+            older = evaluations / "CAMERA_READY_OFFLINE_20260101_000000"
+            newer = evaluations / "CAMERA_READY_OFFLINE_20260902_000000"
+            for run in (older, newer):
+                run.mkdir()
+                (run / "run.json").write_text("{}", encoding="utf-8")
+            analysis = default_analysis_dir(newer)
+            (analysis).mkdir()
+            (analysis / "judgments").mkdir()
+
+            # The bug this guards: sorted(...)[-1] over the same prefix.
+            naive = sorted(p.name for p in evaluations.iterdir()
+                           if p.name.startswith("CAMERA_READY_"))[-1]
+            self.assertTrue(naive.endswith("_ANALYSIS"))
+
+            self.assertEqual(latest_run_dir(evaluations), newer)
+
+    def test_auto_detect_ignores_directories_without_a_run(self):
+        with tempfile.TemporaryDirectory() as temp:
+            evaluations = Path(temp)
+            (evaluations / "CAMERA_READY_OFFLINE_20260101_000000").mkdir()
+            self.assertIsNone(latest_run_dir(evaluations))
+            self.assertIsNone(latest_run_dir(evaluations / "does_not_exist"))
+
     def test_bm25_uses_raw_positive_score_and_skips_no_match(self):
         hit = fake_retriever([0.25, 2.5]).retrieve("beta")
         self.assertTrue(hit["bm25_fired"])
@@ -149,6 +178,97 @@ class CameraReadyPipelineTests(unittest.TestCase):
             prompt = build_prompt(str(run_dir))
         self.assertIn("SC: 11 (27%)", prompt)
         self.assertIn("BASE8 + FT4_ADAPTER", prompt)
+
+    def test_json_extraction_survives_realistic_judge_replies(self):
+        """A brace regex lost valid scores; these are the shapes that broke it."""
+        from internal_eval.judge_per_item import extract_json
+        valid = {"score": 4, "override_triggered": "none", "rationale": "Good."}
+        cases = {
+            "clean": json.dumps(valid),
+            "fenced": "```json\n" + json.dumps(valid) + "\n```",
+            "fenced_bare": "```\n" + json.dumps(valid) + "\n```",
+            "preamble": "Here is my assessment:\n" + json.dumps(valid),
+            "brace_in_rationale": json.dumps(
+                {**valid, "rationale": "Says {call EMS} which is impossible."}),
+            "nested_extra_field": json.dumps({**valid, "detail": {"seq": 1}}),
+            "prose_with_braces": "Considering {the offline context}:\n" + json.dumps(valid),
+        }
+        for name, raw in cases.items():
+            with self.subTest(shape=name):
+                parsed = extract_json(raw)
+                self.assertIsNotNone(parsed, f"{name} failed to parse")
+                self.assertEqual(parsed.get("score"), 4, f"{name} parsed the wrong object")
+                self.assertEqual(validate_response(parsed), [], f"{name} failed validation")
+
+    def test_json_extraction_returns_none_for_genuine_garbage(self):
+        from internal_eval.judge_per_item import extract_json
+        self.assertIsNone(extract_json("I cannot score this response."))
+        self.assertIsNone(extract_json(""))
+
+    def test_completion_matrix_covers_the_whole_panel_after_a_scoped_run(self):
+        """A `--judges claude` run used to rewrite the matrix with one row."""
+        from internal_eval.judge_per_item import (
+            JUDGES as ALL_JUDGES, cache_path, save_cached, score_input_sha256,
+            write_completion_matrix,
+        )
+        bank = [{"question_id": "V2Q01", "question": "q", "reference": "r",
+                 "category": "c", "safety_critical": False,
+                 "safety_critical_confidence": 0.0, "template_idx": 0}]
+        variants = {"A_BASE_4BIT": {"answers": [{"question_id": "V2Q01", "answer": "a"}]}}
+        with tempfile.TemporaryDirectory() as temp:
+            out = Path(temp)
+            for judge in ("deepseek", "claude"):
+                save_cached(
+                    cache_path(out, judge, "A_BASE_4BIT", "V2Q01"),
+                    {"input_sha256": score_input_sha256(
+                        judge, bank[0], "a", "RUB", "A_BASE_4BIT")},
+                )
+            write_completion_matrix(out, list(ALL_JUDGES), ["A_BASE_4BIT"],
+                                    variants, bank, "RUB")
+            text = (out / "completion_matrix.csv").read_text(encoding="utf-8")
+        for judge in ALL_JUDGES:
+            self.assertIn(f"{judge},A_BASE_4BIT", text, f"{judge} row missing")
+        self.assertIn("deepseek,A_BASE_4BIT,1,1", text)
+        self.assertIn("gpt4o,A_BASE_4BIT,0,1", text)
+
+    def test_pairwise_summary_is_rebuilt_from_the_cache_not_the_invocation(self):
+        from internal_eval.judge_per_item import (
+            _aggregate_pairwise, load_pairwise_cache,
+        )
+        with tempfile.TemporaryDirectory() as temp:
+            out = Path(temp)
+            cache = out / "judgments" / "pairwise"
+            cache.mkdir(parents=True)
+            for judge, winner in (("deepseek", "F"), ("claude", "B"), ("gpt4o", "F")):
+                for order in (0, 1):
+                    (cache / f"pairwise_{judge}_V2Q01_order{order}.json").write_text(
+                        json.dumps({"judge_id": judge, "qid": "V2Q01",
+                                    "order": order, "actual_winner": winner}),
+                        encoding="utf-8")
+            records = load_pairwise_cache(out)
+            self.assertEqual(len(records), 6)
+            _aggregate_pairwise(records, out)
+            summary = json.loads(
+                (out / "pairwise_F_vs_B.json").read_text(encoding="utf-8"))
+        self.assertEqual(sorted(summary["pairwise_summary"]),
+                         ["claude", "deepseek", "gpt4o"])
+
+    def test_sign_test_flags_a_significant_result_in_the_wrong_direction(self):
+        from internal_eval.stats_v2 import sign_test
+        worse = sign_test([1.0] * 20, [4.0] * 20, "positive")
+        self.assertTrue(worse["significant"])
+        self.assertFalse(worse["direction_match"])
+        better = sign_test([4.0] * 20, [1.0] * 20, "positive")
+        self.assertTrue(better["significant"])
+        self.assertTrue(better["direction_match"])
+        exploratory = sign_test([1.0] * 20, [4.0] * 20, "either")
+        self.assertTrue(exploratory["direction_match"])
+
+    def test_median_is_the_mean_of_the_two_central_values_when_even(self):
+        from internal_eval.stats_v2 import _median
+        self.assertEqual(_median([1, 2, 3, 4]), 2.5)
+        self.assertEqual(_median([1, 2, 3]), 2)
+        self.assertTrue(math.isnan(_median([])))
 
     def test_judge_schema_is_strict(self):
         self.assertEqual(validate_response({
