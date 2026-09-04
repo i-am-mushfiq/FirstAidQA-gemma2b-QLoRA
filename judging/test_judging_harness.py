@@ -278,18 +278,15 @@ class AssembleGateTests(unittest.TestCase):
 class ControlsKeyTests(unittest.TestCase):
     """The control key must not treat a correct judgment as a failure."""
 
-    @unittest.expectedFailure
     def test_vague_floor_allows_zero(self):
         """
-        Tripwire for judging/OPEN_FINDINGS.md finding 4.
+        Regression guard for judging/OPEN_FINDINGS.md finding 4, now closed.
 
-        make_controls.py has been corrected to emit a CTRL_VAGUE floor of 0,
-        but controls_key.json on disk is still the version the published
-        judgments were graded against, and regenerating it requires re-judging
-        the control items. So this is an EXPECTED failure today.
-
-        When it starts reporting "unexpected success", the key has been
-        regenerated: delete this decorator and close finding 4.
+        controls_key.json was regenerated with `make_controls.py --key_only` on
+        2026-09-05, so the floor is 0 and this passes. It was an
+        expectedFailure tripwire until then. Keep it: a future regeneration
+        that reintroduces a floor above 0 would silently start recording
+        correct score-0 judgments as control failures again.
         """
         key = json.loads((REPO_ROOT / "judging" / "controls_key.json")
                          .read_text(encoding="utf-8"))

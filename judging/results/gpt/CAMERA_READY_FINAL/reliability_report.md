@@ -2,6 +2,6 @@
 
 ## Length–Score Correlation (Bias Check)
 
-- Spearman ρ (rationale length vs score): 0.057  p=0.3725
-  *(Low ρ confirms no systematic length bias in scoring.)*
+- Spearman rho (candidate answer length vs score): -0.222  p=0.0005
+  *(**Significant** at alpha=.05 (p=0.0005): a length-score association is present in this run and must be reported, not dismissed.)*
 
