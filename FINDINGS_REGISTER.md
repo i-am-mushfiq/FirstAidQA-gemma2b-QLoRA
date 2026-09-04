@@ -35,6 +35,8 @@ verified by executing the code path or reading the artifact, not inferred.
 | 6 | **The published results score answers that were generated under an instruction to recommend EMS, against a rubric that hard-caps exactly that.** All 246 judged answers match `evaluations/CAMERA_READY_20260708_180411` (246/246 byte-identical). That run records no prompt policy and no prompt text, and `validate_run_prompt_provenance` rejects it with 9 errors — `internal_eval` refuses it by name as "a legacy-EMS baseline [that] must not be scored as an aligned offline run". `judging/assemble_items.py` has no equivalent check and judged it anyway. Git recovers the generation prompt from the run's commit (`3eaa376`): *"…For life-threatening situations, always advise calling emergency services immediately."* The rubric caps EMS referral at ≤2/5 and scores EMS-only at 1/5. Measured: 53.7% of A's and 65.9% of G's answers contain an EMS referral, and EMS-referring answers score **1.791** vs **2.102** (n=115 vs 131). At that commit `SAFE_FALLBACK` was itself an EMS referral, so **config E is penalized by construction** on every gate firing. **Consequence:** absolute scores and the rubric attribution are affected; B−A / G−B / G−F remain valid *contrasts* (both arms share the prompt) but measure benefit under the EMS premise, not the offline premise the paper describes. **The aligned `CAMERA_READY_OFFLINE_*` run that the whole `camera_ready/` apparatus exists to produce has never been generated.** | OPEN |
 | 6a | **Unreported positive result found while testing 6.** The adapter *reduced* EMS referral from 59.8% (base configs A/G) to 40.2% (adapter configs B/C/E/F) — F lowest at 34.1% — while being instructed to produce it. The adapter learned the corpus's mostly-non-EMS style and partly overrode the system prompt. This is a concrete behavioural finding supporting the fine-tuning claim and is currently absent from the results. (Caveat: the detector also matches "seek immediate medical help", so absolute rates may be inflated; the relative comparison uses one regex across all configs.) | OPEN |
 | 6b | **A retracted claim, recorded so it is not repeated.** I first reported this as a *training*/eval prompt mismatch handicapping the adapter, concluding B−A was an underestimate. Executing the check refuted it: adapter configs mention EMS *less* than base configs, training used all four prefix variants at ~25% each, and the eval prompt structurally matches `template_idx 3`. There is no evidence of a format handicap. The real defect is at generation time (6), not training time. | — |
+| 6d | **The July run was train/test ALIGNED, and "just re-run it offline" would break that.** The training prompt (`data_v2.SYSTEM_PROMPT`) and the prompt the July run generated under (commit `3eaa376`) are byte-identical — both sha256 `09f68afa…`, 168 chars. So the model was asked at test time exactly what it was asked during training; there is no prompt-shift penalty in the published numbers. The planned `offline_definitive_v1` prompt (sha `0d97fe5d…`, 447 chars) matches **neither**. Generating with it against the existing adapter would create the very handicap that 6b retracted. Two coherent routes: **(i)** change `data_v2.SYSTEM_PROMPT` to the offline prompt, retrain, regenerate, re-judge — note this *reduces* the contradiction between instruction and targets, because 97.3% of training answers already do not advise EMS, so the offline prompt describes the corpus better than the current one does (the 122 EMS-advising answers should be filtered or rewritten); or **(ii)** keep the July results, which are internally valid, and stop describing them as an offline-premise evaluation. Do **not** run the offline prompt against the current adapter without retraining. | DECISION |
+| 6e | **The training instruction contradicts 97.3% of its own targets.** Every example is prefixed with "always advise calling emergency services immediately" while only 122/4441 answers do so. The model is therefore trained to disregard a clause of its own system prompt, and empirically it learned to: adapter configs advise EMS *less* than the base model (40.2% vs 59.8%), i.e. it followed the data over the instruction. Direct costs: ~30 of every sequence's tokens spent on a mostly-contradicted instruction. Possible but **unmeasured** cost: degraded instruction-following in general. Not a finding — a hypothesis worth one ablation if the model is retrained. | OPEN |
 | 6c | **`judging/assemble_items.py` does not validate generation provenance.** It reads `run.json` and builds items without checking the prompt policy, so it will assemble a judging set from any run, including one the internal lane rejects. This is the single gate whose absence allowed 6. `evaluation_protocol.validate_run_prompt_provenance` already exists and is a two-line call. | OPEN |
 
 ## P1 — fix before the next run
@@ -109,15 +111,16 @@ verified by executing the code path or reading the artifact, not inferred.
 
 ## Suggested order
 
-**#6 dominates everything else.** The aligned offline run has never been
-generated, and every published number comes from a run whose generation prompt
-contradicts the scoring rubric. Until that is resolved, fixing the reporting of
-those numbers is polishing the wrong artifact.
+**#6 dominates everything else** — but the obvious fix is a trap. See #6d.
 
-1. **#6** — generate the aligned run: `python camera_ready/pipeline.py generate`
-   (~2 GPU-hours, 6 configs × 41 questions, `offline_definitive_v1`), verify it,
-   then re-assemble and re-judge. This is the experiment the paper describes.
-   Add the provenance gate from **#6c** first so it cannot recur.
+1. **#6** — resolve the premise. The training prompt and the July generation
+   prompt are **byte-identical** (both sha `09f68afa`), so the July run is
+   train/test *aligned*; only the rubric disagrees. Generating under
+   `offline_definitive_v1` with the existing adapter would **introduce** a
+   train/test mismatch that does not currently exist. Either retrain under the
+   offline prompt and then regenerate and re-judge (clean, and it makes
+   training more coherent — see #6d), or keep the July results and correct the
+   framing. Add the provenance gate from **#6c** either way.
 2. **#22** — one line, ~7× faster training. Do it before any retrain.
 3. **#24** — regenerate the control key only; no re-judging, lifts controls to
    45/44/45.
