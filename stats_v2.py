@@ -8,13 +8,13 @@ Run AFTER that document is git-committed.
 
 USAGE
 -----
-python stats_v2.py --run_dir evaluations/CAMERA_READY_20260708_180411
+python stats_v2.py --run_dir evaluations/CAMERA_READY_OFFLINE_<timestamp>
 
-Requires per-item judge scores in:
-  <run_dir>/judgments/<judge>/<config>/<qid>.json
+Requires per-item judge scores in the sibling analysis directory:
+  <run_dir>_ANALYSIS/judgments/<judge>/<config>/<qid>.json
 
-OUTPUTS (all written to <run_dir>/stats/)
-------------------------------------------
+OUTPUTS (all written to <run_dir>_ANALYSIS/stats/)
+-------------------------------------------------
   stats_v2_results.csv       -- per-config summary with bootstrap CIs
   stats_v2_pairwise.csv      -- per-pair deltas, CIs, sign test
   stats_v2_judge_agreement.csv -- Kendall tau + Spearman rho
@@ -35,11 +35,22 @@ from itertools import combinations
 from pathlib import Path
 from typing import Optional
 
+from build_v2_judge_prompt import RUBRIC
+from evaluation_protocol import (
+    CAMERA_READY_CONFIG_RESOLUTION,
+    default_analysis_dir,
+    frozen_questions_from_run,
+    validate_camera_config_resolution,
+    validate_run_prompt_provenance,
+    validate_run_question_provenance,
+)
+from judge_per_item import JUDGES as JUDGE_CONFIGS, score_input_sha256
+
 # ---------------------------------------------------------------------------
 # Constants (must match judge_per_item.py and eval bank)
 # ---------------------------------------------------------------------------
 
-JUDGES = ["gpt4o", "claude", "gemini", "grok", "deepseek", "kimi"]
+JUDGES = list(JUDGE_CONFIGS)
 
 JUDGE_LABELS = {
     "gpt4o": "GPT-4o",
@@ -50,19 +61,12 @@ JUDGE_LABELS = {
     "kimi": "Kimi K2",
 }
 
-CAMERA_READY_CONFIGS = [
-    "A_BASE_4BIT",
-    "B_FINETUNED_4BIT",
-    "C_FINETUNED_8BIT",
-    "E_T6_IMPROVED",
-    "F_RAG_BM25",
-    "G_BASE_RAG",
-]
+CAMERA_READY_CONFIGS = list(CAMERA_READY_CONFIG_RESOLUTION)
 
 CONFIG_LABELS = {
     "A_BASE_4BIT":      "A: Base 4-bit",
     "B_FINETUNED_4BIT": "B: Fine-tuned 4-bit",
-    "C_FINETUNED_8BIT": "C: Fine-tuned 8-bit",
+    "C_FINETUNED_8BIT": "C: Base8 + FT4 adapter",
     "E_T6_IMPROVED":    "E: T6 gate",
     "F_RAG_BM25":       "F: RAG BM25",
     "G_BASE_RAG":       "G: Base + RAG",
@@ -91,34 +95,59 @@ ALPHA = 0.05
 # Data loading
 # ---------------------------------------------------------------------------
 
-def load_scores(run_dir: Path, bank: list) -> dict:
+def load_scores(analysis_dir: Path, bank: list, run: dict,
+                rubric_text: str) -> dict:
     """
     Load per-item scores from judgments/<judge>/<config>/<qid>.json.
 
     Returns:
       scores[config][qid][judge_id] = int score (0-5)
     """
-    judgment_dir = run_dir / "judgments"
+    judgment_dir = analysis_dir / "judgments"
     scores: dict = defaultdict(lambda: defaultdict(dict))
+    errors = []
+    q_by_id = {q["question_id"]: q for q in bank}
+    variants = run.get("variants", {})
 
-    for judge_id in JUDGES:
-        j_dir = judgment_dir / judge_id
-        if not j_dir.exists():
-            continue
-        for cfg_dir in j_dir.iterdir():
-            if not cfg_dir.is_dir():
-                continue
-            cfg = cfg_dir.name
-            for jfile in cfg_dir.glob("*.json"):
-                qid = jfile.stem
+    for cfg in CAMERA_READY_CONFIGS:
+        answers = {
+            answer["question_id"]: answer.get("answer", "")
+            for answer in variants.get(cfg, {}).get("answers", [])
+        }
+        for qid, question in q_by_id.items():
+            for judge_id in JUDGES:
+                path = judgment_dir / judge_id / cfg / f"{qid}.json"
+                if not path.exists():
+                    errors.append(f"missing {judge_id}/{cfg}/{qid}")
+                    continue
                 try:
-                    with open(jfile) as f:
-                        d = json.load(f)
-                    s = d.get("score")
-                    if isinstance(s, (int, float)) and 0 <= s <= 5:
-                        scores[cfg][qid][judge_id] = int(s)
-                except Exception:
-                    pass
+                    with open(path, encoding="utf-8") as handle:
+                        data = json.load(handle)
+                except (OSError, json.JSONDecodeError) as exc:
+                    errors.append(f"invalid {judge_id}/{cfg}/{qid}: {exc}")
+                    continue
+                expected_hash = score_input_sha256(
+                    judge_id, question, answers.get(qid, ""), rubric_text, cfg
+                )
+                if data.get("input_sha256") != expected_hash:
+                    errors.append(f"stale {judge_id}/{cfg}/{qid}")
+                    continue
+                score = data.get("score")
+                if isinstance(score, bool) or not isinstance(score, int) or not 0 <= score <= 5:
+                    errors.append(f"bad score {judge_id}/{cfg}/{qid}: {score!r}")
+                    continue
+                if (data.get("judge_id"), data.get("config_label"), data.get("question_id")) != (judge_id, cfg, qid):
+                    errors.append(f"identity mismatch {judge_id}/{cfg}/{qid}")
+                    continue
+                scores[cfg][qid][judge_id] = score
+
+    if errors:
+        preview = "; ".join(errors[:12])
+        suffix = f"; ... and {len(errors)-12} more" if len(errors) > 12 else ""
+        raise ValueError(
+            f"Judgment panel is incomplete or stale ({len(errors)} problem(s)): "
+            + preview + suffix
+        )
 
     return scores
 
@@ -152,9 +181,10 @@ def config_vectors(pm: dict, bank: list,
     result = {}
     for cfg in CAMERA_READY_CONFIGS:
         cfg_pm = pm.get(cfg, {})
-        vec = [cfg_pm[qid] for qid in qids if qid in cfg_pm]
+        present_qids = [qid for qid in qids if qid in cfg_pm]
+        vec = [cfg_pm[qid] for qid in present_qids]
         if vec:
-            result[cfg] = (vec, qids[:len(vec)])
+            result[cfg] = (vec, present_qids)
     return result
 
 # ---------------------------------------------------------------------------
@@ -298,8 +328,13 @@ def spearman_rho(x: list[float], y: list[float]) -> float:
         return ranks
     rx = _ranks(x)
     ry = _ranks(y)
-    d2 = sum((a - b)**2 for a, b in zip(rx, ry))
-    return 1 - 6 * d2 / (n * (n**2 - 1))
+    mean_x = sum(rx) / n
+    mean_y = sum(ry) / n
+    numerator = sum((a - mean_x) * (b - mean_y) for a, b in zip(rx, ry))
+    denom_x = sum((a - mean_x) ** 2 for a in rx)
+    denom_y = sum((b - mean_y) ** 2 for b in ry)
+    denominator = math.sqrt(denom_x * denom_y)
+    return numerator / denominator if denominator > 0 else float("nan")
 
 
 def compute_judge_agreement(scores: dict, bank: list) -> list[dict]:
@@ -422,18 +457,44 @@ def compute_flag_counts(run_dir: Path) -> list[dict]:
 # Main analysis
 # ---------------------------------------------------------------------------
 
-def run_analysis(run_dir: Path, bank: list, out_dir: Path) -> None:
-    print(f"\nLoading per-item scores from {run_dir / 'judgments'} ...")
-    scores = load_scores(run_dir, bank)
+def run_analysis(run_dir: Path, analysis_dir: Path, out_dir: Path,
+                 rubric_text: str) -> None:
+    with open(run_dir / "run.json", encoding="utf-8") as f:
+        run_meta = json.load(f)
+    prompt_errors = validate_run_prompt_provenance(run_meta)
+    if prompt_errors:
+        raise ValueError(
+            "Refusing offline statistical analysis: generation prompt is not "
+            "aligned with the offline no-EMS rubric ("
+            + "; ".join(prompt_errors)
+            + "). Treat the July 2026 "
+            "camera-ready run as a legacy-EMS baseline."
+        )
+    question_errors = validate_run_question_provenance(run_meta)
+    if question_errors:
+        raise ValueError(
+            "Refusing statistical analysis: invalid frozen question snapshot ("
+            + "; ".join(question_errors) + ")"
+        )
+    resolution_errors = validate_camera_config_resolution(run_meta)
+    if resolution_errors:
+        raise ValueError(
+            "Refusing statistical analysis: invalid model/adapter mapping ("
+            + "; ".join(resolution_errors) + ")"
+        )
+    bank = frozen_questions_from_run(run_meta)
+
+    print(f"\nLoading per-item scores from {analysis_dir / 'judgments'} ...")
+    scores = load_scores(analysis_dir, bank, run_meta, rubric_text)
 
     n_loaded = sum(
         len(scores[c][q]) for c in scores for q in scores[c]
     )
     print(f"  Loaded {n_loaded} individual judge scores")
 
-    if n_loaded == 0:
-        print("\nWARNING: No judgment files found. Run judge_per_item.py first.")
-        print("Generating placeholder output files for structure verification.")
+    expected_loaded = len(JUDGES) * len(CAMERA_READY_CONFIGS) * len(bank)
+    if n_loaded != expected_loaded:
+        raise ValueError(f"Expected {expected_loaded} valid scores, loaded {n_loaded}")
 
     pm = panel_means(scores, bank)
     all_qids = [q["question_id"] for q in bank]
@@ -688,9 +749,13 @@ def parse_args():
     p.add_argument("--run_dir", default=None,
                    help="Camera-ready run dir (auto-detects CAMERA_READY_* if omitted)")
     p.add_argument("--bank", default=None,
-                   help="eval_bank_v2.json path")
+                   help="Deprecated; questions and SC labels are read from the frozen run")
+    p.add_argument("--analysis_dir", default=None,
+                   help="Judgment artifact directory (default: sibling <run>_ANALYSIS)")
+    p.add_argument("--rubric", default=None,
+                   help="Rubric used for judging (default: canonical runtime rubric)")
     p.add_argument("--out_dir", default=None,
-                   help="Output dir (default: <run_dir>/stats/)")
+                   help="Statistics output dir (default: <analysis_dir>/stats/)")
     return p.parse_args()
 
 
@@ -712,20 +777,12 @@ def main():
     else:
         run_dir = Path(args.run_dir)
 
-    bank_path = Path(args.bank) if args.bank else \
-        HERE / "evaluations" / "eval_bank_v2_40q" / "eval_bank_v2.json"
-
-    if not bank_path.exists():
-        print(f"ERROR: bank not found: {bank_path}")
-        sys.exit(1)
-
-    with open(bank_path) as f:
-        bank = json.load(f)
-
-    out_dir = Path(args.out_dir) if args.out_dir else run_dir / "stats"
+    analysis_dir = Path(args.analysis_dir) if args.analysis_dir else default_analysis_dir(run_dir)
+    rubric_text = Path(args.rubric).read_text(encoding="utf-8") if args.rubric else RUBRIC
+    out_dir = Path(args.out_dir) if args.out_dir else analysis_dir / "stats"
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    run_analysis(run_dir, bank, out_dir)
+    run_analysis(run_dir, analysis_dir, out_dir, rubric_text)
 
 
 if __name__ == "__main__":

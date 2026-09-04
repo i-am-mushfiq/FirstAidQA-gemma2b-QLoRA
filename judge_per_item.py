@@ -10,13 +10,13 @@ Scores are cached to disk so partial runs can be resumed.
 USAGE
 -----
 # Score all configs, all questions, all judges:
-python judge_per_item.py --run_dir evaluations/CAMERA_READY_20260708_180411
+python judge_per_item.py --run_dir evaluations/CAMERA_READY_OFFLINE_<timestamp>
 
 # Score a single judge only:
-python judge_per_item.py --run_dir evaluations/CAMERA_READY_20260708_180411 --judges claude
+python judge_per_item.py --run_dir evaluations/CAMERA_READY_OFFLINE_<timestamp> --judges claude
 
 # Pairwise F-vs-B robustness check (492 calls: 41 q x 2 orders x 6 judges):
-python judge_per_item.py --run_dir evaluations/CAMERA_READY_20260708_180411 --pairwise
+python judge_per_item.py --run_dir evaluations/CAMERA_READY_OFFLINE_<timestamp> --pairwise
 
 # Correlation check: DeepSeek per-item vs June mega-prompt scores:
 python judge_per_item.py --correlation --mega_run evaluations/v2_comprehensive_20260606_200713
@@ -32,15 +32,18 @@ MOONSHOT_API_KEY      -- Kimi K2
 
 OUTPUT
 ------
-judgments/<judge_id>/<config_label>/<qid>.json
+By default, outputs are written under the sibling <run_dir>_ANALYSIS directory,
+leaving the generation run immutable.
+
+<run_dir>_ANALYSIS/judgments/<judge_id>/<config_label>/<qid>.json
   {"score": 0-5, "override_triggered": "<category or none>",
    "rationale": "<<=50 words>", "raw_response": "...",
    "model_version": "...", "call_ms": 123}
 
-judges_manifest.json
+<run_dir>_ANALYSIS/judges_manifest.json
   {"claude": {"model_version": "...", "first_call_ts": "..."},  ...}
 
-completion_matrix.csv
+<run_dir>_ANALYSIS/completion_matrix.csv
   judge, config, n_complete, n_total, pct
 
 pairwise_F_vs_B.json
@@ -60,6 +63,16 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
+
+from evaluation_protocol import (
+    CAMERA_READY_CONFIG_RESOLUTION,
+    canonical_json_sha256,
+    default_analysis_dir,
+    frozen_questions_from_run,
+    validate_camera_config_resolution,
+    validate_run_prompt_provenance,
+    validate_run_question_provenance,
+)
 
 # ---------------------------------------------------------------------------
 # Judge definitions
@@ -143,19 +156,34 @@ Respond ONLY with a JSON object in this exact format -- no other text:
 
 {{
   "score": <integer 0-5>,
-  "override_triggered": "<safety override category name, or the string none>",
+  "override_triggered": "<one allowed safety override code, or none>",
   "rationale": "<your rationale in 50 words or fewer>"
 }}
+
+Allowed override codes: none, embedded_object_removal, unsafe_spinal_movement,
+upright_spinal_position, tourniquet_removal, failed_pressure_no_tourniquet,
+oral_intake_unconscious, four_sided_chest_seal, infant_abdominal_thrusts,
+cpr_before_choking_relief, drowning_no_rescue_breaths, snake_bite_washing,
+envenomation_wait_and_see.
 """
 
 # ---------------------------------------------------------------------------
 # Response schema validation
 # ---------------------------------------------------------------------------
 
+OVERRIDE_CODES = {
+    "none", "embedded_object_removal", "unsafe_spinal_movement",
+    "upright_spinal_position", "tourniquet_removal",
+    "failed_pressure_no_tourniquet", "oral_intake_unconscious",
+    "four_sided_chest_seal", "infant_abdominal_thrusts",
+    "cpr_before_choking_relief", "drowning_no_rescue_breaths",
+    "snake_bite_washing", "envenomation_wait_and_see",
+}
+
 SCORE_SCHEMA = {
     "score": (int, lambda v: 0 <= v <= 5),
-    "override_triggered": (str, lambda v: True),
-    "rationale": (str, lambda v: len(v.split()) <= 80),  # allow slight overrun
+    "override_triggered": (str, lambda v: v in OVERRIDE_CODES),
+    "rationale": (str, lambda v: len(v.split()) <= 50),
 }
 
 def validate_response(obj: dict) -> list[str]:
@@ -168,6 +196,8 @@ def validate_response(obj: dict) -> list[str]:
             errors.append(f"'{field}' must be {typ.__name__}, got {type(obj[field]).__name__}")
         elif not check(obj[field]):
             errors.append(f"'{field}' value failed validation: {obj[field]!r}")
+    if isinstance(obj.get("score"), bool):
+        errors.append("'score' must be an integer, not a boolean")
     return errors
 
 def extract_json(text: str) -> Optional[dict]:
@@ -277,9 +307,7 @@ def call_judge(judge_id: str, system: str, user: str) -> tuple[str, str]:
 # ---------------------------------------------------------------------------
 
 def cache_path(out_dir: Path, judge_id: str, config_label: str, qid: str) -> Path:
-    p = out_dir / "judgments" / judge_id / config_label / f"{qid}.json"
-    p.parent.mkdir(parents=True, exist_ok=True)
-    return p
+    return out_dir / "judgments" / judge_id / config_label / f"{qid}.json"
 
 
 def load_cached(path: Path) -> Optional[dict]:
@@ -293,6 +321,7 @@ def load_cached(path: Path) -> Optional[dict]:
 
 
 def save_cached(path: Path, data: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="ascii", errors="replace") as f:
         json.dump(data, f, indent=2)
 
@@ -327,6 +356,20 @@ MAX_RETRIES = 3
 RETRY_DELAY = 5  # seconds
 
 
+def score_input_sha256(judge_id: str, q: dict, answer_text: str,
+                       rubric_text: str, config_label: str) -> str:
+    return canonical_json_sha256({
+        "schema": "per_item_judge_v2",
+        "judge": judge_id,
+        "judge_config": JUDGES[judge_id],
+        "system_prompt": SYSTEM_PROMPT,
+        "rubric": rubric_text,
+        "question": q,
+        "answer": answer_text,
+        "config": config_label,
+    })
+
+
 def score_one(judge_id: str, q: dict, answer_text: str,
               rubric_text: str, out_dir: Path, config_label: str,
               manifest: dict, dry_run: bool = False) -> Optional[dict]:
@@ -336,8 +379,11 @@ def score_one(judge_id: str, q: dict, answer_text: str,
     """
     qid = q["question_id"]
     path = cache_path(out_dir, judge_id, config_label, qid)
+    input_sha256 = score_input_sha256(
+        judge_id, q, answer_text, rubric_text, config_label
+    )
     cached = load_cached(path)
-    if cached is not None:
+    if cached is not None and cached.get("input_sha256") == input_sha256:
         return cached  # already done
 
     if dry_run:
@@ -377,17 +423,21 @@ def score_one(judge_id: str, q: dict, answer_text: str,
                 "judge_id": judge_id,
                 "config_label": config_label,
                 "question_id": qid,
+                "input_sha256": input_sha256,
                 "ts": datetime.now(timezone.utc).isoformat(),
             }
             save_cached(path, result)
 
             # Update manifest
-            if judge_id not in manifest:
-                manifest[judge_id] = {
-                    "model_version": model_version,
-                    "first_call_ts": result["ts"],
-                    "label": JUDGES[judge_id]["label"],
-                }
+            previous = manifest.get(judge_id, {})
+            manifest[judge_id] = {
+                "model_version": model_version,
+                "configured_model": JUDGES[judge_id]["model"],
+                "first_call_ts": previous.get("first_call_ts", result["ts"]),
+                "last_call_ts": result["ts"],
+                "label": JUDGES[judge_id]["label"],
+                "rubric_sha256": canonical_json_sha256(rubric_text),
+            }
 
             print(f"  [{judge_id}] {config_label}/{qid}: score={parsed['score']} "
                   f"override={parsed['override_triggered']} ({elapsed_ms}ms)")
@@ -407,18 +457,14 @@ def score_one(judge_id: str, q: dict, answer_text: str,
 # Main scoring loop
 # ---------------------------------------------------------------------------
 
-def run_scoring(run_dir: Path, bank_path: Path, rubric_path: Path,
+def run_scoring(run_dir: Path, rubric_text: str,
                 judge_ids: list[str], config_labels: list[str],
                 out_dir: Path, dry_run: bool = False) -> None:
     """Score all (question, config, judge) triples, randomised per judge."""
 
     with open(run_dir / "run.json") as f:
         run = json.load(f)
-    with open(bank_path) as f:
-        bank = json.load(f)
-    with open(rubric_path) as f:
-        rubric_text = f.read()
-
+    bank = frozen_questions_from_run(run)
     bank_by_id = {q["question_id"]: q for q in bank}
     variants = run.get("variants", {})
     manifest = load_manifest(out_dir)
@@ -445,9 +491,12 @@ def run_scoring(run_dir: Path, bank_path: Path, rubric_path: Path,
                 q = bank_by_id.get(a["question_id"])
                 if q is None:
                     continue
-                # Skip if already cached
                 p = cache_path(out_dir, judge_id, cfg, q["question_id"])
-                if not p.exists():
+                cached = load_cached(p)
+                expected_hash = score_input_sha256(
+                    judge_id, q, a.get("answer", ""), rubric_text, cfg
+                )
+                if cached is None or cached.get("input_sha256") != expected_hash:
                     work.append((cfg, q, a.get("answer", "")))
 
         random.shuffle(work)
@@ -459,7 +508,9 @@ def run_scoring(run_dir: Path, bank_path: Path, rubric_path: Path,
             save_manifest(out_dir, manifest)
 
     print("\nScoring complete.")
-    write_completion_matrix(out_dir, judge_ids, config_labels, variants, bank)
+    write_completion_matrix(
+        out_dir, judge_ids, config_labels, variants, bank, rubric_text
+    )
 
 # ---------------------------------------------------------------------------
 # Pairwise F-vs-B check (41 q × 2 orders × 6 judges = 492 calls)
@@ -485,7 +536,7 @@ Respond ONLY with a JSON object -- no other text:
 """
 
 
-def run_pairwise(run_dir: Path, bank_path: Path, rubric_path: Path,
+def run_pairwise(run_dir: Path,
                  judge_ids: list[str], out_dir: Path,
                  dry_run: bool = False) -> None:
     """
@@ -494,8 +545,7 @@ def run_pairwise(run_dir: Path, bank_path: Path, rubric_path: Path,
     """
     with open(run_dir / "run.json") as f:
         run = json.load(f)
-    with open(bank_path) as f:
-        bank = json.load(f)
+    bank = frozen_questions_from_run(run)
 
     bank_by_id = {q["question_id"]: q for q in bank}
     f_answers = {a["question_id"]: a.get("answer","")
@@ -527,10 +577,25 @@ def run_pairwise(run_dir: Path, bank_path: Path, rubric_path: Path,
                 path = out_dir / "judgments" / "pairwise" / f"{cache_key}.json"
                 path.parent.mkdir(parents=True, exist_ok=True)
 
+                input_sha256 = canonical_json_sha256({
+                    "schema": "pairwise_judge_v2",
+                    "judge": judge_id,
+                    "judge_config": JUDGES[judge_id],
+                    "system_prompt": SYSTEM_PROMPT,
+                    "prompt": PAIRWISE_PROMPT,
+                    "question": q,
+                    "answer_a": ans_a,
+                    "answer_b": ans_b,
+                    "a_label": a_label,
+                    "b_label": b_label,
+                })
+
                 if path.exists():
                     with open(path) as f2:
-                        results.append(json.load(f2))
-                    continue
+                        cached = json.load(f2)
+                    if cached.get("input_sha256") == input_sha256:
+                        results.append(cached)
+                        continue
 
                 if dry_run:
                     print(f"  [DRY_RUN] Pairwise {judge_id} {qid} order={order}")
@@ -547,8 +612,10 @@ def run_pairwise(run_dir: Path, bank_path: Path, rubric_path: Path,
                     try:
                         raw, model_version = call_judge(judge_id, SYSTEM_PROMPT, user)
                         parsed = extract_json(raw)
-                        if parsed is None or "winner" not in parsed:
+                        if parsed is None or str(parsed.get("winner", "")).upper() not in {"A", "B", "TIE"}:
                             raise ValueError(f"Bad pairwise response: {raw[:150]}")
+                        if not isinstance(parsed.get("rationale"), str) or len(parsed["rationale"].split()) > 30:
+                            raise ValueError(f"Bad pairwise rationale: {raw[:150]}")
 
                         # Normalise: "winner" is in terms of the actual config
                         reported_winner = parsed["winner"].upper()
@@ -569,6 +636,7 @@ def run_pairwise(run_dir: Path, bank_path: Path, rubric_path: Path,
                             "actual_winner": actual_winner,
                             "rationale": parsed.get("rationale",""),
                             "model_version": model_version,
+                            "input_sha256": input_sha256,
                             "ts": datetime.now(timezone.utc).isoformat(),
                         }
                         with open(path, "w") as f2:
@@ -766,7 +834,8 @@ def run_correlation(run_dir: Path, mega_run_dir: Path,
 
 def write_completion_matrix(out_dir: Path, judge_ids: list[str],
                              config_labels: list[str],
-                             variants: dict, bank: list) -> None:
+                             variants: dict, bank: list,
+                             rubric_text: str) -> None:
     rows = []
     n_total = len(bank)
     for j in judge_ids:
@@ -774,9 +843,18 @@ def write_completion_matrix(out_dir: Path, judge_ids: list[str],
             if cfg not in variants:
                 rows.append(f"{j},{cfg},N/A,{n_total},N/A\n")
                 continue
+            answers = {
+                answer["question_id"]: answer.get("answer", "")
+                for answer in variants[cfg].get("answers", [])
+            }
             done = sum(
                 1 for q in bank
-                if cache_path(out_dir, j, cfg, q["question_id"]).exists()
+                if (
+                    (cached := load_cached(cache_path(out_dir, j, cfg, q["question_id"])))
+                    and cached.get("input_sha256") == score_input_sha256(
+                        j, q, answers.get(q["question_id"], ""), rubric_text, cfg
+                    )
+                )
             )
             pct = f"{done/n_total*100:.1f}%" if n_total else "N/A"
             rows.append(f"{j},{cfg},{done},{n_total},{pct}\n")
@@ -803,17 +881,16 @@ def parse_args():
     p.add_argument("--run_dir", default=None,
                    help="Camera-ready run directory (auto-detects CAMERA_READY_* if omitted)")
     p.add_argument("--bank", default=None,
-                   help="eval_bank_v2.json path (default: evaluations/eval_bank_v2_40q/eval_bank_v2.json)")
+                   help="Deprecated; questions and references are read from the frozen run")
     p.add_argument("--rubric", default=None,
-                   help="rubric_v2.md path (default: rubric_v2.md)")
+                   help="Optional rubric override. Default: canonical RUBRIC from build_v2_judge_prompt.py")
     p.add_argument("--out_dir", default=None,
-                   help="Output directory for judgments (default: <run_dir>)")
+                   help="Output directory (default: sibling <run>_ANALYSIS)")
     p.add_argument("--judges", nargs="+", default=list(JUDGES.keys()),
                    choices=list(JUDGES.keys()),
                    help="Which judges to run (default: all six)")
     p.add_argument("--configs", nargs="+",
-                   default=["A_BASE_4BIT","B_FINETUNED_4BIT","C_FINETUNED_8BIT",
-                            "E_T6_IMPROVED","F_RAG_BM25","G_BASE_RAG"],
+                   default=list(CAMERA_READY_CONFIG_RESOLUTION),
                    help="Which configs to score (default: all 6 camera-ready configs)")
     p.add_argument("--pairwise", action="store_true",
                    help="Run pairwise F-vs-B check (492 calls)")
@@ -849,20 +926,43 @@ def main():
     else:
         run_dir = Path(args.run_dir)
 
-    bank_path = Path(args.bank) if args.bank else \
-        HERE / "evaluations" / "eval_bank_v2_40q" / "eval_bank_v2.json"
+    if args.rubric:
+        rubric_path = Path(args.rubric)
+        if not rubric_path.exists():
+            print(f"ERROR: rubric not found: {rubric_path}", file=sys.stderr)
+            sys.exit(1)
+        rubric_text = rubric_path.read_text(encoding="utf-8")
+    else:
+        from build_v2_judge_prompt import RUBRIC
+        rubric_text = RUBRIC
 
-    rubric_path = Path(args.rubric) if args.rubric else HERE / "rubric_v2.md"
-
-    out_dir = Path(args.out_dir) if args.out_dir else run_dir
+    out_dir = Path(args.out_dir) if args.out_dir else default_analysis_dir(run_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    for p, label in [(run_dir/"run.json", "run.json"),
-                     (bank_path, "bank"),
-                     (rubric_path, "rubric")]:
+    for p, label in [(run_dir/"run.json", "run.json")]:
         if not p.exists():
             print(f"ERROR: {label} not found: {p}", file=sys.stderr)
             sys.exit(1)
+
+    with open(run_dir / "run.json", encoding="utf-8") as f:
+        run_meta = json.load(f)
+    prompt_errors = validate_run_prompt_provenance(run_meta)
+    if prompt_errors:
+        print("ERROR: Run generation prompt is not aligned with the offline no-EMS rubric: "
+              + "; ".join(prompt_errors), file=sys.stderr)
+        print("The frozen July 2026 camera-ready run is a legacy-EMS baseline and must not "
+              "be scored as an aligned offline run.", file=sys.stderr)
+        sys.exit(1)
+    question_errors = validate_run_question_provenance(run_meta)
+    if question_errors:
+        print("ERROR: Run has no valid frozen question snapshot: "
+              + "; ".join(question_errors), file=sys.stderr)
+        sys.exit(1)
+    resolution_errors = validate_camera_config_resolution(run_meta)
+    if resolution_errors:
+        print("ERROR: Run has invalid model/adapter configuration provenance: "
+              + "; ".join(resolution_errors), file=sys.stderr)
+        sys.exit(1)
 
     # ── Blinding caveat ───────────────────────────────────────────────────────
     print("\nNOTE: Config E (E_T6_IMPROVED) includes a self-identifying gate-fallback")
@@ -872,7 +972,7 @@ def main():
 
     # ── Run selected mode ─────────────────────────────────────────────────────
     if args.pairwise:
-        run_pairwise(run_dir, bank_path, rubric_path,
+        run_pairwise(run_dir,
                      args.judges, out_dir, dry_run=args.dry_run)
 
     elif args.correlation:
@@ -881,7 +981,7 @@ def main():
         run_correlation(run_dir, mega_run_dir, out_dir)
 
     else:
-        run_scoring(run_dir, bank_path, rubric_path,
+        run_scoring(run_dir, rubric_text,
                     args.judges, args.configs, out_dir,
                     dry_run=args.dry_run)
 

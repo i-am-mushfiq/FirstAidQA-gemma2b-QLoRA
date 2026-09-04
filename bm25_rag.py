@@ -338,14 +338,22 @@ class BM25Retriever:
 
         best_idx   = int(np.argmax(raw_scores))
         best_score = float(raw_scores[best_idx])
-        max_score  = float(raw_scores.max())
 
-        # Normalise to [0, 1]
-        norm_score = (best_score / max_score) if max_score > 0 else 0.0
+        # A non-positive BM25 value provides no evidence of lexical relevance.
+        # Do not inject an arbitrary training answer in that case.
+        if best_score <= 0:
+            return {
+                "bm25_fired": False,
+                "bm25_skipped_gap": False,
+                "bm25_no_positive_match": True,
+                "gap_topic": None,
+                "score": round(best_score, 4),
+                "score_kind": "bm25_raw",
+            }
 
         if self.verbose:
             print(
-                f"[BM25RAG] {qid_label}  score={norm_score:.3f}  "
+                f"[BM25RAG] {qid_label}  raw_score={best_score:.3f}  "
                 f"retrieved: {self._questions[best_idx][:55]}..."
             )
 
@@ -360,7 +368,8 @@ class BM25Retriever:
             "answer":           answer_capped,
             "answer_full":      answer_full,
             "category":         self._categories[best_idx],
-            "score":            round(norm_score, 4),
+            "score":            round(best_score, 4),
+            "score_kind":       "bm25_raw",
             "bm25_fired":       True,
             "bm25_skipped_gap": False,
             "gap_topic":        None,
@@ -384,7 +393,6 @@ class BM25Retriever:
 
         query_tokens = query.lower().split()
         raw_scores   = self._index.get_scores(query_tokens)
-        max_score    = float(raw_scores.max()) if raw_scores.max() > 0 else 1.0
         top_indices  = np.argsort(raw_scores)[::-1][:top_n]
 
         # Check which topic patterns would fire
@@ -402,10 +410,10 @@ class BM25Retriever:
             print(f"  Gated  : no")
         print(f"{'='*60}")
         for rank, idx in enumerate(top_indices, 1):
-            score = float(raw_scores[idx]) / max_score
+            score = float(raw_scores[idx])
             words = len(self._answers[idx].split())
             capped = words > _WORD_CAP
-            print(f"\n  Rank {rank}  score={score:.3f}  [{self._categories[idx]}]"
+            print(f"\n  Rank {rank}  raw_score={score:.3f}  [{self._categories[idx]}]"
                   f"  ({words}w{'  CAP APPLIED' if capped else ''})")
             print(f"  Q: {self._questions[idx][:80]}")
             print(f"  A: {self._answers[idx][:120]}{'...' if len(self._answers[idx]) > 120 else ''}")

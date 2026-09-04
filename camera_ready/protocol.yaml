@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "name": "camera-ready-offline-v1",
+  "prompt_policy": "offline_definitive_v1",
+  "generation": {
+    "script": "v2_comprehensive_eval.py",
+    "config_codes": ["A", "B", "C", "E", "F", "G"],
+    "max_new_tokens": 350,
+    "model": "models/gemma-2b-it",
+    "adapter_4bit": "experiments/10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337/adapter",
+    "questions": "evaluations/eval_bank_v2_40q/eval_bank_v2.json",
+    "train_split": "splits/10cat/train.json",
+    "output_prefix": "CAMERA_READY_OFFLINE_"
+  },
+  "verification": {
+    "script": "verify_camera_ready.py",
+    "expected_questions": 41
+  },
+  "judging": {
+    "script": "judge_per_item.py",
+    "judges": ["gpt4o", "claude", "gemini", "grok", "deepseek", "kimi"],
+    "analysis_suffix": "_ANALYSIS"
+  },
+  "analysis": {
+    "script": "stats_v2.py"
+  },
+  "optional_manual_protocol": {
+    "script": "build_v2_judge_prompt.py",
+    "note": "Unblinded side-by-side protocol; report separately from per-item statistics."
+  }
+}

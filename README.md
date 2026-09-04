@@ -1,5 +1,9 @@
 # Offline Medical First-Aid Response via QLoRA Fine-Tuning of Gemma 2B Instruct
 
+> **Current camera-ready workflow:** Start with [`camera_ready/README.md`](camera_ready/README.md)
+> and use `python camera_ready/pipeline.py status` or `check`. The broader README
+> below preserves historical research context and may describe superseded experiments.
+
 Fine-tuning Google's **Gemma 2B Instruct** model using **QLoRA (Quantised Low-Rank Adaptation)** to produce a compact, offline-capable assistant for emergency first-aid guidance. The goal is a model that runs entirely on a consumer device — no internet, no cloud — and gives accurate, step-by-step procedural answers for life-threatening and non-life-threatening first-aid scenarios.
 
 > **Status:** Research complete (May 2026). Final adapter confirmed: `10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337`. 8-bit trialled and rejected — systematic dangerous positioning heuristic discovered on 40-question evaluation. Enhanced inference (T4/T6) trialled and rejected — active harm at 2B scale. T5 (RAG) is the remaining high-priority experiment.

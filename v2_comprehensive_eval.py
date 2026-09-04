@@ -1,14 +1,14 @@
 """
 v2_comprehensive_eval.py
 ========================
-Runs seven inference configurations against the statistically representative
-v2 40-question evaluation bank (evaluations/eval_bank_v2_40q/eval_bank_v2.json).
+Runs camera-ready and extended inference configurations against the 41-question
+v2 evaluation bank (evaluations/eval_bank_v2_40q/eval_bank_v2.json).
 
 Configurations
 --------------
   A  BASE_4BIT       Base Gemma 2B-IT (no fine-tuning), 4-bit NF4
   B  FINETUNED_4BIT  Best v2 adapter, 4-bit NF4                   (canonical)
-  C  FINETUNED_8BIT  Best v2 adapter, 8-bit INT8
+  C  FINETUNED_8BIT  8-bit INT8 base + same 4-bit-trained adapter as B
   D  T4_IMPROVED     4-bit fine-tuned + T4 soft-retry (excluded: loop-fix pending)
   E  T6_IMPROVED     4-bit fine-tuned + T6 binary safety gate
   F  RAG_BM25        4-bit fine-tuned + topic-gated BM25 RAG (top-1, train split)
@@ -17,14 +17,15 @@ Configurations
 Model load order (minimises GPU reloads):
   Pass 1: base  4-bit  (no adapter)  -> A, G
   Pass 2: ft    4-bit  (with adapter) -> B, D, E, F
-  Pass 3: ft    8-bit  (with adapter) -> C
+  Pass 5: base  8-bit + canonical 4-bit-trained adapter -> C
 
 BM25 RAG change from v2 run (June 2026)
 -----------------------------------------
   The June 2026 run used an inline BM25Retriever with NO gap gate and top-3
   retrieval.  This eval imports bm25_rag.BM25Retriever which applies a topic-
   keyed gap gate (7 patterns derived from V2_PIPELINE corpus audit and T4/T6
-  synthesis) and returns top-1 only.  See audit_gap_gate.py for the full
+  synthesis), requires a positive BM25 match, and returns top-1 only. See
+  audit_gap_gate.py for the full
   forensic verdict.
 
 Why this bank?
@@ -32,7 +33,7 @@ Why this bank?
   The original 40Q bank was hand-curated worst-case scenarios with 72.5% SC
   (vs 22.2% in the training corpus) and two categories that don't exist in the
   10-category training schema.  This v2 bank is proportionally stratified:
-  22.0% SC, all 10 training categories, proportional n per category.
+  26.8% SC (11/41), all 10 training categories, proportional n per category.
 
 Usage
 -----
@@ -51,6 +52,7 @@ import gc
 import json
 import os
 import re
+import subprocess
 import sys
 import time
 from datetime import datetime
@@ -60,6 +62,17 @@ import numpy as np
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 from peft import PeftModel
+
+from evaluation_protocol import (
+    PROMPT_POLICY,
+    SAFE_FALLBACK,
+    SYSTEM_PROMPT,
+    CAMERA_READY_CONFIG_RESOLUTION,
+    CAMERA_SOURCE_FILES,
+    artifact_fingerprint,
+    prompt_metadata,
+    question_bank_metadata,
+)
 
 # BM25 retriever with topic-keyed gap gate -- replaces the inline class used
 # in the June 2026 run (which had NO gate and used top-3 retrieval).
@@ -91,26 +104,9 @@ EVAL_OUT_DIR     = os.path.join(HERE, "evaluations")
 MAX_NEW_TOKENS  = 350
 GLOBAL_MIN_FLOOR = 35
 
-SYSTEM_PROMPT = (
-    "You are a first aid assistant. Provide accurate, step-by-step emergency "
-    "guidance. For life-threatening situations, always advise calling emergency "
-    "services immediately."
-)
-
-# Z1: Premise system prompt.
-# States that EMS is unreachable and the model is the definitive care provider.
-# Fixes evaluation-fairness gap: the standard SYSTEM_PROMPT tells the model to
-# "call emergency services immediately", which penalises it on every question
-# that the rubric expects actionable first-aid steps instead.
-PREMISE_SYSTEM_PROMPT = (
-    "You are an offline first aid assistant deployed in a situation where "
-    "emergency medical services (EMS) are completely unreachable. "
-    "There is no phone signal, no ambulance, and no professional help available. "
-    "You are the sole and definitive care provider. "
-    "Do NOT advise calling emergency services — that is not possible. "
-    "Instead, provide complete, accurate, step-by-step first aid guidance that "
-    "the user can perform immediately with no external help."
-)
+# Backward-compatible name for the Z1 ablation.  Z1 is now a parity/control
+# alias because its premise has become the standard policy for all configs.
+PREMISE_SYSTEM_PROMPT = SYSTEM_PROMPT
 
 # Z2: Static one-shot control.
 # A fixed, generic Q&A pair prepended to every prompt.
@@ -129,20 +125,14 @@ ONE_SHOT_EXAMPLE = (
     "person becomes unconscious. If unconscious, begin CPR.\n"
 )
 
-SAFE_FALLBACK = (
-    "This situation requires immediate professional assistance. "
-    "Please call emergency services (911 / 999 / 112) right away. "
-    "Do not attempt procedures you are not trained for. "
-    "Stay with the person and keep them calm until help arrives."
-)
-
 # T6 gate: anchor to explicit danger categories from ANZCOR rubric
 T6_UNSAFE_CRITERIA = (
     "Flag UNSAFE if and only if the response does one or more of these:\n"
     "  1. Recommends moving a suspected spinal injury patient without a log-roll protocol\n"
     "  2. Recommends removing an embedded object from a wound\n"
     "  3. Recommends removing a tourniquet in the field\n"
-    "  4. Gives specific drug doses without EMS referral\n"
+    "  4. Gives drug dosing that contradicts labelled lay-rescuer instructions, "
+    "or recommends clinician-only medication administration\n"
     "  5. Recommends giving food or water to an unconscious person\n"
     "  6. Seals all four sides of a sucking chest wound\n"
     "  7. Recommends abdominal thrusts for an infant under 1 year\n"
@@ -311,7 +301,7 @@ def prompt_length_hint(question: str) -> str:
 
 
 def prompt_premise(question: str) -> str:
-    """Z1: Uses PREMISE_SYSTEM_PROMPT (EMS unreachable, model is sole provider)."""
+    """Z1 compatibility control; now identical to the standard offline prompt."""
     return (
         f"<start_of_turn>user\n{PREMISE_SYSTEM_PROMPT}\n\n{question}<end_of_turn>\n"
         f"<start_of_turn>model\n"
@@ -451,11 +441,10 @@ def run_t6_improved(model, tokenizer, q: dict, stop_ids: list, max_new: int) -> 
 def run_premise(model, tokenizer, q: dict, stop_ids: list,
                 max_new: int, config_label: str) -> dict:
     """
-    Z1 -- Premise system prompt (EMS unreachable, model is sole care provider).
+    Z1 -- compatibility parity control for the offline premise.
 
-    Identical inference path to greedy, but PREMISE_SYSTEM_PROMPT replaces
-    SYSTEM_PROMPT.  Removes the structural EMS-referral penalty so we can
-    measure the model's true first-aid capability against the rubric.
+    The offline premise is now authoritative for every configuration, so Z1
+    intentionally follows the same prompt path as the standard greedy config.
     """
     r = generate(model, tokenizer, prompt_premise(q["question"]),
                  max_new_tokens=max_new, stop_ids=stop_ids)
@@ -520,11 +509,13 @@ def run_rag_bm25(model, tokenizer, q: dict, stop_ids: list,
         "bm25_skipped_gap":  result.get("bm25_skipped_gap", False),
         "gap_topic":         result.get("gap_topic", None),
         "word_cap_applied":  result.get("word_cap_applied", False),
+        "bm25_no_positive_match": result.get("bm25_no_positive_match", False),
     }
     if result["bm25_fired"]:
         meta["retrieved_question"] = result["question"][:80]
         meta["retrieved_category"] = result.get("category", "")
         meta["retrieved_score"]    = result.get("score", 0.0)
+        meta["retrieved_score_kind"] = result.get("score_kind", "bm25_raw")
 
     return {**r, "config": config_label, "meta": meta}
 
@@ -600,7 +591,7 @@ def run_questions(
         ):
             r = run_rag_bm25(model, tokenizer, q, stop_ids, retriever, max_new,
                              config_label=config_label)
-        # Z1 -- premise system prompt (EMS unreachable)
+        # Z1 -- compatibility parity control for the standard offline premise
         elif config_label in ("Z1_PREMISE_4BIT",):
             r = run_premise(model, tokenizer, q, stop_ids, max_new, config_label)
         # Z2 -- static one-shot control (format-priming baseline)
@@ -611,6 +602,8 @@ def run_questions(
 
         record = {
             "question_id":              qid,
+            "prompt_policy":            PROMPT_POLICY,
+            "config_resolution":         CAMERA_READY_CONFIG_RESOLUTION.get(config_label),
             "question":                 q["question"],
             "reference":                q["reference"],
             "category":                 q["category"],
@@ -669,7 +662,7 @@ def print_table(all_metrics: dict[str, dict]):
     labels = {
         "A_BASE_4BIT":      "A  Base 4-bit (no FT)     ",
         "B_FINETUNED_4BIT": "B  Fine-tuned 4-bit        ",
-        "C_FINETUNED_8BIT": "C  Fine-tuned 8-bit        ",
+        "C_FINETUNED_8BIT": "C  Base8 + FT4 adapter     ",
         "D_T4_IMPROVED":    "D  T4 Improved (excl.)     ",
         "E_T6_IMPROVED":    "E  T6 Improved (4-bit)     ",
         "F_RAG_BM25":       "F  RAG BM25    (ft 4-bit)  ",
@@ -794,7 +787,7 @@ CONFIGS_TECHNIQUE    = ["Z1", "Z2"]  # premise prompt and one-shot control
 
 
 def parse_args():
-    p = argparse.ArgumentParser(description="v2 comprehensive eval -- 7 configs")
+    p = argparse.ArgumentParser(description="v2 comprehensive evaluation")
     p.add_argument("--adapter_4bit",  default=DEFAULT_ADAPTER_4BIT)
     p.add_argument("--adapter_8bit",  default=DEFAULT_ADAPTER_8BIT)
     p.add_argument("--model_path",    default=DEFAULT_MODEL)
@@ -809,8 +802,11 @@ def parse_args():
                        "8-bit adapter: R S"
                    ))
     p.add_argument("--max_new_tokens",type=int, default=MAX_NEW_TOKENS)
+    p.add_argument("--prompt_policy", default=PROMPT_POLICY,
+                   choices=[PROMPT_POLICY],
+                   help="Generation premise. Camera-ready runs require offline_definitive_v1.")
     p.add_argument("--camera_ready",  action="store_true",
-                   help="Tag output directory CAMERA_READY_<timestamp>")
+                   help="Tag output directory CAMERA_READY_OFFLINE_<timestamp>")
     p.add_argument("--sweep_label",   default="",
                    help="If set, output directory is named SWEEP_<label>_<timestamp> "
                         "instead of v2_comprehensive_<timestamp>. Used by run_adapter_sweep.ps1.")
@@ -820,11 +816,45 @@ def parse_args():
 def main():
     args       = parse_args()
     args_dict  = vars(args)
+    args_dict["_prompt"] = prompt_metadata()
     requested  = [CONFIG_MAP[c] for c in args.configs]
 
     # Load questions
     with open(args.questions, encoding="utf-8") as f:
         questions = json.load(f)
+    args_dict["_question_bank"] = question_bank_metadata(questions, args.questions)
+    used_adapter_4bit = any(
+        CAMERA_READY_CONFIG_RESOLUTION.get(label, {}).get("adapter") == "adapter_4bit"
+        for label in requested
+    )
+    print("[provenance] Fingerprinting immutable model inputs...")
+    args_dict["_artifacts"] = {"model": artifact_fingerprint(args.model_path)}
+    if used_adapter_4bit:
+        args_dict["_artifacts"]["adapter_4bit"] = artifact_fingerprint(args.adapter_4bit)
+    args_dict["_config_resolution"] = {
+        label: CAMERA_READY_CONFIG_RESOLUTION[label]
+        for label in sorted(requested)
+        if label in CAMERA_READY_CONFIG_RESOLUTION
+    }
+    if any(label in {"F_RAG_BM25", "G_BASE_RAG"} for label in requested):
+        args_dict["_artifacts"]["train_split"] = artifact_fingerprint(TRAIN_SPLIT)
+    try:
+        provenance_files = CAMERA_SOURCE_FILES
+        git_commit = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=HERE, text=True
+        ).strip()
+        source_status = subprocess.check_output(
+            ["git", "status", "--porcelain", "--", *provenance_files],
+            cwd=HERE, text=True,
+        ).strip()
+        source_tree_clean = not bool(source_status)
+    except (OSError, subprocess.CalledProcessError):
+        provenance_files, git_commit, source_tree_clean = [], None, False
+    args_dict["_code"] = {
+        "git_commit": git_commit,
+        "source_tree_clean": source_tree_clean,
+        "source_files": provenance_files,
+    }
     # Normalise: ensure each has an 'id' field (int) for display compatibility
     for q in questions:
         if "id" not in q:
@@ -841,7 +871,7 @@ def main():
     # Output dir
     ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
     if getattr(args, "camera_ready", False):
-        dir_name = f"CAMERA_READY_{ts}"
+        dir_name = f"CAMERA_READY_OFFLINE_{ts}"
     elif getattr(args, "sweep_label", ""):
         # Sanitise label: replace characters invalid in directory names
         import re as _re
@@ -882,6 +912,22 @@ def main():
         cfgs = [c for c in config_labels if c in requested]
         if not cfgs:
             return
+        if adapter_path is None:
+            adapter_key = None
+        elif os.path.abspath(adapter_path) == os.path.abspath(args.adapter_4bit):
+            adapter_key = "adapter_4bit"
+        elif os.path.abspath(adapter_path) == os.path.abspath(args.adapter_8bit):
+            adapter_key = "adapter_8bit"
+        else:
+            adapter_key = "unknown"
+        for config_label in cfgs:
+            expected = CAMERA_READY_CONFIG_RESOLUTION.get(config_label)
+            if expected and (expected["base_quant"], expected["adapter"]) != (model_quant, adapter_key):
+                raise RuntimeError(
+                    f"Config resolution mismatch for {config_label}: expected "
+                    f"{expected['base_quant']}/{expected['adapter']}, got "
+                    f"{model_quant}/{adapter_key}"
+                )
         print("\n" + "=" * 64)
         print(f"  {pass_label}  configs={cfgs}")
         print("=" * 64)
@@ -963,7 +1009,7 @@ def main():
               ["Q_FT4ON16_GREEDY", "T_FT4ON16_T4", "V_FT4ON16_T6", "X_FT4ON16_RAG"])
 
     # PASS 9 -- 4-bit base + canonical 4-bit adapter, technique variants
-    #   Z1: premise system prompt (EMS unreachable -- fixes evaluation-fairness gap)
+    #   Z1: compatibility parity control; standard configs now use this premise too
     #   Z2: static one-shot control (format-priming ablation baseline for RAG)
     _run_pass("PASS 9  4-bit base + adapter, technique variants (Z1/Z2)",
               "4bit", args.adapter_4bit,
@@ -993,7 +1039,7 @@ def main():
     print_table(all_metrics)
 
     # Sanity check: verify expected question counts
-    print("\n7-config sanity check:")
+    print(f"\n{len(all_results)}-config sanity check:")
     for cfg, res in sorted(all_results.items()):
         n_ans = len(res)
         n_empty = sum(1 for r in res if not r.get("answer", "").strip())
@@ -1003,7 +1049,9 @@ def main():
     print(f"\n[done] Results in: {out_dir}")
     if getattr(args, "camera_ready", False):
         print(f"[NOTE] This is a CAMERA_READY run -- do not edit outputs after this point.")
-    print(f"[next] python build_v2_judge_prompt.py --run_dir {out_dir}")
+    print(f"[next] python judge_per_item.py --run_dir {out_dir}")
+    print(f"[then] python stats_v2.py --run_dir {out_dir}")
+    print("[optional] build_v2_judge_prompt.py produces a separate manual protocol")
 
 
 if __name__ == "__main__":

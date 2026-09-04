@@ -3,20 +3,13 @@ verify_camera_ready.py
 ======================
 Post-run verification for the camera-ready eval run.
 
-Checks (all must pass before the run is tagged CAMERA_READY):
-  1. Expected config count: 6 configs present (A, B, C, E, F, G)
-  2. Question count: each config has exactly 41 answers
-  3. No empty generations: every answer is non-empty after strip()
-  4. SC flag patch: V2Q10=False, V2Q13=True, V2Q14=True, V2Q34=True
-  5. BM25 gate metadata: every F/G answer has bm25_fired + bm25_skipped_gap
-  6. V2Q35 gate: V2Q35 is gap-gated in both F and G (tourniquet_escalation)
-  7. V2Q41 gate: V2Q41 is gap-gated in both F and G (spinal_logroll)
-  8. No F/G answer has meta.retrieved (old top-3 list format -- wrong class)
-  9. 7-config sanity table printed (D shows N/A)
+Checks include the prompt policy, frozen question-bank hash, model/adapter content
+fingerprints and mapping, committed code revision, exact 6-config/41-question
+matrix, non-empty answers, SC patches, and the current gated top-1 BM25 schema.
 
 Usage
 -----
-  python verify_camera_ready.py --run_dir evaluations/CAMERA_READY_<timestamp>
+  python verify_camera_ready.py --run_dir evaluations/CAMERA_READY_OFFLINE_<timestamp>
   python verify_camera_ready.py           (auto-detects most recent CAMERA_READY_* dir)
 """
 
@@ -26,16 +19,25 @@ import os
 import re
 import sys
 
+from evaluation_protocol import (
+    CAMERA_READY_CONFIG_RESOLUTION,
+    CAMERA_SOURCE_FILES,
+    PROMPT_POLICY,
+    artifact_fingerprint,
+    validate_camera_config_resolution,
+    validate_run_prompt_provenance,
+    validate_run_question_provenance,
+)
+from build_v2_judge_prompt import RUBRIC
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 EVAL_DIR = os.path.join(HERE, "evaluations")
 
-EXPECTED_CONFIGS = {
-    "A_BASE_4BIT", "B_FINETUNED_4BIT", "C_FINETUNED_8BIT",
-    "E_T6_IMPROVED", "F_RAG_BM25", "G_BASE_RAG",
-}
+EXPECTED_CONFIGS = set(CAMERA_READY_CONFIG_RESOLUTION)
 EXCLUDED_CONFIGS = {"D_T4_IMPROVED"}
 
 EXPECTED_N = 41
+EXPECTED_PROMPT_POLICY = PROMPT_POLICY
 
 # SC patches applied to eval_bank_v2.json after June 2026 run
 SC_PATCHES = {
@@ -91,9 +93,53 @@ def verify(run_dir: str) -> int:
     print(f"{'='*70}\n")
 
     # ------------------------------------------------------------------
-    # Check 1: Expected configs present
+    # Check 1: Prompt/rubric premise alignment and provenance
     # ------------------------------------------------------------------
-    print("1. Config presence")
+    print("1. Prompt policy and provenance")
+    prompt_errors = validate_run_prompt_provenance(run)
+    check(not prompt_errors,
+          f"Prompt text, policy, and SHA-256 match {EXPECTED_PROMPT_POLICY}",
+          "; ".join(prompt_errors), errors)
+    print()
+
+    print("2. Frozen question bank and model/config provenance")
+    question_errors = validate_run_question_provenance(run)
+    check(not question_errors,
+          "Question text, references, categories, and SC labels are frozen consistently",
+          "; ".join(question_errors), errors)
+    resolution_errors = validate_camera_config_resolution(run)
+    check(not resolution_errors,
+          "Model/adapter/technique mapping matches the canonical camera configuration",
+          "; ".join(resolution_errors), errors)
+    for name, recorded in sorted(run.get("run_args", {}).get("_artifacts", {}).items()):
+        try:
+            current = artifact_fingerprint(recorded["path"])
+            matches = current["sha256"] == recorded.get("sha256")
+            check(matches,
+                  f"{name}: content fingerprint verified",
+                  f"{name}: content differs from recorded fingerprint", errors)
+        except (KeyError, OSError, ValueError) as exc:
+            check(False, "", f"{name}: cannot verify artifact: {exc}", errors)
+    code_meta = run.get("run_args", {}).get("_code", {})
+    code_ok = (
+        bool(code_meta.get("git_commit"))
+        and code_meta.get("source_tree_clean") is True
+        and code_meta.get("source_files") == CAMERA_SOURCE_FILES
+    )
+    check(code_ok,
+          f"Generation code was committed and clean at {code_meta.get('git_commit', '')[:12]}",
+          "Generation code commit is missing or camera-ready sources were not clean", errors)
+    rubric_path = os.path.join(HERE, "rubric_v2.md")
+    rubric_doc = open(rubric_path, encoding="utf-8").read()
+    check(RUBRIC.strip() in rubric_doc,
+          "Documented final rubric exactly contains the runtime rubric",
+          "rubric_v2.md final rubric differs from the runtime judge rubric", errors)
+    print()
+
+    # ------------------------------------------------------------------
+    # Check 2: Expected configs present
+    # ------------------------------------------------------------------
+    print("3. Config presence")
     found = set(variants.keys())
     missing = EXPECTED_CONFIGS - found
     extra   = found - EXPECTED_CONFIGS - EXCLUDED_CONFIGS
@@ -106,21 +152,26 @@ def verify(run_dir: str) -> int:
     print()
 
     # ------------------------------------------------------------------
-    # Check 2: Question counts
+    # Check 3: Question counts and identity
     # ------------------------------------------------------------------
-    print("2. Answer counts")
+    print("4. Answer counts and identity")
+    expected_ids = {f"V2Q{i:02d}" for i in range(1, EXPECTED_N + 1)}
     for cfg in sorted(found):
         answers = variants[cfg].get("answers", [])
         n = len(answers)
+        ids = [a.get("question_id") for a in answers]
         check(n == EXPECTED_N,
               f"{cfg}: n={n}",
               f"{cfg}: expected {EXPECTED_N}, got {n}", errors)
+        check(set(ids) == expected_ids and len(ids) == len(set(ids)),
+              f"{cfg}: all expected question IDs present exactly once",
+              f"{cfg}: missing, extra, or duplicate question IDs", errors)
     print()
 
     # ------------------------------------------------------------------
-    # Check 3: No empty generations
+    # Check 4: No empty generations
     # ------------------------------------------------------------------
-    print("3. Empty generation check")
+    print("5. Empty generation check")
     for cfg in sorted(found):
         answers = variants[cfg].get("answers", [])
         empties = [a["question_id"] for a in answers
@@ -131,9 +182,9 @@ def verify(run_dir: str) -> int:
     print()
 
     # ------------------------------------------------------------------
-    # Check 4: SC flag patches
+    # Check 5: SC flag patches
     # ------------------------------------------------------------------
-    print("4. SC flag patch verification")
+    print("6. SC flag patch verification")
     ref_cfg = "A_BASE_4BIT" if "A_BASE_4BIT" in variants else sorted(found)[0]
     answers_by_id = {a["question_id"]: a for a in variants[ref_cfg].get("answers", [])}
     for qid, expected_sc in SC_PATCHES.items():
@@ -147,9 +198,9 @@ def verify(run_dir: str) -> int:
     print()
 
     # ------------------------------------------------------------------
-    # Check 5: BM25 gate metadata in F and G
+    # Check 6: BM25 gate metadata in F and G
     # ------------------------------------------------------------------
-    print("5. BM25 gate metadata (F and G)")
+    print("7. BM25 gate metadata (F and G)")
     for cfg in ["F_RAG_BM25", "G_BASE_RAG"]:
         if cfg not in variants:
             print(f"  SKIP  {cfg} not in run")
@@ -161,7 +212,11 @@ def verify(run_dir: str) -> int:
                            if "bm25_skipped_gap" not in a.get("meta", {})]
         has_old_format = [a["question_id"] for a in answers
                           if "retrieved" in a.get("meta", {})
-                          and isinstance(a["meta"]["retrieved"], list)]
+                           and isinstance(a["meta"]["retrieved"], list)]
+        bad_scores = [a["question_id"] for a in answers
+                      if a.get("meta", {}).get("bm25_fired")
+                      and (a.get("meta", {}).get("retrieved_score_kind") != "bm25_raw"
+                           or a.get("meta", {}).get("retrieved_score", 0) <= 0)]
         check(not missing_fired,
               f"{cfg}: bm25_fired present in all {len(answers)} answers",
               f"{cfg}: bm25_fired missing in {missing_fired}", errors)
@@ -171,12 +226,15 @@ def verify(run_dir: str) -> int:
         check(not has_old_format,
               f"{cfg}: no old top-3 'retrieved' list format",
               f"{cfg}: old retrieved-list format found (wrong class used): {has_old_format}", errors)
+        check(not bad_scores,
+              f"{cfg}: fired retrievals have positive raw BM25 scores",
+              f"{cfg}: invalid retrieval score metadata at {bad_scores}", errors)
     print()
 
     # ------------------------------------------------------------------
-    # Check 6+7: Must-gate questions
+    # Check 7: Must-gate questions
     # ------------------------------------------------------------------
-    print("6+7. Topic-gate assertions (V2Q35 and V2Q41)")
+    print("8. Topic-gate assertions (V2Q35 and V2Q41)")
     for cfg in ["F_RAG_BM25", "G_BASE_RAG"]:
         if cfg not in variants:
             print(f"  SKIP  {cfg} not in run")
@@ -198,7 +256,7 @@ def verify(run_dir: str) -> int:
     # ------------------------------------------------------------------
     # Sanity table
     # ------------------------------------------------------------------
-    print("Sanity table (7 configs)")
+    print("Sanity table (6 camera-ready configs; D shown as excluded)")
     print(f"  {'Config':<24} {'n':>4} {'empty':>6} {'SC':>4} "
           f"{'fired':>6} {'gated':>6}")
     print("  " + "-" * 55)

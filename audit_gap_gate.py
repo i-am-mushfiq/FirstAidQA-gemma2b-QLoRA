@@ -191,12 +191,12 @@ def run_audit(run_dir: str, bank_path: str) -> str:
         if retrieved:
             ret_q = retrieved[0].get("question", "")[:70]
         elif meta.get("bm25_fired", False):
-            ret_q = "(fired, question not stored)"
+            ret_q = meta.get("retrieved_question", "(fired, question not stored)")[:70]
         else:
             ret_q = "(none)"
 
-        fired_str = f"fired({len(retrieved)})" if retrieved else \
-                    ("fired" if meta.get("bm25_fired") else \
+        fired_str = f"legacy({len(retrieved)})" if retrieved else \
+                    ("fired(top1)" if meta.get("bm25_fired") else \
                     ("GATED" if meta.get("bm25_skipped_gap") else "unknown"))
 
         old_gate_str  = "WOULD-GATE" if old_would_gate else "---"

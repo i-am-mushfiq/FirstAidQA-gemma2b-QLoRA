@@ -4,6 +4,9 @@
 # Model weights (never commit — multi-GB)
 models/
 
+# Experiment archives (>100MB, exceeds GitHub file limit)
+experiments/*.zip
+
 # Adapter binary weights (38–150 MB each — reproducible from training)
 *.safetensors
 optimizer.pt

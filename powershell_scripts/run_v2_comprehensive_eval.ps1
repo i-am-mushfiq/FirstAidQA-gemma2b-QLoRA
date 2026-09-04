@@ -40,6 +40,11 @@ param(
     [int]$RagTopK            = 3
 )
 
+Write-Host "This legacy runner is retired because its config-C adapter, RAG, prompt, and output contracts are obsolete." -ForegroundColor Red
+Write-Host "Use the canonical camera-ready runner instead:" -ForegroundColor Yellow
+Write-Host "  ..\run_camera_ready.ps1" -ForegroundColor White
+exit 2
+
 Set-Location "C:\Personal_Endeavours\Fine_Tuning"
 $ErrorActionPreference = "Continue"
 

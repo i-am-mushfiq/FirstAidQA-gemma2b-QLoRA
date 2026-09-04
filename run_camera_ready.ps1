@@ -1,7 +1,7 @@
 # run_camera_ready.ps1
 # ====================
-# Camera-ready eval runner for v2 comprehensive evaluation.
-# Runs all pre-flight checks, then the 6-config eval, then post-run verification.
+# Compatibility entrypoint. The canonical implementation is now the manifest-driven
+# camera_ready/pipeline.py façade. Historical implementation remains below this shim.
 #
 # BEFORE RUNNING:
 #   git pull origin main     (get latest bm25_rag.py + v2_comprehensive_eval.py)
@@ -12,7 +12,7 @@
 #   .\run_camera_ready.ps1
 #
 # The run writes to:
-#   evaluations\CAMERA_READY_<timestamp>\
+#   evaluations\CAMERA_READY_OFFLINE_<timestamp>\
 #
 # Do NOT edit the output directory after the run completes.
 
@@ -20,6 +20,35 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $ROOT = $PSScriptRoot
+
+Write-Host "Routing through the canonical manifest-driven camera-ready pipeline..." -ForegroundColor Cyan
+& python (Join-Path $ROOT "camera_ready\pipeline.py") generate --commit
+exit $LASTEXITCODE
+
+$sourceFiles = @(
+    "evaluation_protocol.py",
+    "bm25_rag.py",
+    "v2_comprehensive_eval.py",
+    "audit_gap_gate.py",
+    "verify_camera_ready.py",
+    "build_v2_judge_prompt.py",
+    "judge_per_item.py",
+    "stats_v2.py",
+    "rubric_v2.md",
+    "run_camera_ready.ps1",
+    "test_camera_ready_pipeline.py",
+    "evaluations/eval_bank_v2_40q/eval_bank_v2.json"
+)
+$dirtySources = @(git status --porcelain -- $sourceFiles)
+if ($LASTEXITCODE -ne 0) {
+    throw "Unable to inspect Git source state."
+}
+if ($dirtySources.Count -gt 0) {
+    Write-Host "ERROR: Camera-ready source files are modified or untracked." -ForegroundColor Red
+    Write-Host "Commit the reviewed pipeline before a reproducible camera-ready run:" -ForegroundColor Yellow
+    $dirtySources | ForEach-Object { Write-Host "  $_" -ForegroundColor Gray }
+    exit 1
+}
 
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Cyan
@@ -33,10 +62,15 @@ Write-Host ""
 Write-Host "[1/5] Syntax checks..." -ForegroundColor Yellow
 
 $scripts = @(
+    "evaluation_protocol.py",
     "bm25_rag.py",
     "v2_comprehensive_eval.py",
     "audit_gap_gate.py",
-    "verify_camera_ready.py"
+    "verify_camera_ready.py",
+    "build_v2_judge_prompt.py",
+    "judge_per_item.py",
+    "stats_v2.py",
+    "test_camera_ready_pipeline.py"
 )
 
 foreach ($s in $scripts) {
@@ -55,6 +89,12 @@ print('OK  $s')
 }
 
 Write-Host "  All syntax checks passed." -ForegroundColor Green
+python -m unittest -q test_camera_ready_pipeline.py
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "CAMERA-READY CONTRACT TESTS FAILED -- aborting." -ForegroundColor Red
+    exit 1
+}
+Write-Host "  Camera-ready contract tests passed." -ForegroundColor Green
 Write-Host ""
 
 # ------------------------------------------------------------------
@@ -125,23 +165,39 @@ Write-Host ""
 # ------------------------------------------------------------------
 # Step 4: Camera-ready eval run
 # ------------------------------------------------------------------
-Write-Host "[4/5] Running camera-ready eval (6 configs x 41 questions)..." -ForegroundColor Yellow
+Write-Host "[4/5] Running offline camera-ready eval (6 configs x 41 questions)..." -ForegroundColor Yellow
 Write-Host "  Configs: A B C E F G (D excluded -- loop-fix pending)" -ForegroundColor Gray
+Write-Host "  Prompt policy: offline_definitive_v1 (EMS unreachable)" -ForegroundColor Gray
 Write-Host "  Expected time: ~2 GPU-hours" -ForegroundColor Gray
 Write-Host ""
 
 $ts = (Get-Date -Format "yyyyMMdd_HHmmss")
 Write-Host "  Start time: $ts" -ForegroundColor Gray
 
+$beforeRunDirs = @(Get-ChildItem -Path (Join-Path $ROOT "evaluations") `
+    -Filter "CAMERA_READY_OFFLINE_*" -Directory -ErrorAction SilentlyContinue |
+    Select-Object -ExpandProperty FullName)
+
 python v2_comprehensive_eval.py `
     --configs A B C E F G `
     --max_new_tokens 350 `
+    --prompt_policy offline_definitive_v1 `
     --camera_ready
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "EVAL RUN FAILED -- check output above." -ForegroundColor Red
     exit 1
 }
+
+$afterRunDirs = @(Get-ChildItem -Path (Join-Path $ROOT "evaluations") `
+    -Filter "CAMERA_READY_OFFLINE_*" -Directory -ErrorAction SilentlyContinue |
+    Select-Object -ExpandProperty FullName)
+$newRunDirs = @($afterRunDirs | Where-Object { $_ -notin $beforeRunDirs })
+if ($newRunDirs.Count -ne 1) {
+    Write-Host "ERROR: Expected exactly one new offline camera-ready directory; found $($newRunDirs.Count)." -ForegroundColor Red
+    exit 1
+}
+$cameraRunDir = $newRunDirs[0]
 
 Write-Host ""
 Write-Host "  Eval run complete." -ForegroundColor Green
@@ -152,7 +208,7 @@ Write-Host ""
 # ------------------------------------------------------------------
 Write-Host "[5/5] Post-run verification..." -ForegroundColor Yellow
 
-python verify_camera_ready.py
+python verify_camera_ready.py --run_dir $cameraRunDir
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host ""
@@ -173,29 +229,21 @@ Write-Host ""
 # ------------------------------------------------------------------
 Write-Host "Staging and committing camera-ready run..." -ForegroundColor Yellow
 
-$run_dirs = @(Get-ChildItem -Path (Join-Path $ROOT "evaluations") -Filter "CAMERA_READY_*" -Directory |
-              Sort-Object Name -Descending)
-
-if ($run_dirs.Count -eq 0) {
-    Write-Host "ERROR: No CAMERA_READY_* directory found to commit." -ForegroundColor Red
-    exit 1
-}
-
-$latest = $run_dirs[0].FullName
-$dirname = $run_dirs[0].Name
+$latest = $cameraRunDir
+$dirname = Split-Path -Leaf $cameraRunDir
 
 Write-Host "  Committing: $dirname" -ForegroundColor Gray
 
 git add "$latest"
-git add "bm25_rag.py" "v2_comprehensive_eval.py" "audit_gap_gate.py" "verify_camera_ready.py"
 
-git commit -m "CAMERA_READY: 6-config v2 eval with topic-gated BM25 RAG
+git commit -m "CAMERA_READY_OFFLINE: 6-config v2 eval with aligned no-EMS premise
 
 Run: $dirname
 Configs: A_BASE_4BIT B_FINETUNED_4BIT C_FINETUNED_8BIT
          E_T6_IMPROVED F_RAG_BM25 G_BASE_RAG
 D_T4_IMPROVED: excluded (loop-fix pending)
 Questions: 41 (eval_bank_v2_40q/eval_bank_v2.json, patched SC flags)
+Prompt policy: offline_definitive_v1 (EMS unreachable; aligned with rubric_v2)
 BM25 gate: topic-keyed (7 patterns), top-1 retrieval
 V2Q35 (tourniquet): gated in F and G
 V2Q41 (spinal movement): gated in F and G
@@ -215,5 +263,10 @@ Write-Host "  Run: $dirname" -ForegroundColor Green
 Write-Host ""
 Write-Host "  Next steps:" -ForegroundColor Cyan
 Write-Host "    git push origin main" -ForegroundColor White
+Write-Host "    python judge_per_item.py --run_dir evaluations\$dirname" -ForegroundColor White
+Write-Host "    python stats_v2.py --run_dir evaluations\$dirname" -ForegroundColor White
+Write-Host ""
+Write-Host "  Optional separate manual mega-prompt protocol:" -ForegroundColor Cyan
 Write-Host "    python build_v2_judge_prompt.py --run_dir evaluations\$dirname" -ForegroundColor White
+Write-Host "  Judgments and stats go to evaluations\${dirname}_ANALYSIS; the run stays immutable." -ForegroundColor Gray
 Write-Host "============================================================" -ForegroundColor Green
