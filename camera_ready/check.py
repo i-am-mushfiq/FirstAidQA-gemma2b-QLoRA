@@ -62,6 +62,14 @@ def _result(condition: bool, name: str, success: str, failure: str,
                        success if condition else failure)
 
 
+def _importable(name: str) -> bool:
+    """True if *name* can be located, False otherwise (never raises)."""
+    try:
+        return importlib.util.find_spec(name) is not None
+    except (ImportError, ValueError):
+        return False
+
+
 def _git_source_status() -> tuple[bool, str]:
     proc = subprocess.run(
         ["git", "status", "--porcelain", "--", *CAMERA_SOURCE_FILES],
@@ -175,11 +183,21 @@ def collect_checks(*, strict: bool = False, check_dependencies: bool = True,
 
     if check_dependencies:
         required = ["numpy", "torch", "transformers", "peft", "rank_bm25"]
-        missing = [name for name in required if importlib.util.find_spec(name) is None]
+        missing = [name for name in required if _importable(name) is False]
         results.append(_result(
             not missing, "generation dependencies", "all importable",
             "missing: " + ", ".join(missing),
             failure_level="error" if strict else "warn",
+        ))
+        # The judging and statistics stages have their own dependencies. Without
+        # these, `check --strict` passed on a machine where scoring could not run.
+        judging = ["openai", "scipy"]
+        judging_missing = [name for name in judging if _importable(name) is False]
+        results.append(_result(
+            not judging_missing, "judging dependencies", "all importable",
+            "missing: " + ", ".join(judging_missing)
+            + " (needed by judging/judge_deepseek.py and the stats lanes)",
+            failure_level="warn",
         ))
 
     if run_tests:

@@ -24,6 +24,7 @@ from evaluation_protocol import (
     CAMERA_SOURCE_FILES,
     PROMPT_POLICY,
     artifact_fingerprint,
+    latest_run_dir,
     validate_camera_config_resolution,
     validate_run_prompt_provenance,
     validate_run_question_provenance,
@@ -36,7 +37,26 @@ EVAL_DIR = os.path.join(HERE, "evaluations")
 EXPECTED_CONFIGS = set(CAMERA_READY_CONFIG_RESOLUTION)
 EXCLUDED_CONFIGS = {"D_T4_IMPROVED"}
 
-EXPECTED_N = 41
+def _expected_n_from_manifest(default: int = 41) -> int:
+    """
+    Read the expected question count from the camera-ready manifest.
+
+    The count lives in camera_ready/protocol.yaml as the single source of
+    truth; hardcoding it here meant the verifier and the manifest could
+    disagree without anything noticing.
+    """
+    manifest = os.path.join(HERE, "camera_ready", "protocol.yaml")
+    try:
+        with open(manifest, encoding="utf-8") as handle:
+            value = json.load(handle)["verification"]["expected_questions"]
+        return int(value)
+    except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError):
+        print(f"  WARN  could not read expected_questions from {manifest}; "
+              f"falling back to {default}")
+        return default
+
+
+EXPECTED_N = _expected_n_from_manifest()
 EXPECTED_PROMPT_POLICY = PROMPT_POLICY
 
 # SC patches applied to eval_bank_v2.json after June 2026 run
@@ -55,14 +75,9 @@ MUST_GATE = {
 
 
 def find_run_dir():
-    """Find the most recent CAMERA_READY_* directory."""
-    candidates = [
-        d for d in os.listdir(EVAL_DIR)
-        if d.startswith("CAMERA_READY_") and os.path.isdir(os.path.join(EVAL_DIR, d))
-    ]
-    if not candidates:
-        return None
-    return os.path.join(EVAL_DIR, sorted(candidates)[-1])
+    """Find the most recent CAMERA_READY_* run directory (never an _ANALYSIS sibling)."""
+    run_dir = latest_run_dir(EVAL_DIR)
+    return str(run_dir) if run_dir is not None else None
 
 
 def check(condition, msg_pass, msg_fail, errors):
@@ -130,7 +145,8 @@ def verify(run_dir: str) -> int:
           f"Generation code was committed and clean at {code_meta.get('git_commit', '')[:12]}",
           "Generation code commit is missing or camera-ready sources were not clean", errors)
     rubric_path = os.path.join(HERE, "rubric_v2.md")
-    rubric_doc = open(rubric_path, encoding="utf-8").read()
+    with open(rubric_path, encoding="utf-8") as handle:
+        rubric_doc = handle.read()
     check(RUBRIC.strip() in rubric_doc,
           "Documented final rubric exactly contains the runtime rubric",
           "rubric_v2.md final rubric differs from the runtime judge rubric", errors)

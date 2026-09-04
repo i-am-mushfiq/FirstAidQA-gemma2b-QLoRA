@@ -55,7 +55,7 @@ import re
 import subprocess
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 import numpy as np
@@ -103,6 +103,18 @@ EVAL_OUT_DIR     = os.path.join(HERE, "evaluations")
 # ---------------------------------------------------------------------------
 MAX_NEW_TOKENS  = 350
 GLOBAL_MIN_FLOOR = 35
+
+#: Decoding parameters shared by every configuration. These are part of the
+#: configuration's identity and are recorded in run.json under
+#: run_args._decoding, so "greedy" in the paper means greedy WITH these
+#: constraints, not bare argmax.
+DECODING_PARAMS = {
+    "repetition_penalty":   1.15,
+    "no_repeat_ngram_size": 4,   # prevents sentence-loop failures
+}
+
+#: Sentences repeated this many times truncate the answer (post-processing).
+REPETITION_MAX_REPEATS = 3
 
 # Backward-compatible name for the Z1 ablation.  Z1 is now a parity/control
 # alias because its premise has become the standard policy for all configs.
@@ -241,21 +253,24 @@ def generate(
         **inputs,
         max_new_tokens=max_new_tokens,
         do_sample=False,
+        **DECODING_PARAMS,
         pad_token_id=tokenizer.pad_token_id,
         eos_token_id=stop_ids,
-        repetition_penalty=1.15,
-        no_repeat_ngram_size=4,      # prevents sentence-loop failures
     )
     elapsed = time.time() - t0
     new_ids = out[0][in_len:]
     n_tok   = len(new_ids)
-    answer  = tokenizer.decode(new_ids, skip_special_tokens=True).strip()
-    # Guard against sentence-level repetition loops (>=3 identical sentences)
-    answer  = _truncate_repetition(answer)
+    raw_answer = tokenizer.decode(new_ids, skip_special_tokens=True).strip()
+    # Guard against sentence-level repetition loops (>=3 identical sentences).
+    # The pre-truncation text is kept so the intervention is auditable.
+    answer  = _truncate_repetition(raw_answer)
+    truncated = answer != raw_answer
     peak_mb = (torch.cuda.max_memory_allocated() / 1e6
                if torch.cuda.is_available() else 0.0)
     return {
         "answer":           answer,
+        "answer_pre_truncation": raw_answer if truncated else None,
+        "repetition_truncated":  truncated,
         "tokens_generated": n_tok,
         "tokens_per_sec":   round(n_tok / elapsed, 2) if elapsed > 0 else 0.0,
         "elapsed_s":        round(elapsed, 3),
@@ -263,7 +278,8 @@ def generate(
     }
 
 
-def _truncate_repetition(text: str, max_repeats: int = 3) -> str:
+def _truncate_repetition(text: str,
+                         max_repeats: int = REPETITION_MAX_REPEATS) -> str:
     """Truncate at the point where any sentence repeats max_repeats times."""
     sentences = re.split(r'(?<=[.!?])\s+', text)
     seen: dict[str, int] = {}
@@ -392,6 +408,10 @@ def run_t4_improved(model, tokenizer, q: dict, stop_ids: list,
     # Pass 1: free generation
     r1 = generate(model, tokenizer, prompt_standard(q["question"]),
                   max_new_tokens=max_new, stop_ids=stop_ids)
+    # Capture the pass-1 count BEFORE r1 can be replaced. The previous
+    # expression recorded it only when no retry happened, i.e. it dropped the
+    # number in exactly the case it was needed to explain.
+    pass1_tokens = r1["tokens_generated"]
     retried = False
     if r1["tokens_generated"] < floor:
         r2 = generate(model, tokenizer, prompt_length_hint(q["question"]),
@@ -405,7 +425,7 @@ def run_t4_improved(model, tokenizer, q: dict, stop_ids: list,
         "meta": {
             "category":     category,
             "floor":        floor,
-            "pass1_tokens": r1["tokens_generated"] if not retried else None,
+            "pass1_tokens": pass1_tokens,
             "retried":      retried,
         },
     }
@@ -683,7 +703,7 @@ def print_table(all_metrics: dict[str, dict]):
             continue
         lbl   = labels.get(key, key)
         rl    = m["rougeL_mean"]
-        delta = (f"  ({'+' if rl >= base_rl else ''}{rl - base_rl:+.4f} vs B)"
+        delta = (f"  ({rl - base_rl:+.4f} vs B)"
                  if key != "B_FINETUNED_4BIT" else "")
         print(f"{lbl:<28} {rl:>8.4f} {m['rougeL_sc_mean']:>8.4f} "
               f"{m['rougeL_nsc_mean']:>8.4f} {m['tok_per_sec_mean']:>7.1f} "
@@ -699,7 +719,7 @@ def save_config_json(out_dir: str, label: str, results: list[dict], args_dict: d
     path = os.path.join(out_dir, f"{label}.json")
     with open(path, "w", encoding="utf-8") as f:
         json.dump({"config": label, "run_args": args_dict,
-                   "run_at": datetime.utcnow().isoformat(),
+                   "run_at": datetime.now(timezone.utc).isoformat(),
                    "n": len(results), "answers": results},
                   f, indent=2, ensure_ascii=False)
     print(f"  [save] {path}")
@@ -709,7 +729,7 @@ def save_run_json(out_dir: str, all_results: dict, args_dict: dict):
     path = os.path.join(out_dir, "run.json")
     payload = {
         "run_type": "v2_comprehensive",
-        "run_at":   datetime.utcnow().isoformat(),
+        "run_at":   datetime.now(timezone.utc).isoformat(),
         "run_args": args_dict,
         "configs":  list(all_results.keys()),
         "variants": {k: {"n": len(v), "answers": v}
@@ -836,7 +856,7 @@ def main():
         for label in sorted(requested)
         if label in CAMERA_READY_CONFIG_RESOLUTION
     }
-    if any(label in {"F_RAG_BM25", "G_BASE_RAG"} for label in requested):
+    if any(label in ALL_RAG_CONFIGS for label in requested):
         args_dict["_artifacts"]["train_split"] = artifact_fingerprint(TRAIN_SPLIT)
     try:
         provenance_files = CAMERA_SOURCE_FILES
@@ -869,13 +889,12 @@ def main():
     floor_map = compute_floor_map(TRAIN_SPLIT)
 
     # Output dir
-    ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     if getattr(args, "camera_ready", False):
         dir_name = f"CAMERA_READY_OFFLINE_{ts}"
     elif getattr(args, "sweep_label", ""):
         # Sanitise label: replace characters invalid in directory names
-        import re as _re
-        safe_label = _re.sub(r"[^\w\-]", "_", args.sweep_label)
+        safe_label = re.sub(r"[^\w\-]", "_", args.sweep_label)
         dir_name = f"SWEEP_{safe_label}_{ts}"
     else:
         dir_name = f"v2_comprehensive_{ts}"
@@ -898,12 +917,17 @@ def main():
     retriever = None
     if rag_needed:
         if not os.path.exists(TRAIN_SPLIT):
-            print(f"[RAG] WARNING: train split not found at {TRAIN_SPLIT}")
-            print(f"[RAG] Excluding RAG configs: {rag_needed}")
-            requested = [c for c in requested if c not in ALL_RAG_CONFIGS]
+            # Silently dropping the RAG configs here left run.json claiming a
+            # _config_resolution for F/G that no variant backed, so the run
+            # failed verification later with an opaque message.
+            raise SystemExit(
+                f"[RAG] ERROR: train split not found at {TRAIN_SPLIT}, but "
+                f"retrieval configs were requested: {rag_needed}. Generate the "
+                f"split with data.py, or re-run without those configs."
+            )
         else:
             retriever = BM25GatedRetriever(TRAIN_SPLIT, gap_gate=True, verbose=False)
-            print(f"[RAG] Topic-gated BM25 retriever ready ({len(retriever._questions):,} docs)")
+            print(f"[RAG] Topic-gated BM25 retriever ready ({retriever.n_docs:,} docs)")
 
     def _run_pass(pass_label, model_quant, adapter_path, config_labels):
         """Load model once, run all configs in config_labels, unload."""
@@ -1025,6 +1049,12 @@ def main():
             "transformers":   _tfm.__version__,
             "max_new_tokens": args.max_new_tokens,
         }
+        args_dict["_decoding"] = {
+            "do_sample": False,
+            "max_new_tokens": args.max_new_tokens,
+            **DECODING_PARAMS,
+            "repetition_truncation_max_repeats": REPETITION_MAX_REPEATS,
+        }
     except Exception:
         pass
 
@@ -1049,8 +1079,10 @@ def main():
     print(f"\n[done] Results in: {out_dir}")
     if getattr(args, "camera_ready", False):
         print(f"[NOTE] This is a CAMERA_READY run -- do not edit outputs after this point.")
-    print(f"[next] python judge_per_item.py --run_dir {out_dir}")
-    print(f"[then] python stats_v2.py --run_dir {out_dir}")
+    print(f"[verify]   python verify_camera_ready.py --run_dir {out_dir}")
+    print(f"[internal] python internal_eval/judge_per_item.py --run_dir {out_dir}")
+    print(f"[internal] python internal_eval/stats_v2.py --run_dir {out_dir}")
+    print("[published] judging/: assemble_items.py -> judge_deepseek.py -> aggregate.py")
     print("[optional] build_v2_judge_prompt.py produces a separate manual protocol")
 
 

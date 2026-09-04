@@ -32,15 +32,24 @@ python camera_ready/pipeline.py generate
 # Add --commit only when you want the verified run committed locally.
 python camera_ready/pipeline.py generate --commit
 
-# 2. Run blinded, randomized, per-item judging.
+# 2. Internal scoring, for pre-run decisions only (internal_eval/ lane).
 python camera_ready/pipeline.py judge --run evaluations/CAMERA_READY_OFFLINE_<timestamp>
 
-# 3. Analyze only after the complete six-judge panel exists.
+# 3. Internal statistics; requires the complete six-judge panel.
 python camera_ready/pipeline.py analyze --run evaluations/CAMERA_READY_OFFLINE_<timestamp>
 ```
 
 Omitting `--run` from `verify`, `judge`, `analyze`, `manual-prompt`, or `status`
-selects the newest `CAMERA_READY_OFFLINE_*` run.
+selects the newest `CAMERA_READY_OFFLINE_*` run. Analysis siblings are never
+selected: see `evaluation_protocol.latest_run_dir`.
+
+**Published results do not come from steps 2-3.** They come from the
+[`judging/`](../judging/) lane, which assembles blinded items from a verified
+run, plants control items with known-correct verdicts, scores quality and
+safety in separate calls, and reports contrasts under `judging/PRECOMMIT.md`
+and `judging/PRECOMMIT_PANEL.md`. Steps 2-3 are the internal decision lane;
+see [`internal_eval/README.md`](../internal_eval/README.md) for the split and
+that lane's known limitations.
 
 Generation output is immutable:
 
@@ -88,8 +97,10 @@ Python standard library and adds no YAML dependency.
 | `v2_comprehensive_eval.py` | Canonical implementation | Model generation |
 | `bm25_rag.py` | Canonical implementation | Gated top-1 retrieval |
 | `verify_camera_ready.py` | Canonical implementation | Post-generation verification |
-| `judge_per_item.py` | Canonical implementation | Primary blinded judging protocol |
-| `stats_v2.py` | Canonical implementation | Complete-panel statistical analysis |
+| `internal_eval/judge_per_item.py` | Internal lane | Per-item blinded scoring for pre-run decisions; not paper-facing |
+| `internal_eval/stats_v2.py` | Internal lane | Panel statistics for pre-run decisions; not paper-facing |
+| `judging/judge_deepseek.py` | Camera-ready judging | Published scoring: 3 pinned judges, planted controls, separate safety pass |
+| `judging/aggregate.py` | Camera-ready statistics | Published contrasts under `judging/PRECOMMIT.md` |
 | `build_v2_judge_prompt.py` | Optional | Separate unblinded manual protocol; not an input to primary stats |
 | `run_camera_ready.ps1` | Compatibility wrapper | Routes to `pipeline.py generate --commit` |
 | `powershell_scripts/run_v2_comprehensive_eval.ps1` | Retired | Obsolete C/RAG/prompt contracts; exits without running |

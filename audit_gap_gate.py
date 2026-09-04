@@ -28,6 +28,9 @@ import os
 import re
 import sys
 
+from bm25_rag import GAP_TOPIC_PATTERNS as _RUNTIME_PATTERNS
+from evaluation_protocol import default_analysis_dir
+
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
@@ -54,16 +57,20 @@ OLD_GAP_DESCRIPTIONS = {
 }
 
 # ---------------------------------------------------------------------------
-# New topic patterns (from V2_PIPELINE corpus audit + T4/T6 synthesis)
+# Topic patterns
+# ---------------------------------------------------------------------------
+# Imported, never copied. This file previously held a second verbatim copy of
+# the gate regexes, so a change to bm25_rag.py silently desynchronised the
+# forensic audit from the code that actually gates retrieval. Both files are in
+# CAMERA_SOURCE_FILES, so the divergence would have been provenance-clean.
 # ---------------------------------------------------------------------------
 GAP_TOPIC_PATTERNS = {
-    "infant_choking":          re.compile(r"(infant|baby).{0,40}chok|chok.{0,40}(infant|baby)", re.I),
-    "spinal_logroll":          re.compile(r"log.?roll|spinal.{0,50}(mov\w*|turn\w*|transport\w*|shift\w*|roll\w*)|(mov\w*|turn\w*|transport\w*).{0,50}spinal", re.I),
-    "chest_seal":              re.compile(r"chest seal|sucking chest|open chest wound", re.I),
-    "tourniquet_escalation":   re.compile(r"tourniquet", re.I),
-    "naloxone_opioid":         re.compile(r"naloxone|opioid.{0,20}overdose|overdose.{0,20}opioid", re.I),
-    "rescue_breaths_drowning": re.compile(r"rescue breath.{0,30}(child|drown|water)|drown.{0,30}(child|rescue)", re.I),
-    "burn_cooling":            re.compile(r"burn.{0,40}cool|cool.{0,40}burn", re.I),
+    topic: pattern for topic, (pattern, _justification) in _RUNTIME_PATTERNS.items()
+}
+
+GAP_TOPIC_JUSTIFICATIONS = {
+    topic: justification
+    for topic, (_pattern, justification) in _RUNTIME_PATTERNS.items()
 }
 
 
@@ -298,20 +305,24 @@ def parse_args():
     p.add_argument("--bank",    default=DEFAULT_BANK,
                    help=f"Path to eval_bank_v2.json (default: {DEFAULT_BANK})")
     p.add_argument("--out",     default=None,
-                   help="Output file path (default: <run_dir>/audit_gap_gate.txt)")
+                   help="Output file path (default: <run_dir>_ANALYSIS/audit_gap_gate.txt)")
     return p.parse_args()
 
 
 if __name__ == "__main__":
     args     = parse_args()
     report   = run_audit(args.run_dir, args.bank)
-    out_path = args.out or os.path.join(args.run_dir, "audit_gap_gate.txt")
+    # Never write inside the run directory: generation output is immutable, and
+    # camera_ready/README.md promises no command modifies an existing run.
+    out_path = args.out or os.path.join(
+        str(default_analysis_dir(args.run_dir)), "audit_gap_gate.txt"
+    )
 
     print(report)
 
     try:
         os.makedirs(os.path.dirname(out_path), exist_ok=True)
-        with open(out_path, "w", encoding="ascii", errors="replace") as f:
+        with open(out_path, "w", encoding="utf-8") as f:
             f.write(report)
         print(f"\n[audit] Saved to {out_path}")
     except Exception as e:

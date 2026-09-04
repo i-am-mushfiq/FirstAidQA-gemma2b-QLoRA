@@ -50,6 +50,8 @@ import os
 import re
 import sys
 
+import numpy as np
+
 # ---------------------------------------------------------------------------
 # Topic-based gap gate
 # ---------------------------------------------------------------------------
@@ -180,10 +182,12 @@ class BM25Retriever:
         "answer"            : str,   # retrieved training answer (capped)
         "answer_full"       : str,   # original uncapped answer
         "category"          : str,
-        "score"             : float, # normalised BM25 score (0-1)
+        "score"             : float, # raw BM25 score (>0); see score_kind
         "bm25_fired"        : True,
         "bm25_skipped_gap"  : False,
         "gap_topic"         : None,
+        "gap_topics"        : [],
+        "score_kind"        : "bm25_raw",
         "word_cap_applied"  : bool,
     }
 
@@ -192,7 +196,8 @@ class BM25Retriever:
     {
         "bm25_fired"        : False,
         "bm25_skipped_gap"  : bool,  # True if topic gate, False if unavailable
-        "gap_topic"         : str | None,  # pattern key that matched, or None
+        "gap_topic"         : str | None,  # first pattern key matched, or None
+        "gap_topics"        : list,        # every pattern key that matched
     }
     """
 
@@ -205,6 +210,14 @@ class BM25Retriever:
         self.gap_gate  = gap_gate
         self.verbose   = verbose
         self.available = False
+        # Initialised before any early return so a caller that inspects the
+        # retriever after a failed load gets empty collections, not
+        # AttributeError.
+        self._questions:  list = []
+        self._answers:    list = []
+        self._categories: list = []
+        self._chunks:     list = []  # tokenised for BM25
+        self._index = None
 
         # Resolve path relative to this script's directory
         if not os.path.isabs(train_path):
@@ -227,6 +240,15 @@ class BM25Retriever:
 
         self._load_kb()
         self._build_index()
+
+    def __len__(self) -> int:
+        """Number of indexed Q&A documents (0 when the retriever is unavailable)."""
+        return len(self._questions)
+
+    @property
+    def n_docs(self) -> int:
+        """Public alias for the indexed document count."""
+        return len(self._questions)
 
     # ------------------------------------------------------------------
     # Initialisation helpers
@@ -313,26 +335,32 @@ class BM25Retriever:
         # Retrieval is skipped entirely for these topics: the KB contains
         # plausible-but-wrong examples that would worsen the model's answer.
         if self.gap_gate:
-            for topic, (pattern, _justification) in GAP_TOPIC_PATTERNS.items():
-                if pattern.search(query):
-                    if self.verbose:
-                        print(
-                            f"[BM25RAG] {qid_label} TOPIC GATE -- retrieval skipped: "
-                            f"'{topic}' matched '{query[:50]}...'"
-                        )
-                    return {
-                        "bm25_fired":       False,
-                        "bm25_skipped_gap": True,
-                        "gap_topic":        topic,
-                    }
+            matched = [topic for topic, (pattern, _justification)
+                       in GAP_TOPIC_PATTERNS.items() if pattern.search(query)]
+            if matched:
+                if self.verbose:
+                    print(
+                        f"[BM25RAG] {qid_label} TOPIC GATE -- retrieval skipped: "
+                        f"{matched} matched '{query[:50]}...'"
+                    )
+                # gap_topic keeps the first match for backward compatibility
+                # with existing run.json files and verify_camera_ready's
+                # MUST_GATE assertions; gap_topics records all of them, so
+                # adding a pattern cannot silently change what was recorded.
+                return {
+                    "bm25_fired":       False,
+                    "bm25_skipped_gap": True,
+                    "gap_topic":        matched[0],
+                    "gap_topics":       matched,
+                }
 
         # --- Unavailable guard -----------------------------------------------
         if not self.available:
-            return {"bm25_fired": False, "bm25_skipped_gap": False, "gap_topic": None}
+            return {"bm25_fired": False, "bm25_skipped_gap": False,
+                    "gap_topic": None, "gap_topics": [],
+                    "retriever_unavailable": True}
 
         # --- BM25 scoring -----------------------------------------------------
-        import numpy as np
-
         query_tokens = query.lower().split()
         raw_scores   = self._index.get_scores(query_tokens)
 
@@ -347,6 +375,7 @@ class BM25Retriever:
                 "bm25_skipped_gap": False,
                 "bm25_no_positive_match": True,
                 "gap_topic": None,
+                "gap_topics": [],
                 "score": round(best_score, 4),
                 "score_kind": "bm25_raw",
             }
@@ -373,6 +402,7 @@ class BM25Retriever:
             "bm25_fired":       True,
             "bm25_skipped_gap": False,
             "gap_topic":        None,
+            "gap_topics":       [],
             "word_cap_applied": cap_applied,
         }
 
@@ -388,8 +418,6 @@ class BM25Retriever:
         if not self.available:
             print("[BM25RAG] Retriever not available.")
             return
-
-        import numpy as np
 
         query_tokens = query.lower().split()
         raw_scores   = self._index.get_scores(query_tokens)
