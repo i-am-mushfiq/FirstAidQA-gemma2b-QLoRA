@@ -297,6 +297,26 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 _write_lock = threading.Lock()
 
 
+def _is_retryable(exc: Exception) -> bool:
+    """
+    True for rate-limit (429) and server-side (5xx) failures.
+
+    Prefers the SDK's numeric status_code. The message is only a fallback:
+    SDK errors render as "Error code: 503 - ...", so inspecting the first few
+    characters never sees the status digits.
+    """
+    status = getattr(exc, "status_code", None)
+    if isinstance(status, int):
+        return status == 429 or 500 <= status < 600
+    # Fallback for wrapped errors that carry no status_code. The code must be
+    # label-adjacent: a bare three-digit number is usually a token count or a
+    # model name ("512 tokens exceeds the limit", "gpt-5.6-sol"), not a status.
+    return bool(re.search(
+        r"(?:error\s*code|status(?:\s*code)?|http)\D{0,4}(?:429|5\d\d)\b",
+        str(exc), re.I,
+    ))
+
+
 def call_api_sync(
     client: "OpenAI",
     model: str,
@@ -306,6 +326,7 @@ def call_api_sync(
     backoff = BACKOFF_BASE
     cfg = MODEL_CONFIGS[ACTIVE_MODEL]
     extra_body = cfg.get("extra_body") or None
+    last_error: Exception | None = None
 
     for attempt in range(MAX_RETRIES + 2):
         try:
@@ -347,12 +368,20 @@ def call_api_sync(
                 "finish_reason": response.choices[0].finish_reason,
             }
         except Exception as e:
-            err_str = str(e)
-            if "429" in err_str or "5" in err_str[:3]:
+            last_error = e
+            if _is_retryable(e):
                 time.sleep(backoff)
                 backoff *= 2
                 continue
             raise
+
+    # Every attempt was retryable and every attempt failed. Falling off the loop
+    # would return None, which surfaces as an opaque AttributeError inside
+    # judge_item_sync, so fail explicitly with the cause attached.
+    raise RuntimeError(
+        f"call_api_sync exhausted {MAX_RETRIES + 2} attempts on {model}; "
+        f"last error: {last_error}"
+    ) from last_error
 
 
 def judge_item_sync(
@@ -702,6 +731,15 @@ def self_review(quality_tmpl: str, safety_tmpl: str) -> bool:
 # ── CLI ───────────────────────────────────────────────────────────────────────
 
 def main():
+    # Judge responses, error messages and this script's own banners all contain
+    # characters outside cp1252 (the Windows console default). Without this, a
+    # print inside an except handler raises UnicodeEncodeError and kills the run.
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, OSError):
+            pass
+
     parser = argparse.ArgumentParser(
         description="Multi-judge per-item harness (DeepSeek / Claude / GPT-4o)"
     )

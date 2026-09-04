@@ -38,6 +38,10 @@ REPO_ROOT  = Path(__file__).resolve().parent.parent
 BANK_PATH  = REPO_ROOT / "evaluations" / "eval_bank_v2_40q" / "eval_bank_v2.json"
 JUDGING_DIR = REPO_ROOT / "judging"
 ITEMS_PATH  = JUDGING_DIR / "items.jsonl"
+
+#: Answers each config must contribute. Matches the v2 eval bank and
+#: verify_camera_ready.EXPECTED_N.
+EXPECTED_N = 41
 BLIND_MAP_PATH = JUDGING_DIR / "blind_map.json"
 
 # Salt for blind IDs — stable across runs, not a secret.
@@ -87,8 +91,14 @@ def load_run(run_dir: Path) -> dict:
 
 def validate_items(items: list, bank: dict, configs_present: list) -> bool:
     """
-    Gate check: every config must have exactly 41 answers, no empty strings.
+    Gate check: every expected config must have exactly 41 answers, none empty.
     Prints config × count table. Returns True if all pass.
+
+    *configs_present* is the list of configs the run was supposed to contribute.
+    It is iterated explicitly: the count table is built only from items that
+    exist, so a config that produced ZERO items has no key and, before this,
+    could not fail the gate at all. An empty variants["F_RAG_BM25"] printed
+    "GATE PASSED" over a five-config items.jsonl.
     """
     from collections import defaultdict
     counts   = defaultdict(int)
@@ -108,15 +118,22 @@ def validate_items(items: list, bank: dict, configs_present: list) -> bool:
     print(f"  {'-'*30}  {'-'*4}  {'-'*5}  {'-'*6}")
 
     all_ok = True
-    for cfg in sorted(counts.keys()):
-        n       = counts[cfg]
+    # Union, so a config that is expected-but-absent and one that is
+    # present-but-unexpected are both visible and both fail.
+    for cfg in sorted(set(counts) | set(configs_present or [])):
+        n       = counts.get(cfg, 0)
         emp     = empties.get(cfg, 0)
         bad     = bad_qids.get(cfg, [])
-        ok      = (n == 41 and emp == 0 and not bad)
+        ok      = (n == EXPECTED_N and emp == 0 and not bad)
         status  = "OK" if ok else "FAIL"
         if not ok:
             all_ok = False
-        print(f"  {cfg:<30}  {n:>4}  {emp:>5}  {status}")
+        note = ""
+        if n == 0:
+            note = "  <-- expected but contributed NO items"
+        elif cfg not in (configs_present or []):
+            note = "  <-- present but not in the expected config list"
+        print(f"  {cfg:<30}  {n:>4}  {emp:>5}  {status}{note}")
         if bad:
             print(f"    BAD QIDs: {bad}")
 
@@ -127,6 +144,12 @@ def validate_items(items: list, bank: dict, configs_present: list) -> bool:
 # ── Main ─────────────────────────────────────────────────────────────────────
 
 def main():
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, OSError):
+            pass
+
     parser = argparse.ArgumentParser(
         description="Assemble (qid, config) items for per-item judging"
     )
@@ -141,6 +164,11 @@ def main():
     parser.add_argument(
         "--append", action="store_true",
         help="Append to existing items.jsonl instead of overwriting"
+    )
+    parser.add_argument(
+        "--force", action="store_true",
+        help="Allow an overwrite that discards planted CTRL_* items "
+             "(re-run make_controls.py afterwards to re-plant them)"
     )
     parser.add_argument(
         "--out", default=str(ITEMS_PATH),
@@ -229,8 +257,44 @@ def main():
         for cfg, qid in missing_bank[:10]:
             print(f"  {cfg} / {qid}")
 
-    # ── Validate ─────────────────────────────────────────────────────────────
+    # ── Validate BEFORE writing anything ─────────────────────────────────────
+    # Outputs used to be written first and the gate checked afterwards, which
+    # left a truncated blind_map.json and items.jsonl on disk after a failed
+    # gate, indistinguishable from good ones to the next stage.
     ok = validate_items(items, bank, selected_configs)
+    if not ok:
+        print("\nGATE FAILED: not every expected config has "
+              f"{EXPECTED_N} valid answers. Nothing was written.")
+        sys.exit(1)
+
+    # ── Refuse to silently discard the planted control items ─────────────────
+    # make_controls.py always appends, so a default (non-append) run truncates
+    # items.jsonl and removes all CTRL_* rows while controls_key.json keeps its
+    # entries. aggregate.py then reports "0/45 controls within expected range".
+    if not args.append and out_path.exists():
+        existing_controls = 0
+        with open(out_path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    if json.loads(line).get("config", "").startswith("CTRL_"):
+                        existing_controls += 1
+                except json.JSONDecodeError:
+                    continue
+        if existing_controls and not args.force:
+            print(f"\nREFUSING to overwrite {out_path}: it holds "
+                  f"{existing_controls} planted control item(s) that this run "
+                  f"does not regenerate.\n"
+                  f"  Controls come from make_controls.py, which appends.\n"
+                  f"  Either re-run this with --force and then re-run "
+                  f"make_controls.py to re-plant them,\n"
+                  f"  or pass --append to add to the existing file.")
+            sys.exit(1)
+        if existing_controls:
+            print(f"\nWARNING: --force given; dropping {existing_controls} "
+                  f"control item(s). Re-run make_controls.py before judging.")
 
     # ── Write blind map ───────────────────────────────────────────────────────
     JUDGING_DIR.mkdir(exist_ok=True)
@@ -247,11 +311,8 @@ def main():
     action = "Appended" if args.append else "Wrote"
     print(f"{action} {len(items)} items to {out_path}")
 
-    if not ok:
-        print("\nGATE FAILED: not all configs have 41 valid answers. Fix before proceeding.")
-        sys.exit(1)
-
-    print("\nGATE PASSED ✓  All configs have 41 valid answers, all qids join to bank.")
+    print(f"\nGATE PASSED  All expected configs have {EXPECTED_N} valid answers, "
+          f"all qids join to bank.")
 
 
 if __name__ == "__main__":
