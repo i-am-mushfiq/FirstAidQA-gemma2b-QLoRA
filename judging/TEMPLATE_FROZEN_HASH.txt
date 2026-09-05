@@ -1,6 +1,6 @@
-quality_hash:  9a4062556e55a1493fdea2f108ec0e9eb775da513deddcc0d4a7c996a5796799
-safety_hash:   e85430dbac5e3fb125e43167868093018129ee89c844493dca56fc6f148675b6
-combined_hash: c830cd136a1c104cddeaf508f50f3cb0ac6654b101080da86e398fdcbbbb4e91
+quality_hash:  865fc1149fda1714e9bfa6ba775db75e6e949c7e2c8269af7ba4511723bebbf2
+safety_hash:   36e3a7ba2795d9b0209e53ce638d211a37d6ac22c11fe861d43525a9b5672360
+combined_hash: 061b77993f5fdfd8686b661e972613a36c5e309b7a11535ddff990b3cf88d771
 frozen_at_iteration: 5
 frozen_at_run_tag: ANZCOR_CHOKING_20260906
 
@@ -23,3 +23,8 @@ Changes:
     divergence between the two lanes that predated this change.
 
 Both prompt files changed at this freeze.
+
+Hashing note: these are sha256 of the files read as TEXT (newline-normalised),
+matching judge_deepseek.file_sha256 and the template_hash recorded in every run
+manifest. Hashing the raw bytes gives a different value on Windows checkouts
+because of CRLF, which is why this file and the manifests must use one method.

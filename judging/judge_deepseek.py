@@ -194,6 +194,12 @@ def git_commit() -> str:
         return "unknown"
 
 
+def bank_sha256_now() -> str:
+    """Frozen-field hash of the reference bank as it stands on disk."""
+    with open(BANK_PATH, encoding="utf-8") as f:
+        return question_bank_metadata(json.load(f), str(BANK_PATH))["sha256"]
+
+
 def check_items_freshness() -> None:
     """
     Refuse to judge an items.jsonl built against a different reference bank.
@@ -585,6 +591,41 @@ def run_judging(
 
     existing_keys: set = set()
     if out_path.exists() and not nonce:
+        # Resume is keyed on (qid, blind_id, prompt_type), and blind_id is a
+        # stable salted hash of the config name -- identical across runs. So a
+        # re-run into a used run_tag keeps every prior judgment and only scores
+        # what is new, silently welding two evaluations together. Refuse when the
+        # prior judgments were produced against different templates or a
+        # different reference bank.
+        prior_manifest_path = out_dir / "manifest.json"
+        if prior_manifest_path.exists():
+            with open(prior_manifest_path, encoding="utf-8") as f:
+                prior = json.load(f)
+            prior_tmpl = prior.get("template_hash")
+            prior_bank = prior.get("bank_sha256")
+            with open(BANK_PATH, encoding="utf-8") as f:
+                bank_sha = question_bank_metadata(json.load(f), str(BANK_PATH))["sha256"]
+            problems = []
+            if prior_tmpl and prior_tmpl != template_hash:
+                problems.append(
+                    f"judge templates changed (was {prior_tmpl[:16]}..., "
+                    f"now {template_hash[:16]}...)")
+            if prior_bank is not None and prior_bank != bank_sha:
+                problems.append(
+                    f"reference bank changed (was {prior_bank[:16]}..., "
+                    f"now {bank_sha[:16]}...)")
+            elif prior_bank is None:
+                problems.append(
+                    "prior run recorded no bank hash, so it predates this check "
+                    "and cannot be shown to match the current bank")
+            if problems:
+                sys.exit(
+                    f"ERROR: refusing to resume into run_tag '{run_tag}'.\n"
+                    + "".join(f"  - {p}\n" for p in problems)
+                    + f"  {out_path} holds judgments from a different evaluation.\n"
+                      "  Resuming would keep those scores and only judge what is new.\n"
+                      "  Use a fresh --run_tag for this evaluation."
+                )
         with open(out_path, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
@@ -670,6 +711,9 @@ def run_judging(
         "template_hash":  template_hash,
         "quality_hash":   quality_hash,
         "safety_hash":    safety_hash,
+        # Recorded so a later resume into this run_tag can prove the reference
+        # bank has not moved underneath the existing judgments.
+        "bank_sha256":    bank_sha256_now(),
         "git_commit":     git_commit(),
         "shuffle_seed":   SHUFFLE_SEED,
         "nonce":          nonce or None,
