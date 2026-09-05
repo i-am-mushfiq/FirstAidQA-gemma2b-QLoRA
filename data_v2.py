@@ -370,7 +370,21 @@ def stratified_split(
 # 4. Save / load splits  (verbatim from data.py)
 # ---------------------------------------------------------------------------
 
-def save_splits(train: list, val: list, test: list, splits_dir: str = SPLITS_DIR):
+def save_splits(train: list, val: list, test: list,
+                splits_dir: str = SPLITS_DIR,
+                overwrite: bool = False):
+    existing = [name for name in ("train", "val", "test")
+                if os.path.exists(os.path.join(splits_dir, f"{name}.json"))]
+    if existing and not overwrite:
+        raise SystemExit("\n".join([
+            f"[data] refusing to overwrite {existing} in {splits_dir}.",
+            "        These splits are a frozen artifact: splits/10cat was produced",
+            "        by utils/classify_10cat.py under the 10-label schema, while",
+            "        this script emits the 17-label legacy schema. Overwriting",
+            "        silently changes the BM25 knowledge base, the T4 floor map",
+            "        and the recorded train_split fingerprint.",
+            "        Pass --overwrite to proceed, or --splits_dir to write elsewhere.",
+        ]))
     os.makedirs(splits_dir, exist_ok=True)
     for name, data in [("train", train), ("val", val), ("test", test)]:
         path = os.path.join(splits_dir, f"{name}.json")
@@ -606,6 +620,8 @@ if __name__ == "__main__":
         help="Use keyword-based classifier instead of NLI",
     )
     p.add_argument("--seed", type=int, default=42)
+    p.add_argument("--overwrite", action="store_true",
+                   help="Allow overwriting existing split files (destructive).")
     args = p.parse_args()
 
     classifier_mode = ("keyword (--no-semantic)" if args.no_semantic
@@ -632,7 +648,7 @@ if __name__ == "__main__":
 
     print("\n[data_v2] Generating stratified splits (80 / 10 / 10)...")
     train, val, test = stratified_split(enriched)
-    save_splits(train, val, test)
+    save_splits(train, val, test, overwrite=args.overwrite)
 
     print("\n" + "=" * 65)
     print("  Split summary")

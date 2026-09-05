@@ -816,6 +816,17 @@ CONFIGS_FP16_BASE   = ["P", "Q", "T", "U", "V", "W", "X", "Y"]
 CONFIGS_8BIT_ADAPTER = ["R", "S"]  # 8-bit-trained adapter on different base quants
 CONFIGS_TECHNIQUE    = ["Z1", "Z2"]  # premise prompt and one-shot control
 
+# Every RAG config, across all base quants.  Module scope is load-bearing:
+# main() reads this while assembling run provenance (the train_split
+# fingerprint), which happens well before the retriever is built.  Defining it
+# inside main() made it a function local, so the earlier read raised NameError
+# on every invocation regardless of which configs were requested.
+ALL_RAG_CONFIGS = {
+    "F_RAG_BM25", "G_BASE_RAG",
+    "N_8BIT_RAG", "O_BASE8_RAG",
+    "X_FT4ON16_RAG", "Y_BASE16_RAG",
+}
+
 
 def parse_args():
     p = argparse.ArgumentParser(description="v2 comprehensive evaluation")
@@ -919,11 +930,6 @@ def main():
     # ---------------------------------------------------------------------------
     # Build BM25 retriever once -- shared by all RAG configs regardless of quant.
     # ---------------------------------------------------------------------------
-    ALL_RAG_CONFIGS = {
-        "F_RAG_BM25", "G_BASE_RAG",
-        "N_8BIT_RAG", "O_BASE8_RAG",
-        "X_FT4ON16_RAG", "Y_BASE16_RAG",
-    }
     rag_needed = [c for c in requested if c in ALL_RAG_CONFIGS]
     retriever = None
     if rag_needed:

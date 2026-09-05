@@ -38,6 +38,11 @@ RUN SEQUENCE:
   Step 4 (train):  python train_v2.py --quant 8bit
   Step 5 (train):  python train_v2.py --quant fp16
 
+  The defaults above now reproduce the canonical adapter
+  (10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337): lr=1e-4, patience=3,
+  max_length=320, seed=42, splits/10cat.  powershell_scripts/run_v2_baseline.ps1
+  passes all of them explicitly and remains the reference invocation.
+
 Usage:
   python train_v2.py --quant 4bit
   python train_v2.py --quant 8bit  --lr 1e-4 --lora_r 16 --lora_alpha 32
@@ -106,9 +111,11 @@ class TrainConfig:
     splits_dir: str = ""
     splits_tag: str = ""
     seed: int = 42
-    # v2: bumped 320 -> 512 for future-proofing
-    # Audit (May 2026): dataset max ~314 estimated tokens; 512 gives 63% buffer
-    max_length: int = 512
+    # 320 = what the canonical adapter was trained at (see its training_curve.json).
+    # An earlier v2 revision defaulted to 512 "for future-proofing"; that silently
+    # diverged from the only published adapter, so the default is the real value.
+    # The audit (May 2026) puts the dataset max at ~314, so 320 covers 100%.
+    max_length: int = 320
     # LoRA hyperparams -- unchanged from train.py
     lora_r: int = 16
     lora_alpha: int = 32
@@ -124,7 +131,7 @@ class TrainConfig:
     num_train_epochs: int = 10
     per_device_train_batch_size: int = 2
     gradient_accumulation_steps: int = 4
-    learning_rate: float = 2e-4
+    learning_rate: float = 1e-4   # canonical adapter
     warmup_ratio: float = 0.03
     lr_scheduler_type: str = "cosine"
     weight_decay: float = 0.01
@@ -134,7 +141,7 @@ class TrainConfig:
     logging_steps: int = 10
     eval_steps: int = None
     save_total_limit: int = 2
-    early_stopping_patience: int = 2
+    early_stopping_patience: int = 3   # canonical adapter; counted in evaluations
 
 
 # ---------------------------------------------------------------------------
@@ -422,13 +429,17 @@ def parse_args() -> TrainConfig:
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--epochs", type=int, default=10)
     p.add_argument("--batch_size", type=int, default=2)
-    p.add_argument("--lr", type=float, default=2e-4)
-    p.add_argument("--max_length", type=int, default=512,
-                   help="Max token length per example. Default 512 (audit: dataset max ~314).")
+    p.add_argument("--lr", type=float, default=1e-4,
+                   help="Learning rate. Default 1e-4 = the canonical adapter.")
+    p.add_argument("--max_length", type=int, default=320,
+                   help="Max token length per example. Default 320 = the canonical "
+                        "adapter; covers 100%% of the dataset (audit: max ~314).")
     p.add_argument("--lora_r", type=int, default=16)
     p.add_argument("--lora_alpha", type=int, default=32)
     p.add_argument("--lora_dropout", type=float, default=0.05)
-    p.add_argument("--patience", type=int, default=2)
+    p.add_argument("--patience", type=int, default=3,
+                   help="Early stopping patience, counted in EVALUATIONS (every "
+                        "200 steps), not epochs. Default 3 = the canonical adapter.")
     p.add_argument("--splits_dir", default="")
     p.add_argument("--splits_tag", default="")
     p.add_argument("--weight_decay", type=float, default=0.01)

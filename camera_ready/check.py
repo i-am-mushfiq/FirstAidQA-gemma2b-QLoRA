@@ -139,6 +139,35 @@ def collect_checks(*, strict: bool = False, check_dependencies: bool = True,
             continue
         results.append(_result(path.exists(), name, str(path), f"missing: {path}"))
 
+    # Path existence is not sufficient. Weights and tokenizer vocabs are
+    # gitignored, so both the model and the adapter survive in a fresh clone as
+    # config-only shells: the dir-exists checks above pass on a machine where
+    # generation cannot even load a tokenizer.
+    for label, key, weight_globs in (
+        ("model",         "model",        ("*.safetensors", "pytorch_model*.bin")),
+        ("4-bit adapter", "adapter_4bit", ("adapter_model.safetensors", "adapter_model.bin")),
+    ):
+        try:
+            directory = resolve_repo_path(generation[key])
+        except (KeyError, TypeError, ValueError) as exc:
+            results.append(CheckResult("error", f"{label} weights", str(exc)))
+            continue
+        weights = sorted(p for glob in weight_globs for p in directory.glob(glob))
+        vocab = sorted(p for p in directory.glob("tokenizer.*")
+                       if p.suffix in (".json", ".model"))
+        results.append(_result(
+            bool(weights), f"{label} weights",
+            f"{weights[0].name} present" if weights else "",
+            f"no {' / '.join(weight_globs)} in {directory} "
+            f"(gitignored - restore before generating)",
+        ))
+        results.append(_result(
+            bool(vocab), f"{label} tokenizer vocab",
+            f"{vocab[0].name} present" if vocab else "",
+            f"no tokenizer.json or tokenizer.model in {directory}; "
+            f"GemmaTokenizer cannot load without one",
+        ))
+
     for relative in CAMERA_SOURCE_FILES:
         path = ROOT / relative
         results.append(_result(
