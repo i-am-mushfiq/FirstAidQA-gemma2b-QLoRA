@@ -629,6 +629,9 @@ def load_precommit_contrasts() -> list[dict]:
         {"name": "C−B overall",  "cfg_a": "C_FINETUNED_8BIT", "cfg_b": "B_FINETUNED_4BIT",  "filter": "all",   "primary": False},
         {"name": "G−B overall",  "cfg_a": "G_BASE_RAG",       "cfg_b": "B_FINETUNED_4BIT",  "filter": "all",   "primary": False},
         {"name": "G−F overall",  "cfg_a": "G_BASE_RAG",       "cfg_b": "F_RAG_BM25",         "filter": "all",   "primary": False},
+        # Registered 2026-09-06 (PRECOMMIT.md contrast 8), before any D data
+        # existed. Without it D would be generated and judged but never tested.
+        {"name": "D−B overall",  "cfg_a": "D_T4_IMPROVED",    "cfg_b": "B_FINETUNED_4BIT",  "filter": "all",   "primary": False},
     ]
 
 

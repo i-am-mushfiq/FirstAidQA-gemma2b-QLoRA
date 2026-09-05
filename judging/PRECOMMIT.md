@@ -32,6 +32,13 @@ they inform future work only.
 | 5 | C−B overall | C_FINETUNED_8BIT      | B_FINETUNED_4BIT     | all    | Does 8-bit quantisation affect quality? |
 | 6 | G−B overall | G_BASE_RAG            | B_FINETUNED_4BIT     | all    | Can RAG on base beat fine-tuning? |
 | 7 | G−F overall | G_BASE_RAG            | F_RAG_BM25           | all    | Does fine-tuning add value on top of RAG? |
+| 8 | D−B overall | D_T4_IMPROVED         | B_FINETUNED_4BIT     | all    | Does the T4 length floor help over greedy? |
+
+**Amendment, 2026-09-06 — contrast 8 added.** Config D was excluded from the
+July run pending the repetition-loop fix (landed d0fdb61) and therefore had no
+registered contrast. It enters scope for the offline regeneration, so D−B is
+registered here **before that run is generated** — no D data exists at the time
+of this amendment. Contrasts 1–7 are unchanged from the 2026-07-10 registration.
 
 ---
 
