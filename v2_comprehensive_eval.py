@@ -694,7 +694,7 @@ def print_table(all_metrics: dict[str, dict]):
         "A_BASE_4BIT":      "A  Base 4-bit (no FT)     ",
         "B_FINETUNED_4BIT": "B  Fine-tuned 4-bit        ",
         "C_FINETUNED_8BIT": "C  Base8 + FT4 adapter     ",
-        "D_T4_IMPROVED":    "D  T4 Improved (excl.)     ",
+        "D_T4_IMPROVED":    "D  T4 Length floor (ft4)   ",
         "E_T6_IMPROVED":    "E  T6 Improved (4-bit)     ",
         "F_RAG_BM25":       "F  RAG BM25    (ft 4-bit)  ",
         "G_BASE_RAG":       "G  RAG BM25    (base 4-bit)",
@@ -806,8 +806,11 @@ CONFIG_MAP = {
 }
 ALL_CONFIGS = sorted(CONFIG_MAP.keys())
 
-# Default camera-ready set (original 6; D excluded — loop-fix pending)
-CAMERA_READY_CONFIGS = ["A", "B", "C", "E", "F", "G"]
+# Default camera-ready set. D was held back from the July run pending the
+# repetition-loop fix; that landed in d0fdb61, so the length-floor technique is
+# now in scope and gets its first isolated test. Keep in step with
+# camera_ready/protocol.yaml generation.config_codes.
+CAMERA_READY_CONFIGS = ["A", "B", "C", "D", "E", "F", "G"]
 
 # Convenience groups for sweep runner
 CONFIGS_4BIT_BASE   = ["A", "B", "D", "E", "F", "G"]

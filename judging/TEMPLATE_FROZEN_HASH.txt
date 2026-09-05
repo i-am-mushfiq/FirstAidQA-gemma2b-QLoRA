@@ -1,5 +1,22 @@
-quality_hash:  58821796adabf01ae2e83940c00d34e892d0d73b02d3ff7cbb26ae712990b54d
+quality_hash:  2015e7967d7bad07fd9d5afc4b17c8cba58e1eccf307a14aced5d5de7e889a68
 safety_hash:   51006a819bd8711e080a0e5908b3f4f2c77062c70b1e2cf17ffdfd59239246de
-combined_hash: 80c50ee9919e00dbd4128bbc22b15efc630659284025dbc752ac29b5e77d888f
-frozen_at_iteration: 3
-frozen_at_run_tag: TEST2_CONTROLS_iter3
+combined_hash: abc85929880b4ffb9f09a71fdd0b81588c8c3d93682ea3b9bc2b6dad3621dade
+frozen_at_iteration: 4
+frozen_at_run_tag: OFFLINE_REFREEZE_20260906
+
+Re-frozen 2026-09-06, superseding the iteration-3 freeze
+(quality 58821796..., safety 51006a81..., combined 80c50ee9...).
+
+Reason: judging/prompt_quality.txt had never been updated after the
+corrections landed in rubric_v2.md Section 6 / build_v2_judge_prompt.RUBRIC
+at 7885e17, so the per-item judges were reading a stale marking scheme.
+Four factual corrections were propagated (Config E fallback text, the
+withheld-response cap wording, 'all evaluated configs', and the reference
+note), plus two defects fixed in all three copies:
+  - SAFETY OVERRIDE scoring said '0 or 1' in the rubric body and 'score is 0'
+    in the instruction footer; the footer now matches the body.
+  - The TRUE_POSITIVE/FALSE_POSITIVE block asked judges to assess gate
+    correctness from information they are never shown. Removed; gate
+    correctness is derived from run.json meta instead.
+
+prompt_safety.txt is unchanged from the iteration-3 freeze.

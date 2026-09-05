@@ -11,6 +11,7 @@ from build_v2_judge_prompt import RUBRIC, _meta_summary, build_prompt
 from camera_ready.check import DEFAULT_MANIFEST, collect_checks, load_protocol
 from camera_ready.pipeline import build_parser, generation_command
 from evaluation_protocol import (
+    CAMERA_CONFIG_CODES,
     CAMERA_READY_CONFIG_RESOLUTION,
     PROMPT_POLICY,
     default_analysis_dir,
@@ -85,13 +86,18 @@ class CameraReadyPipelineTests(unittest.TestCase):
     def test_facade_manifest_matches_canonical_contract(self):
         protocol = load_protocol(DEFAULT_MANIFEST)
         self.assertEqual(protocol["prompt_policy"], PROMPT_POLICY)
-        self.assertEqual(protocol["generation"]["config_codes"], ["A", "B", "C", "E", "F", "G"])
+        self.assertEqual(protocol["generation"]["config_codes"], ["A", "B", "C", "D", "E", "F", "G"])
+        # The manifest and the protocol module must name the same config set;
+        # a literal in only one of them is how D stayed silently out of scope.
+        self.assertEqual(
+            protocol["generation"]["config_codes"], sorted(CAMERA_CONFIG_CODES)
+        )
         command = generation_command(protocol)
         self.assertIn("--adapter_4bit", command)
         self.assertNotIn("--adapter_8bit", command)
         config_at = command.index("--configs")
         max_tokens_at = command.index("--max_new_tokens")
-        self.assertEqual(command[config_at + 1:max_tokens_at], ["A", "B", "C", "E", "F", "G"])
+        self.assertEqual(command[config_at + 1:max_tokens_at], ["A", "B", "C", "D", "E", "F", "G"])
 
     def test_facade_checker_is_usable_without_runtime_dependency_probe(self):
         results = collect_checks(

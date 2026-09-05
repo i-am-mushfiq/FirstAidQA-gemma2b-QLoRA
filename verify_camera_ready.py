@@ -35,7 +35,11 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 EVAL_DIR = os.path.join(HERE, "evaluations")
 
 EXPECTED_CONFIGS = set(CAMERA_READY_CONFIG_RESOLUTION)
-EXCLUDED_CONFIGS = {"D_T4_IMPROVED"}
+# D_T4_IMPROVED was excluded from the July run and is now in scope: the
+# length-floor technique had never been isolated, so it was an untested claim.
+# Empty rather than deleted -- the set is still the mechanism for tolerating a
+# config that appears in a run but is not part of the protocol.
+EXCLUDED_CONFIGS: set[str] = set()
 
 def _expected_n_from_manifest(default: int = 41) -> int:
     """

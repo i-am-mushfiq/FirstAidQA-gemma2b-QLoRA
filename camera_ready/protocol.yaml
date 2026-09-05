@@ -4,7 +4,7 @@
   "prompt_policy": "offline_definitive_v1",
   "generation": {
     "script": "v2_comprehensive_eval.py",
-    "config_codes": ["A", "B", "C", "E", "F", "G"],
+    "config_codes": ["A", "B", "C", "D", "E", "F", "G"],
     "max_new_tokens": 350,
     "model": "models/gemma-2b-it",
     "adapter_4bit": "experiments/10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337/adapter",

@@ -80,6 +80,7 @@ CONFIG_LABELS = {
     "A_BASE_4BIT":      "A: Base 4-bit",
     "B_FINETUNED_4BIT": "B: Fine-tuned 4-bit",
     "C_FINETUNED_8BIT": "C: Base8 + FT4 adapter",
+    "D_T4_IMPROVED":    "D: T4 length floor",
     "E_T6_IMPROVED":    "E: T6 gate",
     "F_RAG_BM25":       "F: RAG BM25",
     "G_BASE_RAG":       "G: Base + RAG",

@@ -35,6 +35,14 @@ from pathlib import Path
 
 # ── Paths ────────────────────────────────────────────────────────────────────
 REPO_ROOT  = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from evaluation_protocol import (          # noqa: E402  (needs REPO_ROOT on sys.path)
+    PROMPT_POLICY,
+    validate_run_prompt_provenance,
+)
+
 BANK_PATH  = REPO_ROOT / "evaluations" / "eval_bank_v2_40q" / "eval_bank_v2.json"
 JUDGING_DIR = REPO_ROOT / "judging"
 ITEMS_PATH  = JUDGING_DIR / "items.jsonl"
@@ -87,6 +95,59 @@ def load_run(run_dir: Path) -> dict:
         config = cfg_data.get("config", p.stem)
         result[config] = cfg_data.get("answers", [])
     return result
+
+
+def check_prompt_provenance(run_dir: Path, *, allow_unaligned: bool) -> None:
+    """
+    Refuse to build a judging set from a run not generated under the offline premise.
+
+    This is the check that was missing. The July 2026 camera-ready run was
+    generated with the EMS-advising system prompt, then judged against offline
+    references and the offline rubric, and nothing in this lane noticed --
+    because nothing in this lane ever looked at which prompt produced the
+    answers. That run.json records no prompt policy at all.
+
+    validate_run_prompt_provenance() checks the run-level identity (policy name,
+    exact text, SHA-256) and the per-answer prompt_policy marker. Empty list
+    means aligned.
+    """
+    run_json = run_dir / "run.json"
+    if not run_json.exists():
+        # Per-config fallback runs carry no run-level provenance to check, so
+        # the premise is unverifiable -- which is a failure, not a pass.
+        errors = [f"{run_json} not found; prompt provenance is unverifiable"]
+    else:
+        with open(run_json, encoding="utf-8") as f:
+            errors = validate_run_prompt_provenance(json.load(f))
+
+    if not errors:
+        print(f"  Prompt provenance: OK ({PROMPT_POLICY})")
+        return
+
+    print("", file=sys.stderr)
+    print("-- Prompt provenance: FAIL ------------------------------", file=sys.stderr)
+    print(f"  Run: {run_dir}", file=sys.stderr)
+    print(f"  Required policy: {PROMPT_POLICY}", file=sys.stderr)
+    for err in errors:
+        print(f"    - {err}", file=sys.stderr)
+
+    if allow_unaligned:
+        print("", file=sys.stderr)
+        print("  WARNING: --allow_unaligned_prompt was given. Building items from a",
+              file=sys.stderr)
+        print("  run whose generation premise does not match the rubric. Scores from",
+              file=sys.stderr)
+        print("  this item set MUST NOT be published as an offline evaluation.",
+              file=sys.stderr)
+        print("", file=sys.stderr)
+        return
+
+    print("", file=sys.stderr)
+    print("  Refusing to assemble. Regenerate under the canonical offline prompt", file=sys.stderr)
+    print("  (python camera_ready/pipeline.py generate), or pass", file=sys.stderr)
+    print("  --allow_unaligned_prompt to build a knowingly mismatched item set.", file=sys.stderr)
+    print("", file=sys.stderr)
+    sys.exit(2)
 
 
 def validate_items(items: list, bank: dict, configs_present: list) -> bool:
@@ -171,6 +232,12 @@ def main():
              "(re-run make_controls.py afterwards to re-plant them)"
     )
     parser.add_argument(
+        "--allow_unaligned_prompt", action="store_true",
+        help="Build items from a run whose generation prompt does not match the "
+             "canonical offline policy. Emits a loud warning; scores from such an "
+             "item set must not be published as an offline evaluation."
+    )
+    parser.add_argument(
         "--out", default=str(ITEMS_PATH),
         help=f"Output path for items.jsonl (default: {ITEMS_PATH})"
     )
@@ -182,6 +249,10 @@ def main():
     if not run_dir.exists():
         print(f"ERROR: run_dir not found: {run_dir}", file=sys.stderr)
         sys.exit(1)
+
+    # ── Prompt provenance gate (before any other work) ───────────────────────
+    print(f"Checking prompt provenance for {run_dir}")
+    check_prompt_provenance(run_dir, allow_unaligned=args.allow_unaligned_prompt)
 
     out_path = Path(args.out)
 
