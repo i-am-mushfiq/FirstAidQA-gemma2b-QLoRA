@@ -63,8 +63,14 @@ except ImportError:
 
 # ── Paths ────────────────────────────────────────────────────────────────────
 REPO_ROOT       = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from evaluation_protocol import question_bank_metadata  # noqa: E402
+
 JUDGING_DIR     = REPO_ROOT / "judging"
 ITEMS_PATH      = JUDGING_DIR / "items.jsonl"
+BANK_PATH       = REPO_ROOT / "evaluations" / "eval_bank_v2_40q" / "eval_bank_v2.json"
 BLIND_MAP_PATH  = JUDGING_DIR / "blind_map.json"
 PROMPT_QUALITY  = JUDGING_DIR / "prompt_quality.txt"
 PROMPT_SAFETY   = JUDGING_DIR / "prompt_safety.txt"
@@ -188,11 +194,51 @@ def git_commit() -> str:
         return "unknown"
 
 
+def check_items_freshness() -> None:
+    """
+    Refuse to judge an items.jsonl built against a different reference bank.
+
+    items.jsonl records no provenance, so a stale file left over from an earlier
+    run is indistinguishable from a fresh one. Because decoding is greedy, a
+    regenerated run yields byte-identical answers, which makes a stale item set
+    look entirely plausible while carrying superseded reference answers.
+    assemble_items.py now writes items_manifest.json alongside it; this compares
+    the bank it was built from against the bank on disk now.
+    """
+    manifest_path = JUDGING_DIR / "items_manifest.json"
+    if not manifest_path.exists():
+        sys.exit(
+            f"ERROR: {manifest_path} not found.\n"
+            "  items.jsonl predates the provenance manifest, so the reference bank\n"
+            "  it was built from cannot be verified. Re-run:\n"
+            "    python judging/assemble_items.py --run_dir <verified run> --configs all\n"
+            "    python judging/make_controls.py"
+        )
+    with open(manifest_path, encoding="utf-8") as f:
+        manifest = json.load(f)
+    with open(BANK_PATH, encoding="utf-8") as f:
+        current = question_bank_metadata(json.load(f), str(BANK_PATH))
+    recorded = manifest.get("bank", {})
+    if recorded.get("sha256") != current["sha256"]:
+        sys.exit(
+            "ERROR: the reference bank has changed since items.jsonl was built.\n"
+            f"  items built against: {recorded.get('sha256', '?')[:16]}...\n"
+            f"  bank on disk now   : {current['sha256'][:16]}...\n"
+            f"  items built at     : {manifest.get('created_at', '?')}\n"
+            f"  from run           : {manifest.get('run_dir', '?')}\n"
+            "  Judging now would score answers against superseded references.\n"
+            "  Re-run assemble_items.py and make_controls.py first."
+        )
+    print(f"  Items provenance: OK (bank {current['sha256'][:16]}..., "
+          f"run {manifest.get('run_dir', '?')})")
+
+
 def load_items(
     controls_only: bool = False,
     configs: list[str] | None = None,
     limit: int | None = None,
 ) -> list[dict]:
+    check_items_freshness()
     items = []
     with open(ITEMS_PATH, encoding="utf-8") as f:
         for line in f:
@@ -236,8 +282,22 @@ def build_safety_prompt(template: str, item: dict) -> str:
 
 
 def cache_key(model: str, template_hash: str, prompt_type: str,
-              qid: str, blind_id: str, answer: str, nonce: str = "") -> str:
-    raw = f"{model}|{template_hash}|{prompt_type}|{qid}|{blind_id}|{sha256_hex(answer)}|{nonce}"
+              qid: str, blind_id: str, answer: str, prompt: str,
+              nonce: str = "") -> str:
+    """
+    Key on the fully rendered prompt, not on its parts.
+
+    The previous key hashed (model, template_hash, prompt_type, qid, blind_id,
+    answer) and therefore did NOT cover the reference answer. Decoding is greedy,
+    so a regenerated run produces byte-identical answers: if the reference bank
+    changed but the prompt templates did not, every score would have been served
+    from cache against the OLD gold standard, silently and with cache_hit=True.
+
+    sha256(prompt) subsumes the template, question, reference, sc_flag and
+    answer, so any change to what the judge actually reads invalidates the entry.
+    """
+    raw = (f"{model}|{template_hash}|{prompt_type}|{qid}|{blind_id}"
+           f"|{sha256_hex(answer)}|{sha256_hex(prompt)}|{nonce}")
     return sha256_hex(raw)
 
 
@@ -413,7 +473,8 @@ def judge_item_sync(
             f"{prompt_type} prompt for qid={qid}. Aborting."
         )
 
-    ckey = cache_key(model, template_hash, prompt_type, qid, blind_id, answer, nonce)
+    ckey = cache_key(model, template_hash, prompt_type, qid, blind_id, answer,
+                     prompt, nonce)
 
     if not nonce:
         cached = load_cache(prompt_type, ckey)
@@ -701,12 +762,31 @@ def self_review(quality_tmpl: str, safety_tmpl: str) -> bool:
     except Exception as e:
         checks.append(("FAIL", f"Cache dir not writable: {e}"))
 
-    # 7. items.jsonl exists and has entries
+    # 7. items.jsonl exists, has entries, and was built against the bank on disk
     if ITEMS_PATH.exists():
         n = sum(1 for _ in open(ITEMS_PATH))
         checks.append(("OK", f"items.jsonl exists ({n} lines)"))
     else:
         checks.append(("FAIL", "items.jsonl not found"))
+
+    manifest_path = JUDGING_DIR / "items_manifest.json"
+    if not manifest_path.exists():
+        checks.append(("FAIL", "items_manifest.json not found — items.jsonl "
+                               "provenance unverifiable; re-run assemble_items.py"))
+    else:
+        try:
+            with open(manifest_path, encoding="utf-8") as f:
+                recorded = json.load(f).get("bank", {})
+            with open(BANK_PATH, encoding="utf-8") as f:
+                current = question_bank_metadata(json.load(f), str(BANK_PATH))
+            if recorded.get("sha256") == current["sha256"]:
+                checks.append(("OK", f"items built against current bank "
+                                     f"({current['sha256'][:12]}...)"))
+            else:
+                checks.append(("FAIL", "reference bank changed since items.jsonl was "
+                                       "built — re-run assemble_items.py and make_controls.py"))
+        except (OSError, ValueError, KeyError) as e:
+            checks.append(("FAIL", f"items manifest unreadable: {e}"))
 
     # 8. temperature=0
     checks.append(("OK", f"temperature={TEMPERATURE} (deterministic)") if TEMPERATURE == 0

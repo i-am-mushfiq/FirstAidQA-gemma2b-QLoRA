@@ -31,6 +31,7 @@ import hashlib
 import json
 import os
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 # ── Paths ────────────────────────────────────────────────────────────────────
@@ -40,6 +41,8 @@ if str(REPO_ROOT) not in sys.path:
 
 from evaluation_protocol import (          # noqa: E402  (needs REPO_ROOT on sys.path)
     PROMPT_POLICY,
+    frozen_questions_from_run,
+    question_bank_metadata,
     validate_run_prompt_provenance,
 )
 
@@ -51,6 +54,7 @@ ITEMS_PATH  = JUDGING_DIR / "items.jsonl"
 #: verify_camera_ready.EXPECTED_N.
 EXPECTED_N = 41
 BLIND_MAP_PATH = JUDGING_DIR / "blind_map.json"
+MANIFEST_PATH  = JUDGING_DIR / "items_manifest.json"
 
 # Salt for blind IDs — stable across runs, not a secret.
 # Purpose: prevent config names appearing in judge prompts by accident.
@@ -146,6 +150,51 @@ def check_prompt_provenance(run_dir: Path, *, allow_unaligned: bool) -> None:
     print("  Refusing to assemble. Regenerate under the canonical offline prompt", file=sys.stderr)
     print("  (python camera_ready/pipeline.py generate), or pass", file=sys.stderr)
     print("  --allow_unaligned_prompt to build a knowingly mismatched item set.", file=sys.stderr)
+    print("", file=sys.stderr)
+    sys.exit(2)
+
+
+def check_bank_alignment(run_dir: Path, bank: dict) -> None:
+    """
+    Refuse to build items from a run whose embedded questions differ from the bank.
+
+    items.jsonl takes `reference` from the LIVE bank, while internal_eval reads it
+    from run.json via frozen_questions_from_run(). If the bank is revised after a
+    run is generated, the two lanes silently grade against different gold
+    standards -- the same class of divergence that produced the July premise
+    mismatch. Regenerate instead; decoding is greedy, so the answers are identical.
+    """
+    run_json = run_dir / "run.json"
+    if not run_json.exists():
+        return                      # provenance gate already failed this case
+    with open(run_json, encoding="utf-8") as f:
+        run = json.load(f)
+    try:
+        embedded = {q["question_id"]: q for q in frozen_questions_from_run(run)}
+    except (TypeError, ValueError) as exc:
+        print(f"ERROR: cannot read frozen questions from {run_json}: {exc}", file=sys.stderr)
+        sys.exit(2)
+
+    drift = [qid for qid, q in embedded.items()
+             if qid in bank and q.get("reference") != bank[qid].get("reference")]
+    missing = sorted(set(embedded) ^ set(bank))
+    if not drift and not missing:
+        print(f"  Bank alignment: OK (run questions match {BANK_PATH.name})")
+        return
+
+    print("", file=sys.stderr)
+    print("-- Bank alignment: FAIL ---------------------------------", file=sys.stderr)
+    print(f"  Run: {run_dir}", file=sys.stderr)
+    if missing:
+        print(f"  question ids present in only one of run/bank: {missing[:5]}", file=sys.stderr)
+    if drift:
+        print(f"  {len(drift)} reference(s) differ between the run and the bank: "
+              + ", ".join(drift[:5]) + ("..." if len(drift) > 5 else ""), file=sys.stderr)
+    print("", file=sys.stderr)
+    print("  The reference bank was revised after this run was generated.", file=sys.stderr)
+    print("  Judging it would grade the published lane against the new references", file=sys.stderr)
+    print("  and the internal lane against the old ones. Regenerate:", file=sys.stderr)
+    print("    python camera_ready/pipeline.py generate", file=sys.stderr)
     print("", file=sys.stderr)
     sys.exit(2)
 
@@ -260,6 +309,7 @@ def main():
     print(f"Loading eval bank from {BANK_PATH}")
     bank = load_bank()
     print(f"  {len(bank)} questions")
+    check_bank_alignment(run_dir, bank)
 
     # ── Load run ─────────────────────────────────────────────────────────────
     print(f"Loading run from {run_dir}")
@@ -381,6 +431,22 @@ def main():
 
     action = "Appended" if args.append else "Wrote"
     print(f"{action} {len(items)} items to {out_path}")
+
+    # ── Write the items manifest ─────────────────────────────────────────────
+    # items.jsonl carries no record of which run or which reference bank built
+    # it, so a stale file from an earlier run is indistinguishable from a fresh
+    # one and judge_deepseek.py would score it without complaint. The manifest
+    # pins both; the judge refuses to run when the bank has moved underneath it.
+    manifest = {
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "run_dir": str(run_dir),
+        "configs": selected_configs,
+        "real_item_count": len(items),
+        "bank": question_bank_metadata(list(bank.values()), str(BANK_PATH)),
+    }
+    with open(MANIFEST_PATH, "w", encoding="utf-8") as f:
+        json.dump(manifest, f, indent=2)
+    print(f"Items manifest written: {MANIFEST_PATH}")
 
     print(f"\nGATE PASSED  All expected configs have {EXPECTED_N} valid answers, "
           f"all qids join to bank.")
