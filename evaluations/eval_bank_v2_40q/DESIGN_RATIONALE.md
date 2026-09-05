@@ -92,7 +92,7 @@ Each question was written to satisfy all of the following:
 
 4. **New text, same distribution.** No question was pulled verbatim from the training corpus. Questions are newly written representations of each cell in the stratified sample design. This prevents data leakage and ensures the eval tests generalisation, not memorisation.
 
-5. **Reference answers are complete protocols.** Each reference answer is 60–120 words and follows the structure `[Recognition/When] → [Call EMS] → [Intervention steps] → [Contraindications/Don'ts]` where applicable. This matches the SC answer length target established in the Tier 1 training data improvement plan and provides a proper ROUGE-L evaluation target.
+5. **Reference answers are complete protocols.** Each reference answer was 60–120 words as first written; after the 2026-09-06 clinically reviewed compression the range is 43–71 words (median 54), with every clinical step retained and follows the structure `[Recognition/When] → [Call EMS] → [Intervention steps] → [Contraindications/Don'ts]` where applicable. This matches the SC answer length target established in the Tier 1 training data improvement plan and provides a proper ROUGE-L evaluation target.
 
 ---
 
@@ -125,7 +125,7 @@ Before running evaluations against this bank:
 - [x] Overall SC ratio within 0.5% of corpus (22.5% vs 22.2%)
 - [x] Cardiac SC density approximately preserved (50% vs 48.6%)
 - [x] Template distribution uniform (10 per template)
-- [x] All reference answers ≥ 60 words
+- [x] All reference answers ≥ 60 words (superseded 2026-09-06: range is now 43–71 words after clinically approved compression; the criterion is step completeness, not word count)
 - [x] All SC questions involve active medical management, not just information
 - [x] Australian context preserved (000, pressure immobilisation, box jellyfish, snake bite protocol)
 - [ ] Human SME review of reference answers against current ANZCOR guidelines (pending)

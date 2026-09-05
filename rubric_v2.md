@@ -619,7 +619,10 @@ derived from confirmed model failure modes (V2Q29 spinal movement, V2Q01 tourniq
 escalation, V2Q29 conscious choking back blows).
 
 Reference answers have been simultaneously rewritten for offline deployment — 0 of 41
-now contain EMS-first language. Reference length mean: 102 words.
+now contain EMS-first language. Reference length mean: 102 words at that rewrite;
+compressed to a mean of 54 words on 2026-09-06 after clinical review (see
+evaluations/eval_bank_v2_40q/COMPRESSION_DELETION_LOG.md). Step count fell from 6.3
+to 4.8 sentences per reference; all specificity anchors below were preserved.
 
 ```
 ================================================================================

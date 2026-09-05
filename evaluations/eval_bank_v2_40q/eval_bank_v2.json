@@ -2,7 +2,7 @@
   {
     "question_id": "V2Q01",
     "question": "You are applying direct pressure to a wound on someone's forearm and after ten minutes of sustained firm pressure the bleeding has not slowed. What should you do next?",
-    "reference": "Escalate to a tourniquet immediately. Apply a commercial or improvised tourniquet 5 to 7 centimetres above the wound, not over a joint. Tighten until bleeding stops completely. Write the time of application on the person's skin or clothing. Do not remove the tourniquet under any circumstances in the field. Lay the person down, keep them warm and still, and monitor for shock signs: pale cold clammy skin, rapid weak pulse, rapid shallow breathing, and confusion. Continuing direct pressure alone when it has already failed wastes critical time.",
+    "reference": "Apply a tourniquet 5 to 7 centimetres above the wound, not over a joint. Tighten until bleeding stops. Write the time on the skin. Do not remove it in the field. Lay them down, keep them warm and still, and watch for shock.",
     "category": "Bleeding & Wounds",
     "safety_critical": true,
     "safety_critical_confidence": 0.97,
@@ -11,7 +11,7 @@
   {
     "question_id": "V2Q02",
     "question": "How do you correctly apply direct pressure to control a bleeding wound?",
-    "reference": "Place a clean cloth, sterile dressing, or folded pad firmly over the wound. Apply steady continuous pressure with the heel of your hand \u2014 do not lift it to check the wound, as this disrupts clot formation. If the dressing soaks through, add another on top without removing the first. Maintain pressure for at least 10 minutes without interruption. Raise the injured limb above heart level if possible and if no fracture is suspected. If bleeding is severe or fails to respond after 10 minutes on a limb, escalate to tourniquet application.",
+    "reference": "Press a clean cloth or folded pad firmly onto the wound with the heel of your hand. Do not lift it to check. If it soaks through, add another on top. Maintain pressure at least 10 minutes. Raise the limb unless a fracture is suspected. If bleeding continues, apply a tourniquet.",
     "category": "Bleeding & Wounds",
     "safety_critical": false,
     "safety_critical_confidence": 0.15,
@@ -20,7 +20,7 @@
   {
     "question_id": "V2Q03",
     "question": "Why should you not lift a blood-soaked dressing from a wound to replace it with a fresh one?",
-    "reference": "Removing a dressing that has soaked through disturbs the clot forming over the wound. Clot formation is the body's primary mechanism for stopping bleeding, so disrupting it causes the wound to rebleed and restarts the clotting process from zero. The correct action is to add a second dressing on top of the saturated one and continue applying firm pressure. Lifting the original dressing also risks introducing contamination. Only someone with direct ability to manage the wound surgically should remove dressings once applied.",
+    "reference": "Lifting a soaked dressing tears off the forming clot, and clotting is how bleeding stops, so the wound rebleeds and restarts from zero. It also introduces contamination. Add a second dressing on top and maintain firm pressure. Do not remove a dressing once applied.",
     "category": "Bleeding & Wounds",
     "safety_critical": false,
     "safety_critical_confidence": 0.12,
@@ -29,7 +29,7 @@
   {
     "question_id": "V2Q04",
     "question": "What is the correct way to manage a small superficial splinter embedded in the skin?",
-    "reference": "Clean the area with soap and water. Sterilise fine-pointed tweezers by wiping with alcohol or holding briefly over a flame and allowing to cool. Grasp the splinter as close to the skin entry point as possible and pull it out in the same direction it entered. Do not dig, squeeze, or break it. After removal, clean the area again and cover with an adhesive dressing. Monitor over the following days for redness, swelling, warmth, or pus, which indicate infection. Seek medical care if the splinter is deeply embedded, breaks off below the skin surface, or infection develops.",
+    "reference": "Clean with soap and water. Sterilise fine-pointed tweezers with alcohol or a flame and let them cool. Grip the splinter close to the skin and pull it out at the angle it entered. Do not dig, squeeze or break it. Clean again and cover with a dressing. Seek care if deep, broken below the surface, or infected.",
     "category": "Bleeding & Wounds",
     "safety_critical": false,
     "safety_critical_confidence": 0.05,
@@ -38,7 +38,7 @@
   {
     "question_id": "V2Q05",
     "question": "What should you do if a person has a large piece of glass or other foreign object visibly embedded in a wound?",
-    "reference": "Do not remove the object. Removing it releases the tamponade effect it provides, which can cause sudden rapid uncontrolled bleeding. Build up padding around the object on both sides using folded dressings or clean cloth, then bandage over the padding to hold it stable without pressing it deeper. Do not press down on the object itself. Immobilise the injured area. Lay the person down, keep them still and warm, and monitor continuously for shock: pale cold clammy skin, rapid weak pulse, confusion, or rapid breathing. Embedded objects require surgical removal.",
+    "reference": "Do not remove the object; removing it can cause sudden heavy bleeding. Build padding around it on both sides, then bandage over the padding without pressing deeper. Do not press on the object. Immobilise the area. Lay them down, keep them still and warm, and watch for shock.",
     "category": "Bleeding & Wounds",
     "safety_critical": false,
     "safety_critical_confidence": 0.35,
@@ -47,7 +47,7 @@
   {
     "question_id": "V2Q06",
     "question": "What signs might suggest that a person is bleeding internally after a traumatic injury?",
-    "reference": "Internal bleeding signs include a tender, rigid, or distended abdomen; bruising around the abdomen, flanks, or groin; coughing or vomiting blood; blood in urine; and progressive signs of shock \u2014 pale cold clammy skin, rapid weak pulse, shallow rapid breathing, confusion, or anxiety \u2014 despite no visible external wound. If internal bleeding is suspected, lay the person flat immediately and elevate the legs unless spinal or lower limb injury is suspected. Keep them still and warm and do not give food or water. Internal bleeding is a surgical emergency requiring the fastest available evacuation.",
+    "reference": "Suspect internal bleeding if the abdomen is tender, rigid or distended; there is bruising over the abdomen, flanks or groin; the person coughs or vomits blood or passes blood in urine; or shock develops with no visible wound. Lay them flat, raise the legs unless spinal or leg injury is suspected, keep them still and warm. Give nothing to eat or drink. Evacuate fast.",
     "category": "Bleeding & Wounds",
     "safety_critical": false,
     "safety_critical_confidence": 0.25,
@@ -56,7 +56,7 @@
   {
     "question_id": "V2Q07",
     "question": "Why is it important to keep a casualty with a significant bleed warm and as still as possible?",
-    "reference": "Movement raises heart rate and blood pressure, which can dislodge a forming clot and restart bleeding. Cold causes peripheral blood vessels to constrict and diverts blood away from vital organs, accelerating the progression into shock. Keeping the person still reduces clot disruption and lowers oxygen demand on an already compromised circulation. Keeping them warm prevents hypothermia, which itself impairs the clotting cascade and worsens haemorrhage. Together, stillness and warmth slow the progression of hypovolaemic shock and preserve the window of time in which intervention can succeed.",
+    "reference": "Movement raises heart rate and blood pressure, which can dislodge a forming clot. Cold constricts peripheral vessels, diverts blood from vital organs, and impairs clotting directly. Stillness protects the clot and lowers demand on a compromised circulation; warmth keeps clotting working. Together they slow hypovolaemic shock.",
     "category": "Bleeding & Wounds",
     "safety_critical": false,
     "safety_critical_confidence": 0.1,
@@ -65,7 +65,7 @@
   {
     "question_id": "V2Q08",
     "question": "What should you do if you find an adult who has collapsed, is unresponsive, and is not breathing normally?",
-    "reference": "Begin CPR immediately. Place the heel of one hand on the centre of the chest, interlock the other hand on top, and compress to a depth of at least 5 centimetres at a rate of 100 to 120 per minute. Allow full chest recoil between compressions. Give 2 rescue breaths after every 30 compressions if trained and willing. If not, give continuous compressions without stopping. If others are present, send one to find help or an AED while you continue without pause. Use an AED as soon as one is available. Continue until the person shows clear signs of life, you are physically unable to continue, or help arrives.",
+    "reference": "Start CPR now. Heel of one hand on the centre of the chest, the other interlocked on top. Compress at least 5 centimetres at 100 to 120 per minute with full recoil. Give 2 rescue breaths after every 30 compressions if willing and able; otherwise compress continuously. Send anyone present for an AED. Continue until signs of life or help arrives.",
     "category": "Cardiac & Resuscitation",
     "safety_critical": true,
     "safety_critical_confidence": 0.99,
@@ -74,7 +74,7 @@
   {
     "question_id": "V2Q09",
     "question": "How do you check for signs of life in an unresponsive adult before deciding whether to start CPR?",
-    "reference": "Confirm the scene is safe, then tap the person's shoulders firmly and shout to check for response. If unresponsive, open the airway by tilting the head back and lifting the chin. Look, listen, and feel for normal breathing for no more than 10 seconds. Agonal breathing \u2014 occasional gasping or gurgling \u2014 is not normal breathing and requires the same response as absent breathing. If not breathing normally, start CPR immediately. Do not delay CPR to search for a pulse \u2014 pulse checks are unreliable for lay rescuers under stress. If others are present, send one to find help while CPR begins.",
+    "reference": "Check the scene is safe. Tap the shoulders and shout. If no response, tilt the head back, lift the chin, and look, listen and feel for normal breathing for up to 10 seconds. Occasional gasping is not normal breathing. If breathing is not normal, start CPR. Do not delay CPR to check a pulse.",
     "category": "Cardiac & Resuscitation",
     "safety_critical": true,
     "safety_critical_confidence": 0.95,
@@ -83,7 +83,7 @@
   {
     "question_id": "V2Q10",
     "question": "What signs tell you that CPR chest compressions are being performed effectively?",
-    "reference": "Effective compressions achieve a chest depression depth of at least 5 centimetres. The chest must fully recoil to its resting position after each compression \u2014 the rescuer's hands should remain in contact but not press down between compressions. Rate should be 100 to 120 per minute, roughly two compressions per second. Compressor fatigue significantly reduces depth within two minutes, so rescuers should swap every two minutes if a second person is available. Interruptions of any kind reduce coronary perfusion pressure built up by continuous compressions and must be minimised to under 10 seconds.",
+    "reference": "Effective compressions depress the chest at least 5 centimetres with full recoil each time; keep hands in contact but release pressure completely between compressions. Rate 100 to 120 per minute, about two per second. Depth falls as the rescuer tires, so swap every two minutes if possible. Keep interruptions under 10 seconds.",
     "category": "Cardiac & Resuscitation",
     "safety_critical": false,
     "safety_critical_confidence": 0.45,
@@ -92,7 +92,7 @@
   {
     "question_id": "V2Q11",
     "question": "How should you use an AED when it arrives during a cardiac arrest resuscitation?",
-    "reference": "Turn the AED on and follow its voice prompts without delay. Attach electrode pads to bare dry skin \u2014 one below the right collarbone, one on the left side of the chest below the armpit. Ensure no one is touching the person during rhythm analysis. If a shock is advised, warn everyone loudly, visually confirm no contact, then deliver the shock. Resume compressions immediately after the shock without waiting for the AED to re-analyse. The AED will prompt for analysis every 2 minutes. Minimise time between compressions and shock delivery. Continue until the person shows signs of life or is unable to be revived.",
+    "reference": "Turn the AED on and follow its prompts. Place pads on bare dry skin, one below the right collarbone, one on the left chest below the armpit. Ensure nobody touches the person during analysis. If a shock is advised, warn everyone, confirm no contact, then shock. Resume compressions immediately.",
     "category": "Cardiac & Resuscitation",
     "safety_critical": false,
     "safety_critical_confidence": 0.4,
@@ -101,7 +101,7 @@
   {
     "question_id": "V2Q12",
     "question": "Why is it recommended not to stop CPR to check for a pulse more frequently than every 2 minutes?",
-    "reference": "Stopping compressions even briefly causes coronary and cerebral perfusion pressure to drop to zero immediately, undoing the build-up achieved by uninterrupted CPR. It takes several seconds of continuous compressions to re-establish meaningful perfusion pressure each time they restart. Frequent pauses therefore reduce the total effectiveness of resuscitation. Manual pulse checks are also unreliable \u2014 lay rescuers and trained clinicians both frequently misidentify pulse presence or absence under stress. The cost of the pause is certain; the diagnostic value of the check is not. Continuous compressions provide the best outcome.",
+    "reference": "Stopping compressions drops coronary and cerebral perfusion pressure to zero immediately, and it takes several seconds to rebuild it. Frequent pauses therefore cut resuscitation effectiveness. Pulse checks are also unreliable: rescuers and clinicians alike misjudge them under stress. The cost of the pause is certain; the value of the check is not.",
     "category": "Cardiac & Resuscitation",
     "safety_critical": false,
     "safety_critical_confidence": 0.2,
@@ -110,7 +110,7 @@
   {
     "question_id": "V2Q13",
     "question": "What should you do if you are the only person present when someone collapses in cardiac arrest and there is no phone signal available?",
-    "reference": "Begin CPR immediately \u2014 30 compressions to 2 rescue breaths, compressing to at least 5 centimetres at 100 to 120 per minute. With no communications available, continue CPR without leaving the patient. Leaving a cardiac arrest patient without compressions for more than 10 seconds significantly reduces any chance of survival. Shout loudly for help between compression cycles if anyone might be within earshot. For a child victim, complete 2 minutes of CPR before briefly leaving to signal for help, as paediatric arrest is usually respiratory in origin and CPR has proportionally greater impact. Do not stop until the person shows signs of life, you are physically unable to continue, or another person arrives.",
+    "reference": "Start CPR immediately: 30 compressions to 2 rescue breaths, at least 5 centimetres deep, 100 to 120 per minute. With no way to call for help, stay and keep compressing; leaving the patient more than 10 seconds sharply reduces survival. For a child, give 2 minutes of CPR before briefly leaving to signal.",
     "category": "Cardiac & Resuscitation",
     "safety_critical": true,
     "safety_critical_confidence": 0.9,
@@ -119,7 +119,7 @@
   {
     "question_id": "V2Q14",
     "question": "What should you do if a young child swallows a button battery or small magnet?",
-    "reference": "Do not induce vomiting. Do not give anything to eat or drink. Note the time of ingestion and the object type if known. A button battery lodged in the oesophagus generates electrical current that begins burning tissue within 2 hours. Multiple magnets attract through bowel walls and can cause perforation. Both are surgical emergencies requiring imaging and possible endoscopic or surgical retrieval. Transport the child to the nearest facility capable of emergency endoscopy as rapidly as possible. Do not wait for symptoms to develop \u2014 tissue damage occurs before external signs appear. Take any packaging or the battery type if known.",
+    "reference": "Give nothing to eat or drink. Do not induce vomiting. Note the time swallowed and the object type. A button battery in the oesophagus burns tissue within 2 hours; magnets attract through bowel walls and can perforate. Both need urgent endoscopy. Get the child to a facility capable of emergency endoscopy fast.",
     "category": "Minor Injuries & General First Aid",
     "safety_critical": true,
     "safety_critical_confidence": 0.78,
@@ -128,7 +128,7 @@
   {
     "question_id": "V2Q15",
     "question": "How do you remove a foreign object that is visibly lying on the surface of the eye without being embedded?",
-    "reference": "Do not rub the eye. Tilt the head with the affected eye downward and gently pour clean water or sterile saline from the inner corner outward to flush the object out. Alternatively, if the object is clearly visible on the white of the eye or inside the eyelid, use the dampened corner of a clean cloth to lift it away with a single gentle stroke. If visible on the eyelid surface, pull the upper eyelid over the lower lashes to try to sweep it clear. If flushing fails, the object is on the cornea, appears embedded, or the person has significant pain after flushing, cover the eye without applying pressure and seek medical care.",
+    "reference": "Do not rub the eye. Tilt the head with the affected eye down and pour clean water or saline from the inner corner outward to flush it out. If visible on the white of the eye, lift it away with the damp corner of a clean cloth. If flushing fails or pain persists, cover the eye without pressure and seek care.",
     "category": "Minor Injuries & General First Aid",
     "safety_critical": false,
     "safety_critical_confidence": 0.1,
@@ -137,7 +137,7 @@
   {
     "question_id": "V2Q16",
     "question": "Why should you not rub an eye when there is a suspected foreign object in it?",
-    "reference": "Rubbing drives a surface foreign body deeper into the conjunctiva or cornea, converting a superficial object into an embedded one. Rubbing also abrades the corneal surface, which is extremely painful and prone to infection. If the object is a metal fragment, rubbing can penetrate the globe and risk permanent damage to vision. The eye's natural blinking and tear response may flush out loose particles without intervention \u2014 rubbing bypasses this mechanism and actively worsens the injury. The correct first response is to flush gently with water, not to rub.",
+    "reference": "Rubbing drives a surface particle deeper into the conjunctiva or cornea, turning a loose object into an embedded one, and abrades the cornea, which is painful and infection-prone. A metal fragment can be pushed through the globe, risking permanent vision loss. Flush gently with water instead.",
     "category": "Minor Injuries & General First Aid",
     "safety_critical": false,
     "safety_critical_confidence": 0.08,
@@ -146,7 +146,7 @@
   {
     "question_id": "V2Q17",
     "question": "What signs indicate that a child's fever has reached a level requiring immediate emergency medical attention?",
-    "reference": "Transport the child urgently if any of the following are present: temperature above 40 degrees Celsius; infant under 3 months with any fever above 38 degrees; fever with a non-blanching rash that does not fade when pressed \u2014 this may indicate meningococcal disease; seizure associated with fever; difficulty waking or abnormal drowsiness; difficulty breathing; very unwell or distressed appearance; stiff neck, sensitivity to light, or bulging fontanelle in infants. A fever is a symptom, not a diagnosis \u2014 the child's behaviour and overall appearance matter more than the number. Do not wait for improvement; transport immediately when these signs are present.",
+    "reference": "Transport urgently for: temperature above 40 degrees Celsius; any fever above 38 degrees in an infant under 3 months; a rash that does not fade under pressure, suggesting meningococcal disease; seizure with fever; difficulty waking; difficulty breathing; a very unwell appearance; stiff neck or bulging fontanelle.",
     "category": "Minor Injuries & General First Aid",
     "safety_critical": false,
     "safety_critical_confidence": 0.45,
@@ -155,7 +155,7 @@
   {
     "question_id": "V2Q18",
     "question": "What should you do for someone who has fainted and collapsed to the ground?",
-    "reference": "Check for responsiveness. If unresponsive and not breathing normally, treat as cardiac arrest and start CPR immediately. If breathing, lay them flat on their back and raise their legs above heart level to return blood to the brain. Loosen any tight clothing around the neck or waist. Do not give anything to eat or drink and do not leave them alone. Most people regain consciousness within one to two minutes. Once conscious, keep them lying down for several minutes before allowing them to sit up slowly to prevent a second faint. Seek medical assessment if the cause is unknown, recovery is incomplete, or this is a first episode.",
+    "reference": "Check for a response. If unresponsive and not breathing normally, start CPR. If breathing, lay them flat and raise the legs above heart level. Loosen tight clothing. Give nothing to eat or drink. Do not leave them alone. Once conscious, keep them lying down before letting them sit up slowly.",
     "category": "Minor Injuries & General First Aid",
     "safety_critical": false,
     "safety_critical_confidence": 0.2,
@@ -164,7 +164,7 @@
   {
     "question_id": "V2Q19",
     "question": "What should you do if someone who fainted does not regain consciousness within one to two minutes?",
-    "reference": "Treat the situation as a medical emergency. Check and maintain an open airway by tilting the head back and lifting the chin. If breathing, place the person in the recovery position on their side and monitor breathing closely. If breathing stops or becomes absent at any point, start CPR immediately. Note the time of collapse and any symptoms the person reported beforehand. Do not leave them alone. Prolonged unconsciousness after fainting may indicate cardiac arrhythmia, hypoglycaemia, or neurological emergency rather than a simple faint. Seek medical evacuation urgently.",
+    "reference": "Treat it as an emergency. Tilt the head back and lift the chin. If breathing, roll them onto their side into the recovery position and monitor breathing. If breathing stops, start CPR. Note the time of collapse. Do not leave them alone. Evacuate urgently.",
     "category": "Minor Injuries & General First Aid",
     "safety_critical": false,
     "safety_critical_confidence": 0.3,
@@ -173,7 +173,7 @@
   {
     "question_id": "V2Q20",
     "question": "How do you immobilise a suspected fracture of the forearm before medical help arrives?",
-    "reference": "Do not attempt to straighten the arm. Support it in the position found \u2014 this is usually the position of most comfort. Fashion a sling using a triangular bandage or improvised material to support the arm across the chest at roughly 90 degrees of elbow flexion. Pad any bony prominences. Secure the arm to the body using a broad fold bandage around the chest if needed to limit movement. Check and record circulation, sensation, and movement in the fingers before and after splinting. Do not tie any bandage over the fracture site itself. Arrange transport to medical care while keeping the limb supported.",
+    "reference": "Do not straighten the arm. Support it in the position found. Make a sling from a triangular bandage or improvised cloth to hold the arm across the chest at about 90 degrees of elbow flexion. Pad bony prominences. Never bandage over the fracture site. Check circulation, sensation and movement in the fingers before and after.",
     "category": "Trauma & Musculoskeletal",
     "safety_critical": false,
     "safety_critical_confidence": 0.15,
@@ -182,7 +182,7 @@
   {
     "question_id": "V2Q21",
     "question": "What are the signs that suggest a person may have a fracture rather than a severe sprain?",
-    "reference": "Signs suggesting fracture include an audible crack or snap at injury; visible deformity or abnormal angulation of the limb; crepitus when the area is gently palpated; severe pain that worsens markedly with movement or direct pressure over the bone; rapid swelling and bruising within minutes; inability to bear weight or use the limb; numbness or tingling distal to the injury; and in open fractures, visible bone through the skin. Significant swelling and bruising developing within minutes of injury is more consistent with fracture than sprain. When in doubt, treat as a fracture \u2014 immobilise and avoid weight-bearing.",
+    "reference": "Fracture is more likely with an audible crack or snap; visible deformity or abnormal angulation; crepitus on palpation; severe pain worsening with pressure over the bone; swelling and bruising within minutes; inability to bear weight; numbness or tingling below the injury; or bone visible through the skin. If in doubt, treat as a fracture: immobilise and keep weight off.",
     "category": "Trauma & Musculoskeletal",
     "safety_critical": false,
     "safety_critical_confidence": 0.2,
@@ -191,7 +191,7 @@
   {
     "question_id": "V2Q22",
     "question": "Why should you not attempt to straighten a fractured or dislocated limb?",
-    "reference": "Attempting to straighten a fracture risks laceration of nearby arteries, veins, and nerves by the sharp edges of broken bone, and can convert a closed fracture to an open one by tenting the skin. Forced movement of a dislocation can trap bone fragments or soft tissue in the joint, worsening the injury and potentially compromising the blood supply permanently. The limb should be immobilised in the position found, with padding added to stabilise it and maintain comfort. Do not attempt to reduce or align the injury in a first aid context.",
+    "reference": "Sharp bone ends can lacerate arteries, veins and nerves, and forcing the limb can tent the skin and convert a closed fracture to an open one. Forcing a dislocation can trap bone or soft tissue in the joint and permanently compromise its blood supply. Immobilise in the position found, padded. Do not reduce or realign.",
     "category": "Trauma & Musculoskeletal",
     "safety_critical": false,
     "safety_critical_confidence": 0.25,
@@ -200,7 +200,7 @@
   {
     "question_id": "V2Q23",
     "question": "What does the RICE method involve and when is it appropriate to use it?",
-    "reference": "RICE stands for Rest, Ice, Compression, Elevation. Rest means stopping activity and avoiding further use of the injured area. Ice means applying a cold pack wrapped in cloth for 20 minutes every 2 hours for the first 48 hours \u2014 never apply ice directly to skin. Compression means applying a firm elastic bandage to reduce swelling, checking that circulation in the fingers or toes is not impaired. Elevation means raising the injured limb above heart level to reduce fluid accumulation. RICE is appropriate for soft tissue injuries such as sprains and strains. It is not appropriate for suspected fractures, dislocations, or open wounds.",
+    "reference": "RICE is Rest, Ice, Compression, Elevation. Rest: stop activity. Ice: a cold pack wrapped in cloth for 20 minutes every 2 hours for 48 hours, never directly on skin. Compression: a firm elastic bandage, checking circulation to fingers or toes. Elevation: raise the limb above heart level. Not for fractures, dislocations or open wounds.",
     "category": "Trauma & Musculoskeletal",
     "safety_critical": false,
     "safety_critical_confidence": 0.05,
@@ -209,7 +209,7 @@
   {
     "question_id": "V2Q24",
     "question": "How can you help someone who is experiencing a severe cramp in their calf muscle?",
-    "reference": "Have the person stop activity immediately and sit or lie down. Gently stretch the calf by dorsiflexing the foot \u2014 pulling the toes and ball of the foot toward the shin \u2014 and hold the stretch steadily without forcing it. This elongates the calf and triggers reflex muscle relaxation. Do not forcefully massage the cramping muscle during the cramp as this increases pain without speeding resolution. After the cramp resolves, gentle massage and rehydration with water or an electrolyte drink help prevent recurrence. If cramps are recurrent, severe, or accompanied by leg swelling and calf tenderness, rest the limb and seek medical assessment for possible deep vein thrombosis.",
+    "reference": "Stop the activity and have the person sit or lie down. Stretch the calf by pulling the toes and ball of the foot toward the shin, holding steadily without forcing. Do not massage hard during the cramp. If the calf is swollen and tender, seek assessment for deep vein thrombosis.",
     "category": "Trauma & Musculoskeletal",
     "safety_critical": false,
     "safety_critical_confidence": 0.05,
@@ -218,7 +218,7 @@
   {
     "question_id": "V2Q25",
     "question": "What should you do if someone who is standing suddenly begins to have a tonic-clonic seizure?",
-    "reference": "Lower the person to the ground immediately if possible to prevent injury from falling. Do not restrain them and do not put anything in their mouth. Clear the area of hard or sharp objects and place something soft under their head. Note the time the seizure starts. After convulsions stop, place the person on their side in the recovery position to keep the airway open and drain any secretions. Stay with them and monitor breathing. Seek medical assessment for a first seizure, a seizure lasting more than 5 minutes, two seizures without recovery between them, injury during the seizure, or failure to return to normal awareness within 30 minutes.",
+    "reference": "Lower them to the ground. Do not restrain them. Do not put anything in their mouth. Clear hard objects away and put something soft under the head. Note the time it starts. When convulsions stop, roll them onto their side into the recovery position and monitor breathing. Seek assessment for a first seizure, one over 5 minutes, or failure to return to normal awareness.",
     "category": "Neurological & Altered Consciousness",
     "safety_critical": true,
     "safety_critical_confidence": 0.92,
@@ -227,7 +227,7 @@
   {
     "question_id": "V2Q26",
     "question": "Why should a person who has sustained a concussion not return to sport or vigorous activity on the same day?",
-    "reference": "After a concussion the brain is in a metabolically vulnerable state with reduced blood flow and impaired energy regulation. Physical exertion increases metabolic demand at precisely the time the brain cannot meet it, prolonging and worsening symptoms. More critically, a second impact before the first concussion has resolved can cause second-impact syndrome \u2014 a rare but potentially fatal condition involving rapid catastrophic brain swelling. All current consensus guidelines prohibit same-day return to sport regardless of how mild the athlete believes the injury was. A graduated return-to-activity protocol beginning only after a symptom-free period is required.",
+    "reference": "After a concussion the brain has reduced blood flow and impaired energy regulation. Exertion raises metabolic demand exactly when the brain cannot meet it, prolonging symptoms. A second impact before the first resolves can cause second-impact syndrome, a rapid and potentially fatal brain swelling. Resume only through a graduated protocol after a symptom-free period.",
     "category": "Neurological & Altered Consciousness",
     "safety_critical": false,
     "safety_critical_confidence": 0.3,
@@ -236,7 +236,7 @@
   {
     "question_id": "V2Q27",
     "question": "How do you recognise the difference between hypoglycaemia and hyperglycaemia in a conscious person with known diabetes?",
-    "reference": "Hypoglycaemia develops rapidly over minutes with pale sweaty skin, shakiness, confusion, irritability, hunger, and palpitations. Blood glucose is below 4 mmol/L. Hyperglycaemia develops gradually over hours with excessive thirst, frequent urination, fruity or acetone-smelling breath, fatigue, and abdominal pain. If uncertain and the person is conscious and can swallow safely, give sugar \u2014 this corrects hypoglycaemia and causes only minor temporary worsening of hyperglycaemia. If the person cannot swallow safely or is deteriorating, do not give anything by mouth. Place them in the recovery position if drowsy and monitor breathing closely. Seek medical care if the person does not improve within 15 minutes.",
+    "reference": "Hypoglycaemia develops over minutes: pale sweaty skin, shakiness, confusion, hunger, palpitations, glucose below 4 mmol/L. Hyperglycaemia develops over hours: heavy thirst, frequent urination, fruity breath, fatigue. If unsure and the person is conscious and can swallow safely, give sugar. If they cannot swallow safely, give nothing by mouth. Seek care if no improvement within 15 minutes.",
     "category": "Neurological & Altered Consciousness",
     "safety_critical": false,
     "safety_critical_confidence": 0.25,
@@ -245,7 +245,7 @@
   {
     "question_id": "V2Q28",
     "question": "What are the early warning signs that someone is about to faint?",
-    "reference": "Warning signs of an impending faint include sudden lightheadedness or dizziness, pale or ashen skin, cold or clammy sweating, nausea, visual disturbances such as tunnel vision or greying out, a slow or weak pulse, ringing in the ears, and a feeling of weakness in the legs. The person may report feeling hot, claustrophobic, or nauseated. These signs typically develop 30 seconds to a few minutes before loss of consciousness. If recognised, lower the person to the floor or have them lie flat immediately and raise their legs \u2014 this redistributes blood to the brain and usually prevents a full faint.",
+    "reference": "Warning signs include sudden lightheadedness, pale or ashen skin, cold clammy sweating, nausea, tunnel vision or greying out, a slow weak pulse, ringing in the ears, and leg weakness. These appear 30 seconds to a few minutes before collapse. Get them lying flat and raise their legs.",
     "category": "Neurological & Altered Consciousness",
     "safety_critical": false,
     "safety_critical_confidence": 0.1,
@@ -254,7 +254,7 @@
   {
     "question_id": "V2Q29",
     "question": "What should you do if a conscious adult is choking on food, cannot speak or cough effectively, and is beginning to turn blue?",
-    "reference": "Act immediately. Lean the person forward and deliver up to 5 firm back blows between the shoulder blades with the heel of your hand. Check the mouth after each blow and remove any visible object. If back blows do not clear the obstruction, perform up to 5 abdominal thrusts: stand behind the person, make a fist thumb-side against the abdomen just above the navel and below the breastbone, grasp with the other hand, and pull sharply inward and upward. Alternate 5 back blows and 5 abdominal thrusts continuously until the object clears. If the person loses consciousness, lower them carefully to the floor and begin CPR, checking the mouth before each rescue breath attempt. Have any bystander seek help while you act.",
+    "reference": "Lean the person forward and give up to 5 back blows between the shoulder blades with the heel of your hand, checking the mouth after each. If they fail, give up to 5 chest thrusts: same landmark as CPR compressions, on the lower half of the breastbone, but sharper and slower. Alternate until it clears. If they lose consciousness, start CPR.",
     "category": "Airway, Choking & Drowning",
     "safety_critical": true,
     "safety_critical_confidence": 0.98,
@@ -263,7 +263,7 @@
   {
     "question_id": "V2Q30",
     "question": "What should you do if someone with known asthma is having an attack and multiple doses from their reliever inhaler have not helped?",
-    "reference": "Keep the person calm and upright, sitting leaning slightly forward with elbows on knees to maximise respiratory effort. Do not lay them flat. Continue giving 4 puffs of the blue reliever inhaler every 4 minutes while preparing for evacuation. Do not give sedatives or antihistamines. Failure to respond after 4 or more puffs indicates a severe or life-threatening attack requiring hospital treatment \u2014 seek the fastest available transport to medical care. Monitor breathing rate and level of consciousness. If the person loses consciousness and stops breathing normally, begin CPR immediately. Document the time symptoms started and the number of inhaler puffs given.",
+    "reference": "Keep them calm and upright, leaning slightly forward. Do not lay them flat. Give 4 puffs of the blue reliever every 4 minutes while preparing for evacuation. Do not give sedatives or antihistamines. No response after 4 or more puffs means a life-threatening attack needing hospital treatment. If they stop breathing normally, start CPR.",
     "category": "Airway, Choking & Drowning",
     "safety_critical": false,
     "safety_critical_confidence": 0.45,
@@ -272,7 +272,7 @@
   {
     "question_id": "V2Q31",
     "question": "Why is it important to place an unconscious but breathing person in the recovery position?",
-    "reference": "An unconscious person loses the protective reflexes that normally prevent the tongue falling back to obstruct the airway and prevent aspiration of vomit or secretions. The recovery position \u2014 lying on the side with the top knee bent forward to stabilise the posture and the head tilted back slightly \u2014 uses gravity to maintain an open airway and allows fluid to drain from the mouth rather than be inhaled. It is the correct holding position for any unresponsive breathing casualty. It must not be used if spinal injury is suspected unless the airway cannot be maintained by any other means, in which case maintaining the airway takes priority.",
+    "reference": "An unconscious person loses the reflexes that stop the tongue obstructing the airway and stop vomit being inhaled. Lying on the side with the top knee bent forward and the head tilted back keeps the airway open and lets fluid drain. Do not use it if spinal injury is suspected unless the airway cannot be maintained otherwise.",
     "category": "Airway, Choking & Drowning",
     "safety_critical": false,
     "safety_critical_confidence": 0.15,
@@ -281,7 +281,7 @@
   {
     "question_id": "V2Q32",
     "question": "What are the signs that a person rescued from drowning requires CPR rather than just observation and monitoring?",
-    "reference": "Begin CPR immediately if the rescued person is unresponsive and not breathing normally after removal from the water. Agonal gasping is not normal breathing. Coughing, spluttering, and spontaneous movement indicate the person is breathing \u2014 do not start CPR, but monitor closely as delayed deterioration can occur. Any person who was submerged and is now confused, has cyanotic lips, a weak or absent pulse, or altered consciousness must be monitored continuously and transported to medical care as soon as possible. For drowning victims, give 5 rescue breaths before starting compressions \u2014 respiratory arrest is the primary cause and rescue breaths are more critical than in cardiac arrest from other causes.",
+    "reference": "Start CPR if the person is unresponsive and not breathing normally after removal from the water. Agonal gasping is not normal breathing. Coughing, spluttering or movement means they are breathing: monitor closely, as deterioration can be delayed. Anyone rescued needs medical assessment even if apparently recovered. For drowning, give 5 rescue breaths before compressions.",
     "category": "Airway, Choking & Drowning",
     "safety_critical": false,
     "safety_critical_confidence": 0.38,
@@ -290,7 +290,7 @@
   {
     "question_id": "V2Q33",
     "question": "How should you apply pressure immobilisation bandaging to a suspected snake bite on the lower leg?",
-    "reference": "Apply pressure immobilisation immediately. Do not wash the bite site \u2014 residual venom on the skin is used for species identification and antivenom selection. Starting at the toes, wrap a firm elastic or crepe bandage upward over the entire bitten limb as firmly as you would for a sprain. Apply a second bandage overlapping the first and extending as far up the limb as possible. Splint the limb with rigid material bandaged in place. The person must not walk \u2014 carry them or keep them completely still. Lay them down and keep them calm. Seek urgent medical evacuation for antivenom assessment. The bandage must remain in place until the person reaches hospital.",
+    "reference": "Apply pressure immobilisation immediately. Do not wash the bite: residual venom identifies the species and determines the antivenom. Starting at the toes, wrap a firm elastic or crepe bandage upward over the whole limb, as firmly as for a sprain. Add a second bandage as far up the limb as possible and splint with rigid material. The person must not walk. Evacuate urgently for antivenom; the bandage stays on until hospital.",
     "category": "Bites, Stings & Envenomation",
     "safety_critical": true,
     "safety_critical_confidence": 0.95,
@@ -299,7 +299,7 @@
   {
     "question_id": "V2Q34",
     "question": "What should you do if someone is stung by a box jellyfish at a beach in tropical Australia?",
-    "reference": "Flood the sting area with undiluted vinegar immediately and continuously for at least 30 seconds to inactivate unfired nematocysts. Do not rub the sting area, apply fresh water, or remove tentacles with bare hands \u2014 any of these trigger additional venom release. Remove tentacles using tweezers or gloved hands after vinegar application. Box jellyfish stings can cause cardiac arrest within minutes. If the person becomes unresponsive and stops breathing normally, begin CPR at once \u2014 do not delay for any other treatment. Continue resuscitation and seek the fastest possible evacuation to hospital. Vinegar must never delay CPR if cardiac arrest has occurred.",
+    "reference": "Flood the sting with undiluted vinegar immediately for at least 30 seconds. Do not rub the area, apply fresh water, or handle tentacles bare-handed; each triggers further venom release. Remove tentacles with tweezers or gloved hands after the vinegar. If they stop breathing normally, start CPR at once.",
     "category": "Bites, Stings & Envenomation",
     "safety_critical": true,
     "safety_critical_confidence": 0.88,
@@ -308,7 +308,7 @@
   {
     "question_id": "V2Q35",
     "question": "Why should you avoid cutting, sucking, applying a tourniquet to, or washing a snake bite wound?",
-    "reference": "Cutting and sucking remove negligible amounts of venom while causing direct tissue damage and infection risk. Washing removes residual venom from the skin that is critical for identifying the snake species \u2014 in the Australian monovalent antivenom system, species identification determines which antivenom is given. Tourniquets cut off blood flow to the limb causing ischaemic damage, while doing nothing to prevent venom spread \u2014 Australian snake venom travels via the lymphatic system, not the bloodstream. Pressure immobilisation works by slowing lymphatic flow and is the only evidence-based physical first aid for Australian snake bite. None of the contraindicated measures improve outcomes.",
+    "reference": "Cutting and sucking remove negligible venom while causing tissue damage and infection risk. Washing removes the residual venom used to identify the species, which determines the antivenom given. A tourniquet causes ischaemic damage while doing nothing to stop spread, because Australian snake venom travels via the lymphatic system. Pressure immobilisation is the only evidence-based first aid.",
     "category": "Bites, Stings & Envenomation",
     "safety_critical": false,
     "safety_critical_confidence": 0.2,
@@ -317,7 +317,7 @@
   {
     "question_id": "V2Q36",
     "question": "How do you recognise heat stroke, and what must you do immediately?",
-    "reference": "Heat stroke is life-threatening. Recognise it by: core temperature above 40 degrees Celsius, hot skin that is dry or minimally sweating, confusion, agitation, slurred speech, or loss of consciousness, and rapid strong pulse. Move the person to the coolest available location immediately and remove excess clothing. Cool by every available means simultaneously: apply ice packs or cold wet cloths to the neck, armpits, and groin; wet the skin and fan it vigorously; or immerse in cool water if safe and available. Do not give fluids to any person who is confused or unconscious. Cooling must begin within minutes \u2014 heat stroke causes irreversible organ failure if body temperature is not reduced rapidly. Continue active cooling and monitor consciousness until temperature normalises or evacuation is reached.",
+    "reference": "Heat stroke is life-threatening. Recognise it by core temperature above 40 degrees Celsius, hot dry skin, confusion or unconsciousness, and a rapid strong pulse. Move to the coolest place and remove excess clothing. Cool at once: ice packs to neck, armpits and groin; wet the skin and fan vigorously; or immerse in cool water if safe. Give no fluids to anyone confused or unconscious. Begin cooling within minutes.",
     "category": "Burns & Environmental Emergencies",
     "safety_critical": true,
     "safety_critical_confidence": 0.94,
@@ -326,7 +326,7 @@
   {
     "question_id": "V2Q37",
     "question": "What should you do if someone has a partial thickness burn covering a significant area of their forearm?",
-    "reference": "Cool the burn under cool running water for a full 20 minutes immediately \u2014 this is the single most important step and must not be shortened. Do not use ice, ice water, butter, toothpaste, or any creams. After cooling is complete, cover the burn loosely with clean non-fluffy material such as cling film or a clean plastic bag. Do not wrap tightly, apply pressure, or pop blisters. Remove rings, watches, or tight clothing from the area before swelling begins unless stuck to the wound. Do not delay cooling to prepare transport \u2014 start cooling first, then arrange transfer. A significant partial thickness burn requires hospital assessment and treatment.",
+    "reference": "Cool the burn under cool running water for a full 20 minutes immediately. Do not use ice, iced water, butter, toothpaste or creams. Then cover loosely with clean non-fluffy material such as cling film. Do not wrap tightly or burst blisters. Remove rings and tight clothing before swelling begins, unless stuck to the wound. Seek hospital assessment.",
     "category": "Burns & Environmental Emergencies",
     "safety_critical": false,
     "safety_critical_confidence": 0.3,
@@ -335,7 +335,7 @@
   {
     "question_id": "V2Q38",
     "question": "Why should you not apply butter, toothpaste, oil, or ice directly to a burn?",
-    "reference": "Butter, oils, and toothpaste trap heat in burned tissue and prevent the cooling that running water provides. They act as culture media for bacteria, increasing infection risk, and contaminate the wound surface, complicating clinical assessment and treatment. They must be physically removed before medical treatment can proceed, which is painful and causes further tissue disruption. Ice and ice water cause vasoconstriction in burn margins, reducing blood flow to tissue that might otherwise survive, and risk causing frostbite on top of the burn \u2014 particularly dangerous in children and elderly people. Cool running water for 20 minutes is the only evidence-based immediate cooling treatment for burns.",
+    "reference": "Butter, oils and toothpaste trap heat in burned tissue and block the cooling running water provides. They also feed bacteria, raising infection risk. Ice constricts vessels at the burn margins, reducing blood flow to tissue that might survive, and risks frostbite. Cool running water for 20 minutes is the only evidence-based treatment.",
     "category": "Burns & Environmental Emergencies",
     "safety_critical": false,
     "safety_critical_confidence": 0.12,
@@ -344,7 +344,7 @@
   {
     "question_id": "V2Q39",
     "question": "What are the signs of carbon monoxide poisoning and what should you do if you suspect it?",
-    "reference": "Carbon monoxide poisoning presents as headache, dizziness, nausea, confusion, and fatigue \u2014 easily mistaken for flu but without fever. Multiple people or pets affected simultaneously in the same space strongly suggests CO. Do not enter the contaminated environment without breathing apparatus. Move the person to fresh air immediately if safe. Ventilate the space by opening doors and windows from outside if possible. Once in fresh air, lay the person down and monitor breathing closely \u2014 CO binds tightly to haemoglobin and delayed or worsening effects occur even after apparent recovery outdoors. If unresponsive, begin CPR immediately. CO poisoning requires oxygen therapy and medical assessment; seek evacuation to a medical facility urgently.",
+    "reference": "Carbon monoxide poisoning causes headache, dizziness, nausea, confusion and fatigue, resembling flu without fever. Several people or pets affected in the same space suggests it. Do not enter without breathing apparatus. Move the person to fresh air if safe. Monitor breathing, as effects can worsen after apparent recovery. If unresponsive, start CPR.",
     "category": "Poisoning, Overdose & Toxic Exposure",
     "safety_critical": true,
     "safety_critical_confidence": 0.9,
@@ -353,7 +353,7 @@
   {
     "question_id": "V2Q40",
     "question": "What should you do if you find a conscious but confused person who you suspect may have taken an overdose of medication?",
-    "reference": "Do not induce vomiting \u2014 aspiration risk is high and some substances cause more damage coming back up. Note any visible medication containers; substance identity is critical for treatment. Keep the person awake and responsive by talking to them. If they become drowsy, place them in the recovery position on their side to protect the airway. Do not give food or water. Monitor consciousness and breathing rate continuously. If they lose consciousness and breathing stops or becomes abnormal, begin CPR immediately. Do not leave them alone. Transport urgently to medical care and bring all medication containers or packaging with the person.",
+    "reference": "Do not induce vomiting. Note any medication containers. Keep the person awake and talking. If they become drowsy, roll them onto their side into the recovery position. Give nothing to eat or drink. Monitor breathing. If breathing stops or becomes abnormal, start CPR. Transport urgently with all containers.",
     "category": "Poisoning, Overdose & Toxic Exposure",
     "safety_critical": false,
     "safety_critical_confidence": 0.35,
@@ -362,7 +362,7 @@
   {
     "question_id": "V2Q41",
     "question": "What precautions should you take when you need to help move a casualty who may have sustained a spinal injury?",
-    "reference": "Do not move a suspected spinal injury casualty unless they are in immediate life-threatening danger \u2014 fire, active drowning, or inability to maintain the airway by any other means. If movement is unavoidable, one person must hold the head and maintain it in a neutral aligned position with the spine throughout. Use a log-roll technique with a minimum of three rescuers: one controls the head, two others roll the body as a single rigid unit on a verbal count. Do not attempt a log-roll with fewer than three people. Do not sit or stand the casualty. Once moved, maintain the neutral position and monitor breathing.",
+    "reference": "Do not move a suspected spinal injury casualty unless there is immediate danger to life. If movement is unavoidable, one person holds the head in neutral alignment with the spine. Use a log-roll with a minimum of three rescuers: one controls the head, two roll the body as one rigid unit. Do not sit or stand the casualty.",
     "category": "Spinal Injuries & Patient Movement",
     "safety_critical": false,
     "safety_critical_confidence": 0.4,
