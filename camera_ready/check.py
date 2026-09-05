@@ -105,7 +105,7 @@ def collect_checks(*, strict: bool = False, check_dependencies: bool = True,
     codes = generation.get("config_codes")
     results.append(_result(
         codes == list(CAMERA_CONFIG_CODES),
-        "camera configs", "A B C E F G",
+        "camera configs", " ".join(CAMERA_CONFIG_CODES),
         f"manifest={codes!r}; canonical={list(CAMERA_CONFIG_CODES)!r}",
     ))
     results.append(_result(
@@ -211,7 +211,11 @@ def collect_checks(*, strict: bool = False, check_dependencies: bool = True,
     ))
 
     if check_dependencies:
-        required = ["numpy", "torch", "transformers", "peft", "rank_bm25"]
+        # bitsandbytes belongs here: every camera-ready config loads the base
+        # model in 4-bit or 8-bit, so without it generation dies at model load
+        # while this check reported PASS.
+        required = ["numpy", "torch", "transformers", "peft", "rank_bm25",
+                    "bitsandbytes"]
         missing = [name for name in required if _importable(name) is False]
         results.append(_result(
             not missing, "generation dependencies", "all importable",
