@@ -200,6 +200,29 @@ def bank_sha256_now() -> str:
         return question_bank_metadata(json.load(f), str(BANK_PATH))["sha256"]
 
 
+def _model_tokens(name: str) -> set[str]:
+    """Identifier tokens of a model string, ignoring separators and case."""
+    return {t for t in re.split(r"[/\-_.:]+", (name or "").lower()) if t}
+
+
+def model_substituted(requested: str, returned: str) -> bool:
+    """
+    True when the provider served a genuinely different model, not a snapshot.
+
+    Providers routinely resolve an alias to a dated snapshot, and the date may be
+    appended or the words reordered:
+        anthropic/claude-opus-4.8  -> anthropic/claude-4.8-opus-20260528   OK
+        openai/gpt-5.6-sol         -> openai/gpt-5.6-sol-20260709          OK
+    A tier swap drops one of the requested tokens instead:
+        deepseek-v4-pro            -> deepseek-v4-flash                    SUBSTITUTION
+    So the requested tokens must all be present in what came back; extra tokens
+    (a date) are fine.
+    """
+    if not requested or not returned:
+        return False
+    return not _model_tokens(requested).issubset(_model_tokens(returned))
+
+
 def resume_incompatibilities(out_dir: Path, template_hash: str) -> list[str]:
     """
     Reasons the judgments already in *out_dir* must not be resumed into.
@@ -581,6 +604,7 @@ def run_judging(
     run_tag: str,
     nonce: str = "",
     verbose: bool = False,
+    allow_model_substitution: bool = False,
 ) -> list[dict]:
     cfg = MODEL_CONFIGS[ACTIVE_MODEL]
     api_key = os.environ.get(cfg["api_key_env"])
@@ -678,6 +702,21 @@ def run_judging(
                 n_cache_hit += 1
             if j["status"] == "INVALID":
                 n_invalid += 1
+            # Abort on a tier substitution rather than discover it in 582 JSONL
+            # lines afterwards. In July the provider served deepseek-v4-flash on
+            # every call against a registered deepseek-v4-pro and nothing
+            # complained. A dated or reordered snapshot of the requested model is
+            # normal resolution and does not trip this.
+            served = j.get("model_returned")
+            if served and not allow_model_substitution and \
+                    model_substituted(cfg["model"], served):
+                raise RuntimeError(
+                    f"MODEL SUBSTITUTION: requested {cfg['model']!r}, provider "
+                    f"served {served!r}. Aborting after {done + 1} call(s) so the "
+                    f"panel is not built on the wrong tier. Re-run with "
+                    f"--allow_model_substitution to accept it deliberately, and "
+                    f"disclose the substitution."
+                )
             done += 1
             judgments.append(j)
             with open(out_path, "a", encoding="utf-8") as f:
@@ -895,6 +934,9 @@ def main():
                         help="Which prompt types to run (default: both)")
     parser.add_argument("--nonce",         default="",
                         help="Set to bypass cache (for stability/re-score tests)")
+    parser.add_argument("--allow_model_substitution", action="store_true",
+                        help="Proceed even when the provider serves a different "
+                             "model tier than requested. Disclose it if used.")
     parser.add_argument("--verbose",       action="store_true",
                         help="Print every judgment as it completes")
     parser.add_argument("--review_only",   action="store_true",
@@ -932,6 +974,7 @@ def main():
         prompt_types=args.prompt_types,
         run_tag=args.run_tag,
         nonce=args.nonce,
+        allow_model_substitution=args.allow_model_substitution,
         verbose=args.verbose,
     )
 

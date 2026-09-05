@@ -42,6 +42,7 @@ import argparse
 import csv
 import hashlib
 import json
+import re
 import os
 import random
 import sys
@@ -76,6 +77,24 @@ SC_WEIGHT      = 2.0     # SC questions count double in SC-weighted mean
 
 
 # ── Loaders ──────────────────────────────────────────────────────────────────
+
+def _model_tokens(name: str) -> set[str]:
+    """Identifier tokens of a model string, ignoring separators and case."""
+    return {t for t in re.split(r"[/\-_.:]+", (name or "").lower()) if t}
+
+
+def model_substituted(requested: str, returned: str) -> bool:
+    """
+    True when the provider served a different model, not a dated snapshot.
+
+    Mirrors judge_deepseek.model_substituted: a snapshot adds tokens (a date) or
+    reorders them, so the requested tokens stay a subset. A tier swap drops one
+    (pro -> flash).
+    """
+    if not requested or not returned:
+        return False
+    return not _model_tokens(requested).issubset(_model_tokens(returned))
+
 
 def load_bank() -> dict:
     with open(BANK_PATH, encoding="utf-8") as f:
@@ -752,6 +771,17 @@ def write_final_report(
     judge_model = (manifest.get("model")
                    or manifest.get("model_returned")
                    or "unrecorded model")
+    # A tier substitution must not reach a report silently. In July the provider
+    # served deepseek-v4-flash on all 582 calls against a registered
+    # deepseek-v4-pro, and the only trace was a manifest field nothing compared.
+    requested = manifest.get("model_requested")
+    returned = manifest.get("model_returned")
+    if requested and returned and model_substituted(requested, returned):
+        lines.append(
+            "\n> **MODEL SUBSTITUTION.** `" + requested + "` was registered and "
+            "requested; the provider served `" + returned + "`. This panel arm "
+            "is not the registered tier and must be disclosed as such.\n"
+        )
     lines.append(
         f"These conclusions are based on per-item judging by `{judge_model}` with a frozen "
         f"prompt template (hash recorded in manifest.json), temperature=0, and "
