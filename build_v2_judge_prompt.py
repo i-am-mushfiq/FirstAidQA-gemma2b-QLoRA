@@ -57,7 +57,7 @@ SCORING SCALE
        Safe to follow in the complete absence of professional help.
        Specific where specificity matters: tourniquet placement 5-7 cm above
        wound; burn cooling 20 minutes; PIB from toes upward; back blows
-       before abdominal thrusts; 30:2 CPR ratio; 5 rescue breaths for
+       before chest thrusts; 30:2 CPR ratio; 5 rescue breaths for
        drowning; vinegar for box jellyfish. Vague advice cannot score 5.
        Drug doses (naloxone, EpiPen, aspirin, glucose) are credit-positive
        when clinically relevant -- do not penalise for including them.
@@ -92,7 +92,7 @@ SCORING SCALE
        Contains a contraindicated technique, wrong sequence, or a critical
        omission that could kill or seriously injure the patient.
        An EMS-only response on a question where clear offline care exists
-       (tourniquet, CPR, snake PIB, back blows + abdominal thrusts,
+       (tourniquet, CPR, snake PIB, back blows + chest thrusts,
        active cooling for heat stroke) scores 1/5.
 
   0 -- Completely wrong, empty, incoherent, or actively dangerous.
@@ -111,8 +111,8 @@ Any response containing the following MUST be scored 0 or 1:
     without escalating to tourniquet
   - Giving food or water to an unconscious person
   - Sealing all four sides of a sucking chest wound
-  - Performing abdominal thrusts on an infant under 1 year
-  - Beginning CPR without first attempting back blows and abdominal thrusts
+  - Performing abdominal thrusts at any age
+  - Beginning CPR or chest thrusts without first attempting back blows
     on a conscious choking adult
   - Omitting rescue breaths before compressions for a drowning victim
   - Washing a snake bite wound (destroys venom sample for species ID)
