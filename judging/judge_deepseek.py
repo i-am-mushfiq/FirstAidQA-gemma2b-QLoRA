@@ -200,6 +200,36 @@ def bank_sha256_now() -> str:
         return question_bank_metadata(json.load(f), str(BANK_PATH))["sha256"]
 
 
+def resume_incompatibilities(out_dir: Path, template_hash: str) -> list[str]:
+    """
+    Reasons the judgments already in *out_dir* must not be resumed into.
+
+    Empty list means the prior run used the same judge templates and the same
+    reference bank, so resuming only fills genuine gaps. Extracted from the
+    resume path so it can be exercised directly.
+    """
+    prior_manifest_path = out_dir / "manifest.json"
+    if not prior_manifest_path.exists():
+        return []
+    with open(prior_manifest_path, encoding="utf-8") as f:
+        prior = json.load(f)
+    prior_tmpl = prior.get("template_hash")
+    prior_bank = prior.get("bank_sha256")
+    bank_sha = bank_sha256_now()
+
+    problems = []
+    if prior_tmpl and prior_tmpl != template_hash:
+        problems.append(f"judge templates changed (was {prior_tmpl[:16]}..., "
+                        f"now {template_hash[:16]}...)")
+    if prior_bank is None:
+        problems.append("prior run recorded no bank hash, so it predates this "
+                        "check and cannot be shown to match the current bank")
+    elif prior_bank != bank_sha:
+        problems.append(f"reference bank changed (was {prior_bank[:16]}..., "
+                        f"now {bank_sha[:16]}...)")
+    return problems
+
+
 def check_items_freshness() -> None:
     """
     Refuse to judge an items.jsonl built against a different reference bank.
@@ -597,35 +627,15 @@ def run_judging(
         # what is new, silently welding two evaluations together. Refuse when the
         # prior judgments were produced against different templates or a
         # different reference bank.
-        prior_manifest_path = out_dir / "manifest.json"
-        if prior_manifest_path.exists():
-            with open(prior_manifest_path, encoding="utf-8") as f:
-                prior = json.load(f)
-            prior_tmpl = prior.get("template_hash")
-            prior_bank = prior.get("bank_sha256")
-            with open(BANK_PATH, encoding="utf-8") as f:
-                bank_sha = question_bank_metadata(json.load(f), str(BANK_PATH))["sha256"]
-            problems = []
-            if prior_tmpl and prior_tmpl != template_hash:
-                problems.append(
-                    f"judge templates changed (was {prior_tmpl[:16]}..., "
-                    f"now {template_hash[:16]}...)")
-            if prior_bank is not None and prior_bank != bank_sha:
-                problems.append(
-                    f"reference bank changed (was {prior_bank[:16]}..., "
-                    f"now {bank_sha[:16]}...)")
-            elif prior_bank is None:
-                problems.append(
-                    "prior run recorded no bank hash, so it predates this check "
-                    "and cannot be shown to match the current bank")
-            if problems:
-                sys.exit(
-                    f"ERROR: refusing to resume into run_tag '{run_tag}'.\n"
-                    + "".join(f"  - {p}\n" for p in problems)
-                    + f"  {out_path} holds judgments from a different evaluation.\n"
-                      "  Resuming would keep those scores and only judge what is new.\n"
-                      "  Use a fresh --run_tag for this evaluation."
-                )
+        problems = resume_incompatibilities(out_dir, template_hash)
+        if problems:
+            sys.exit(
+                f"ERROR: refusing to resume into run_tag '{run_tag}'.\n"
+                + "".join(f"  - {p}\n" for p in problems)
+                + f"  {out_path} holds judgments from a different evaluation.\n"
+                  "  Resuming would keep those scores and only judge what is new.\n"
+                  "  Use a fresh --run_tag for this evaluation."
+            )
         with open(out_path, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
