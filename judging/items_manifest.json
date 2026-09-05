@@ -1,0 +1,28 @@
+{
+  "created_at": "2026-09-05T21:01:58.711207+00:00",
+  "run_dir": "C:\\Personal_Endeavours\\Fine_Tuning\\evaluations\\CAMERA_READY_OFFLINE_20260905_204533",
+  "configs": [
+    "A_BASE_4BIT",
+    "B_FINETUNED_4BIT",
+    "C_FINETUNED_8BIT",
+    "D_T4_IMPROVED",
+    "E_T6_IMPROVED",
+    "F_RAG_BM25",
+    "G_BASE_RAG"
+  ],
+  "real_item_count": 287,
+  "bank": {
+    "source_path": "C:\\Personal_Endeavours\\Fine_Tuning\\evaluations\\eval_bank_v2_40q\\eval_bank_v2.json",
+    "question_count": 41,
+    "sha256": "8dfb4f4b221426c7ff597abe4bcb87e4d74f9c7d23510ea6fd9c442f1c4a18b0",
+    "frozen_fields": [
+      "question_id",
+      "question",
+      "reference",
+      "category",
+      "safety_critical",
+      "safety_critical_confidence",
+      "template_idx"
+    ]
+  }
+}
