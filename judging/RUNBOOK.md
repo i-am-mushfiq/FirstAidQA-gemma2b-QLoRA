@@ -36,6 +36,38 @@ returns 402 for both Claude models (verified with two separate keys). The 3-of-3
 rule needs all three; do not start stage 2 expecting a complete panel until this
 is resolved.
 
+### AgentRouter 402s are per-model pool caps, not an empty account
+
+Recorded 2026-09-06. Commit `8a34241` says the AgentRouter budget was
+"exhausted" — that is **wrong** and this corrects it.
+
+`gpt_ar` halted at 305/664 on HTTP 402 "Budget pool quota has been exhausted".
+The account was not out of money:
+
+```
+GET /v1/dashboard/billing/subscription -> hard_limit_usd 20, has_payment_method true
+GET /v1/dashboard/billing/usage        -> total_usage 483.0474   (cents, i.e. $4.83)
+```
+
+$4.83 of $20. At the same moment, on the same key, `glm-5.3` and
+`deepseek-v4-flash` returned 200 while `gpt-5.6-sol`, `claude-opus-5` and
+`claude-opus-4-8` returned 402. A drained account fails uniformly; this does
+not. The quota is allocated **per model pool**, which is what the error means by
+"select another budget pool".
+
+Practical consequences:
+
+- A 402 from AgentRouter does not mean stop spending. Check
+  `probe_agentrouter.py` — other models may still be reachable.
+- Pool state must be changed from the console. `/api/user/self` and
+  `/api/token` reject an API key ("access token 无效"); they need a browser
+  session token.
+- Whether pools reset on a schedule is unknown. If they do, the remaining 359
+  `gpt_ar` calls simply resume, and nothing already judged is re-paid.
+- Budget headroom is not a reason to expect a model to work, and a 402 is not a
+  reason to assume the account is empty. Check the per-model probe, not the
+  balance.
+
 The item set must already be built against the verified run:
 
 ```bash
