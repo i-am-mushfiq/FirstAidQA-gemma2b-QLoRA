@@ -70,16 +70,17 @@ jobs:
       # from "present but truncated on paste".
       - name: Check the API key secret is reachable
         env:
-          AGENTROUTER_NEW_API_KEY: ${{ secrets.AGENTROUTER_NEW_API_KEY }}
+          AGENT_ROUTER: ${{ secrets.AGENT_ROUTER }}
         run: |
-          if [ -z "${AGENTROUTER_NEW_API_KEY}" ]; then
-            echo "::error::secrets.AGENTROUTER_NEW_API_KEY is empty or not set."
+          if [ -z "${AGENT_ROUTER}" ]; then
+            echo "::error::secrets.AGENT_ROUTER is empty or not set."
             echo ""
-            echo "The workflow reads it as: secrets.AGENTROUTER_NEW_API_KEY"
+            echo "The workflow reads it as: secrets.AGENT_ROUTER"
             echo "Check, in order:"
-            echo "  1. NAME must match exactly, including AGENTROUTER_NEW_API_KEY"
-            echo "     (note NEW_) and be all upper case. A secret named"
-            echo "     AGENTROUTER_API_KEY will not be found."
+            echo "  1. NAME must be exactly AGENT_ROUTER - upper case, one"
+            echo "     underscore, no API_KEY suffix. Earlier names used in this"
+            echo "     project (AGENTROUTER_API_KEY, AGENTROUTER_NEW_API_KEY)"
+            echo "     will NOT be found."
             echo "  2. It must be a REPOSITORY secret:"
             echo "     Settings > Secrets and variables > Actions > Secrets tab."
             echo "     A value added under the Variables tab is not a secret and"
@@ -89,11 +90,11 @@ jobs:
             echo "  4. It must be on THIS repository, not a fork or another repo."
             exit 1
           fi
-          echo "Secret is present (length ${#AGENTROUTER_NEW_API_KEY}); expected 51."
+          echo "Secret is present (length ${#AGENT_ROUTER}); expected 51."
 
       - name: Self-review (0 API calls)
         env:
-          AGENTROUTER_NEW_API_KEY: ${{ secrets.AGENTROUTER_NEW_API_KEY }}
+          AGENT_ROUTER: ${{ secrets.AGENT_ROUTER }}
         run: |
           python judging/judge_deepseek.py \
             --model gpt_ar --run_tag "${{ inputs.run_tag }}" --review_only
@@ -101,7 +102,7 @@ jobs:
       - name: Probe (4 calls, throwaway tag)
         if: inputs.mode == 'probe'
         env:
-          AGENTROUTER_NEW_API_KEY: ${{ secrets.AGENTROUTER_NEW_API_KEY }}
+          AGENT_ROUTER: ${{ secrets.AGENT_ROUTER }}
         run: |
           python judging/judge_deepseek.py \
             --model gpt_ar --run_tag CI_PROBE --limit 2
@@ -110,7 +111,7 @@ jobs:
       - name: Full panel
         if: inputs.mode == 'full'
         env:
-          AGENTROUTER_NEW_API_KEY: ${{ secrets.AGENTROUTER_NEW_API_KEY }}
+          AGENT_ROUTER: ${{ secrets.AGENT_ROUTER }}
         run: |
           python judging/judge_deepseek.py \
             --model gpt_ar --run_tag "${{ inputs.run_tag }}"

@@ -30,7 +30,7 @@ from judge_deepseek import _AR_BASE, _AR_HEADERS  # noqa: E402
 
 AR_BASE = _AR_BASE
 AR_HEADERS = _AR_HEADERS
-AR_KEY_ENV = "AGENTROUTER_NEW_API_KEY"
+AR_KEY_ENV = "AGENT_ROUTER"
 
 # One short question that a reasoning model will chew on but a plain one
 # answers immediately. Keeps the completion-token signal legible.

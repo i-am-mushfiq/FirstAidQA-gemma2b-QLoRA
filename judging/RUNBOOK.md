@@ -22,9 +22,9 @@ having spent 14% of the budget.
 
 ```bash
 # Required. Do not commit these.
-export DEEPSEEK_API_KEY=...           # deepseek judge (direct API)
-export OPENROUTER_API_KEY=...         # claude_or only  <-- NOT YET AVAILABLE
-export AGENTROUTER_NEW_API_KEY=...    # gpt_ar and glm_ar
+export DEEPSEEK_API_KEY=...    # deepseek judge (direct API)
+export OPENROUTER_API_KEY=...  # claude_or only  <-- NOT YET AVAILABLE
+export AGENT_ROUTER=...        # gpt_ar and glm_ar (also the CI secret name)
 ```
 
 On this machine the keys live in a gitignored `.env` at the repo root; load them

@@ -159,7 +159,7 @@ MODEL_CONFIGS = {
     "gpt_ar": {
         "base_url":    _AR_BASE,
         "model":       "gpt-5.6-sol",
-        "api_key_env": "AGENTROUTER_NEW_API_KEY",
+        "api_key_env": "AGENT_ROUTER",
         "json_mode":   True,
         # Panel policy: no judge reasons. Verified accepted 2026-09-06;
         # "minimal" is rejected by this model, "none" and "low" are accepted.
@@ -186,7 +186,7 @@ MODEL_CONFIGS = {
     "glm_ar": {
         "base_url":    _AR_BASE,
         "model":       "glm-5.3",
-        "api_key_env": "AGENTROUTER_NEW_API_KEY",
+        "api_key_env": "AGENT_ROUTER",
         "json_mode":   True,
         "extra_body":  {"reasoning_effort": "low"},
         # With reasoning_effort=low the earlier 558-1,784 token bursts are gone:
@@ -205,7 +205,7 @@ MODEL_CONFIGS = {
     "claude_ar": {
         "base_url":    _AR_BASE,
         "model":       "claude-opus-5",
-        "api_key_env": "AGENTROUTER_NEW_API_KEY",
+        "api_key_env": "AGENT_ROUTER",
         "json_mode":   True,
         "extra_body":  None,
         "strict_model_match": True,
@@ -214,7 +214,7 @@ MODEL_CONFIGS = {
     "claude_ar_48": {
         "base_url":    _AR_BASE,
         "model":       "claude-opus-4-8",
-        "api_key_env": "AGENTROUTER_NEW_API_KEY",
+        "api_key_env": "AGENT_ROUTER",
         "json_mode":   True,
         "extra_body":  None,
         "strict_model_match": True,

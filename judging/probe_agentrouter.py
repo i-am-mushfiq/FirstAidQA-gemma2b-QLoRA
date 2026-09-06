@@ -10,7 +10,7 @@ judging lane: touches no items, no cache, no results.
 
     python judging/probe_agentrouter.py
 
-Requires AGENTROUTER_NEW_API_KEY in the environment. The User-Agent below is
+Requires AGENT_ROUTER in the environment. The User-Agent below is
 required: the gateway rejects unrecognised clients with 401 "unauthorized
 client detected" (see the _AR_HEADERS note in judge_deepseek.py).
 """
@@ -28,7 +28,7 @@ from judge_deepseek import _AR_BASE, _AR_HEADERS  # noqa: E402
 
 BASE_URL = _AR_BASE
 HEADERS = _AR_HEADERS
-KEY_ENV = "AGENTROUTER_NEW_API_KEY"
+KEY_ENV = "AGENT_ROUTER"
 
 
 def main() -> int:
