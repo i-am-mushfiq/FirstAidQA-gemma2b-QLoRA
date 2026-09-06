@@ -621,6 +621,25 @@ def call_api_sync(
             if use_json_fmt:
                 create_kwargs["response_format"] = {"type": "json_object"}
             response = client.chat.completions.create(**create_kwargs)
+
+            # The SDK returns the raw body as a str instead of a parsed
+            # completion when the response is not JSON -- an HTML block page,
+            # a captcha interstitial, or a proxy error served with HTTP 200.
+            # Without this check that surfaces 200 lines later as
+            # "'str' object has no attribute 'choices'", which says nothing
+            # about the cause. Seen 2026-09-06 on a GitHub Actions runner while
+            # the identical call succeeded from a residential IP, i.e. the
+            # gateway blocking a datacenter range rather than any fault here.
+            if not hasattr(response, "choices"):
+                body = response if isinstance(response, str) else repr(response)
+                raise RuntimeError(
+                    f"Provider returned a non-JSON body ({type(response).__name__}, "
+                    f"{len(body)} chars) instead of a chat completion. This is "
+                    f"usually an HTML block page or captcha from the gateway or a "
+                    f"proxy in front of it, not a model error. First 300 chars:\n"
+                    f"{body[:300]}"
+                )
+
             # Some models (e.g. Gemini via OpenRouter) return None in the
             # content field when json_object mode is active or thinking is on.
             # Fall back to reasoning_content, then empty string.

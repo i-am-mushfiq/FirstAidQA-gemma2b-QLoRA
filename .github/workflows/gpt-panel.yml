@@ -61,8 +61,11 @@ jobs:
         with:
           python-version: "3.11"
 
+      # Pinned to the version the panel was validated against locally. An
+      # unpinned install makes CI and local behaviour diverge silently, which is
+      # one more variable to rule out when a run fails only in CI.
       - name: Install judging dependencies
-        run: python -m pip install --quiet openai
+        run: python -m pip install --quiet "openai==3.8.0"
 
       # Fail here, with a diagnosis, rather than 20 lines into a judging run.
       # GitHub masks secret VALUES in logs but not their length, so reporting
@@ -91,6 +94,35 @@ jobs:
             exit 1
           fi
           echo "Secret is present (length ${#AGENT_ROUTER}); expected 51."
+
+      # Raw reachability check, no SDK in the way. A GitHub runner sits in an
+      # Azure datacenter range, and AgentRouter already refuses clients it does
+      # not recognise. If it also blocks datacenter IPs the block arrives as an
+      # HTML page or a captcha, often with HTTP 200, which the SDK then hands
+      # back as a plain string. Printing the status and the first bytes of the
+      # body distinguishes "blocked" from "our bug" in one step.
+      - name: Gateway reachability from this runner
+        if: inputs.mode == 'probe'
+        env:
+          AGENT_ROUTER: ${{ secrets.AGENT_ROUTER }}
+        run: |
+          code=$(curl -sS -o /tmp/ar_body -w '%{http_code}' \
+            -H "Authorization: Bearer ${AGENT_ROUTER}" \
+            -H "User-Agent: claude-cli/1.0.0 (external, cli)" \
+            https://agentrouter.org/v1/models) || true
+          echo "HTTP status: ${code}"
+          echo "Content-Type: $(file -b --mime-type /tmp/ar_body)"
+          echo "--- first 300 bytes of body ---"
+          head -c 300 /tmp/ar_body; echo
+          echo "-------------------------------"
+          if ! head -c 1 /tmp/ar_body | grep -q '{'; then
+            echo "::error::Body is not JSON. The gateway is not serving this"
+            echo "runner's IP normally - almost certainly a datacenter-range"
+            echo "block. Run the panel from a residential IP instead; CI cannot"
+            echo "reach this provider."
+            exit 1
+          fi
+          echo "Gateway returns JSON to this runner."
 
       - name: Self-review (0 API calls)
         env:
