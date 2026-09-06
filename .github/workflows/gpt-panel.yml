@@ -1,5 +1,17 @@
-# Run the gpt_ar judging panel on a GitHub-hosted runner, so the panel survives
-# the laptop being closed.
+# Run a judging panel on a GitHub-hosted runner, so a long panel survives the
+# laptop being closed.
+#
+# !! DOES NOT WORK FOR AGENTROUTER (gpt_ar, glm_ar). Measured 2026-09-06:
+# !! agentrouter.org sits behind Alibaba Cloud WAF, which serves a JavaScript
+# !! bot-challenge to GitHub runner IPs -- HTTP 200, Content-Type text/html,
+# !! body carrying aliyun_waf_aa / aliyun_waf_bb meta tags. No API response is
+# !! returned at all. A runner has no browser and cannot solve a JS challenge,
+# !! and defeating a WAF bot-control is not something this project will do.
+# !!
+# !! The same calls succeed from a residential IP, so AgentRouter panels must be
+# !! run locally. Keep this workflow for judges reached over providers that do
+# !! not challenge datacenter ranges -- claude_or via OpenRouter is the expected
+# !! use once that key exists. Change --model accordingly.
 #
 # Manual trigger only (workflow_dispatch). Never add pull_request or push
 # triggers: this workflow needs the API key secret, and a fork-originated
@@ -115,6 +127,13 @@ jobs:
           echo "--- first 300 bytes of body ---"
           head -c 300 /tmp/ar_body; echo
           echo "-------------------------------"
+          if grep -qi 'aliyun_waf' /tmp/ar_body; then
+            echo "::error::Alibaba Cloud WAF JavaScript challenge. This is the"
+            echo "known, confirmed block (2026-09-06): agentrouter.org does not"
+            echo "serve its API to GitHub runner IPs. Nothing to fix here - run"
+            echo "AgentRouter panels from a residential IP."
+            exit 1
+          fi
           if ! head -c 1 /tmp/ar_body | grep -q '{'; then
             echo "::error::Body is not JSON. The gateway is not serving this"
             echo "runner's IP normally - almost certainly a datacenter-range"
