@@ -825,9 +825,20 @@ def run_judging(
             # Rewrite without them. Re-judging appends a fresh row for the same
             # key, so leaving the INVALID row in place would put two rows with
             # one key in the file and hand aggregate.py an ambiguous read.
-            with open(out_path, "w", encoding="utf-8") as f:
+            #
+            # Written to a sibling temp file and swapped in with os.replace,
+            # which is atomic on both POSIX and Windows. Truncating the real
+            # file with open(..., "w") and streaming rows back into it would
+            # put every judgment already paid for at risk for the duration of
+            # the write: a Ctrl+C there leaves the file truncated. Every other
+            # write in this run is a single append for exactly that reason.
+            tmp_path = out_path.with_suffix(".jsonl.tmp")
+            with open(tmp_path, "w", encoding="utf-8") as f:
                 for j in judgments:
                     f.write(json.dumps(j, ensure_ascii=False) + "\n")
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(tmp_path, out_path)
             print(f"  Dropped {n_dropped} INVALID row(s) for retry")
         print(f"  Resuming: {len(judgments)} existing judgments found")
 
