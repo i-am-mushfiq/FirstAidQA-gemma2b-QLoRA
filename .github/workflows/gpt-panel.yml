@@ -64,6 +64,33 @@ jobs:
       - name: Install judging dependencies
         run: python -m pip install --quiet openai
 
+      # Fail here, with a diagnosis, rather than 20 lines into a judging run.
+      # GitHub masks secret VALUES in logs but not their length, so reporting
+      # the length is safe and distinguishes "absent" from "present but empty"
+      # from "present but truncated on paste".
+      - name: Check the API key secret is reachable
+        env:
+          AGENTROUTER_NEW_API_KEY: ${{ secrets.AGENTROUTER_NEW_API_KEY }}
+        run: |
+          if [ -z "${AGENTROUTER_NEW_API_KEY}" ]; then
+            echo "::error::secrets.AGENTROUTER_NEW_API_KEY is empty or not set."
+            echo ""
+            echo "The workflow reads it as: secrets.AGENTROUTER_NEW_API_KEY"
+            echo "Check, in order:"
+            echo "  1. NAME must match exactly, including AGENTROUTER_NEW_API_KEY"
+            echo "     (note NEW_) and be all upper case. A secret named"
+            echo "     AGENTROUTER_API_KEY will not be found."
+            echo "  2. It must be a REPOSITORY secret:"
+            echo "     Settings > Secrets and variables > Actions > Secrets tab."
+            echo "     A value added under the Variables tab is not a secret and"
+            echo "     is not readable via secrets.*"
+            echo "  3. If it was added as an ENVIRONMENT secret, this job must"
+            echo "     declare that environment; it currently declares none."
+            echo "  4. It must be on THIS repository, not a fork or another repo."
+            exit 1
+          fi
+          echo "Secret is present (length ${#AGENTROUTER_NEW_API_KEY}); expected 51."
+
       - name: Self-review (0 API calls)
         env:
           AGENTROUTER_NEW_API_KEY: ${{ secrets.AGENTROUTER_NEW_API_KEY }}
