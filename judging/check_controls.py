@@ -126,11 +126,15 @@ def main() -> int:
 
     models = JUDGES if args.all or not args.model else [args.model]
     print(f"\nControls gate — run_tag={args.run_tag}\n" + "=" * 60)
-    all_ok, any_rows = True, False
+    # A judge with no judgments and a judge whose controls are out of range are
+    # different conditions and must not print the same verdict. Conflating them
+    # reported an absent judge as a reference-bank failure and told the reader to
+    # "restore steps to the bank" when nothing was wrong with it.
+    controls_failed, any_rows, missing = False, False, []
     for model in models:
         passed, total, failures = check(model, args.run_tag)
         if total == 0:
-            all_ok = False
+            missing.append(model)
             continue
         any_rows = True
         verdict = "PASS" if passed == total else "FAIL"
@@ -138,20 +142,29 @@ def main() -> int:
         for f in failures:
             print(f"               - {f}")
         if passed != total:
-            all_ok = False
+            controls_failed = True
 
     print("=" * 60)
     if not any_rows:
         print("GATE: no judgments found. Run judge_deepseek.py --controls_only first.")
         return 1
-    if all_ok:
-        print("GATE PASSED — every control inside its expected range.")
-        print("Safe to spend the full panel.")
-        return 0
-    print("GATE FAILED — do NOT spend the full panel until this is understood.")
-    print("A CTRL_REF below 4 means the compressed references no longer read as")
-    print("complete answers; restore steps before judging the rest.")
-    return 1
+    if controls_failed:
+        print("GATE FAILED — do NOT spend the full panel until this is understood.")
+        print("A CTRL_REF below 4 means the compressed references no longer read as")
+        print("complete answers; restore steps before judging the rest.")
+        return 1
+    if missing:
+        print("GATE INCOMPLETE — every judge with judgments passed, but these have "
+              "none:")
+        for m in missing:
+            print(f"  - {m}")
+        print("The controls are sound; the panel is not yet complete. Spending the")
+        print("full panel on the judges that passed is safe. A contrast cannot be")
+        print("confirmed until every panel judge in PRECOMMIT.md has reported.")
+        return 2
+    print("GATE PASSED — every control inside its expected range.")
+    print("Safe to spend the full panel.")
+    return 0
 
 
 if __name__ == "__main__":

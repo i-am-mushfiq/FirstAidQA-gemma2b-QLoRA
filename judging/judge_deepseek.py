@@ -267,6 +267,15 @@ def init_model(model_name: str) -> None:
 # ── Constants ─────────────────────────────────────────────────────────────────
 MAX_CONCURRENCY  = 2   # reduced from 4; Windows IOCP hangs with high concurrency
 MAX_RETRIES      = 3
+
+#: Per-request wall-clock bound, seconds. Set above the slowest response ever
+#: observed to return valid JSON -- a 143.0s gpt_ar call in AR_PROBE -- so a
+#: legitimate slow answer is not thrown away and re-paid for, and far below the
+#: 3757s hang that motivated the bound at all (see make_client).
+REQUEST_TIMEOUT_S = 180.0
+#: SDK-level transport retries, distinct from MAX_RETRIES above (which re-prompts
+#: on invalid JSON). Worst case per call is REQUEST_TIMEOUT_S * (1 + this).
+SDK_MAX_RETRIES  = 2
 MAX_TOKENS       = 400
 TEMPERATURE      = 0
 BACKOFF_BASE     = 2.0   # seconds; doubled on each 429/5xx retry
@@ -552,6 +561,21 @@ def _is_retryable(exc: Exception) -> bool:
     SDK errors render as "Error code: 503 - ...", so inspecting the first few
     characters never sees the status digits.
     """
+    # Timeouts and dropped connections are transient and MUST be retryable.
+    # They carry no status_code and their messages ("Request timed out") match
+    # no status pattern, so without this they fell through to `raise` and killed
+    # the whole run -- the same path a terminal 402 takes. That distinction
+    # matters: a 402 should stop the run, a timeout should be retried. Added
+    # 2026-09-06 after a gpt_ar call hung for 3757s.
+    try:
+        from openai import APIConnectionError, APITimeoutError
+        if isinstance(exc, (APITimeoutError, APIConnectionError)):
+            return True
+    except ImportError:
+        pass
+    if isinstance(exc, TimeoutError):
+        return True
+
     status = getattr(exc, "status_code", None)
     if isinstance(status, int):
         return status == 429 or 500 <= status < 600
@@ -848,7 +872,24 @@ def run_judging(
 
     # One sync OpenAI client per thread (thread-safe: each thread owns its client)
     def make_client():
-        kwargs = dict(api_key=api_key, base_url=cfg["base_url"])
+        # An explicit per-request timeout is required, not optional. With the
+        # SDK left on its defaults a single gpt_ar call hung for 3757s on
+        # 2026-09-06, blocking both concurrency slots for 62 minutes and
+        # completing 13 of 574 calls in an hour. Nothing in the run reported an
+        # error -- it simply stopped, then resumed at full speed.
+        #
+        # REQUEST_TIMEOUT_S bounds one attempt; the SDK retries it up to
+        # SDK_MAX_RETRIES times, so the worst case per call is bounded at
+        # roughly REQUEST_TIMEOUT_S * (1 + SDK_MAX_RETRIES). A judging call that
+        # has not returned inside the timeout is not going to return anything
+        # useful; failing it and letting the resume path retry is strictly
+        # better than blocking the pool.
+        kwargs = dict(
+            api_key=api_key,
+            base_url=cfg["base_url"],
+            timeout=REQUEST_TIMEOUT_S,
+            max_retries=SDK_MAX_RETRIES,
+        )
         if cfg.get("default_headers"):
             kwargs["default_headers"] = cfg["default_headers"]
         return OpenAI(**kwargs)
