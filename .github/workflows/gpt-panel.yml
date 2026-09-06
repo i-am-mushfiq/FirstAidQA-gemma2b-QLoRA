@@ -1,0 +1,131 @@
+# Run the gpt_ar judging panel on a GitHub-hosted runner, so the panel survives
+# the laptop being closed.
+#
+# Manual trigger only (workflow_dispatch). Never add pull_request or push
+# triggers: this workflow needs the API key secret, and a fork-originated
+# trigger must never be able to reach it.
+#
+# Two modes:
+#   probe  - 4 calls, throwaway run_tag, commits nothing. Run this FIRST. It
+#            answers the one open question: whether AgentRouter accepts requests
+#            from a GitHub runner IP at all. The gateway already refuses clients
+#            it does not recognise ("unauthorized client detected"), and
+#            free-credit gateways commonly block datacenter ranges. Finding out
+#            costs 4 calls here instead of a failed 574-call job.
+#   full   - resumes OFFLINE_FINAL and judges whatever is missing, then commits
+#            the results back to the branch.
+#
+# Resume safety: judgments.jsonl is appended per call and the on-disk cache is
+# keyed on the rendered prompt plus decode settings, so re-running never
+# re-pays for work already committed. A cancelled or timed-out job loses at
+# most the calls in flight.
+#
+# IMPORTANT: do not run this while a local run against the same run_tag is in
+# progress. Both would append to their own copy of judgments.jsonl and the
+# commit-back would either conflict or drop rows.
+
+name: gpt_ar judging panel
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "probe (4 calls, no commit) or full (resume OFFLINE_FINAL)"
+        required: true
+        default: probe
+        type: choice
+        options: [probe, full]
+      run_tag:
+        description: "run_tag for full mode"
+        required: false
+        default: OFFLINE_FINAL
+        type: string
+
+# One at a time. Two concurrent jobs would race on judgments.jsonl.
+concurrency:
+  group: gpt-ar-panel
+  cancel-in-progress: false
+
+jobs:
+  judge:
+    runs-on: ubuntu-latest
+    # Comfortably over the ~80 min the panel takes locally, under the 6h cap.
+    timeout-minutes: 300
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install judging dependencies
+        run: python -m pip install --quiet openai
+
+      - name: Self-review (0 API calls)
+        env:
+          AGENTROUTER_NEW_API_KEY: ${{ secrets.AGENTROUTER_NEW_API_KEY }}
+        run: |
+          python judging/judge_deepseek.py \
+            --model gpt_ar --run_tag "${{ inputs.run_tag }}" --review_only
+
+      - name: Probe (4 calls, throwaway tag)
+        if: inputs.mode == 'probe'
+        env:
+          AGENTROUTER_NEW_API_KEY: ${{ secrets.AGENTROUTER_NEW_API_KEY }}
+        run: |
+          python judging/judge_deepseek.py \
+            --model gpt_ar --run_tag CI_PROBE --limit 2
+          echo "Probe succeeded: AgentRouter accepts GitHub runner IPs."
+
+      - name: Full panel
+        if: inputs.mode == 'full'
+        env:
+          AGENTROUTER_NEW_API_KEY: ${{ secrets.AGENTROUTER_NEW_API_KEY }}
+        run: |
+          python judging/judge_deepseek.py \
+            --model gpt_ar --run_tag "${{ inputs.run_tag }}"
+
+      - name: Controls gate
+        if: inputs.mode == 'full'
+        # Exit 2 means "incomplete panel" (a judge has no data), which is the
+        # expected state while claude_or has no key. Only exit 1 is a real
+        # control failure.
+        run: |
+          python judging/check_controls.py \
+            --model gpt_ar --run_tag "${{ inputs.run_tag }}" || rc=$?
+          if [ "${rc:-0}" = "1" ]; then exit 1; fi
+
+      - name: Aggregate
+        if: inputs.mode == 'full'
+        run: |
+          python judging/aggregate.py \
+            --model gpt_ar --run_tag "${{ inputs.run_tag }}"
+
+      - name: Commit results
+        if: inputs.mode == 'full'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "judging/results/gpt_ar/${{ inputs.run_tag }}"
+          if git diff --cached --quiet; then
+            echo "No new results to commit."
+            exit 0
+          fi
+          git commit -m "gpt_ar panel results for ${{ inputs.run_tag }} (CI run ${{ github.run_id }})"
+          # Rebase in case anything landed on the branch while the panel ran.
+          git pull --rebase origin "${{ github.ref_name }}"
+          git push origin "HEAD:${{ github.ref_name }}"
+
+      - name: Upload judgments as an artifact
+        if: always() && inputs.mode == 'full'
+        uses: actions/upload-artifact@v4
+        with:
+          name: gpt-ar-judgments
+          # Kept even when a later step fails, so a partial panel is recoverable
+          # from the artifact if the commit step could not run.
+          path: judging/results/gpt_ar/
+          if-no-files-found: warn
+          retention-days: 14
