@@ -15,6 +15,15 @@ datasets>=2.21.0
 accelerate>=0.34.0
 trl>=0.9.0
 
+# Judging / evaluation lane.
+# These were undocumented until 2026-09-06 — judging/judge_deepseek.py imports
+# openai at module scope, so a fresh checkout aborts before its own --review_only
+# self-check can run. scipy and rouge-score are used by the scoring lane.
+openai>=1.40.0
+scipy>=1.11.0
+rouge-score>=0.1.2
+rank_bm25>=0.2.2
+
 # Optional — logging / monitoring
 # wandb
 # tensorboard

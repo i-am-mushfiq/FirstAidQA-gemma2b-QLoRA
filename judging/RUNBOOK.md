@@ -3,7 +3,15 @@
 **Written:** 2026-09-06
 **For run:** `evaluations/CAMERA_READY_OFFLINE_20260905_204533` (verified)
 **Item set:** 287 real (7 configs × 41) + 45 planted controls = 332 items
-**Panel:** `deepseek` (v4-pro), `claude_or`, `gpt` — 664 calls each, 1,992 total
+**Panel:** `deepseek` (v4-pro), `claude_or`, `gpt_ar` — 664 calls each, 1,992 total
+**Optional fourth:** `glm_ar` — good-to-have robustness check, does not gate the
+3-of-3 rule. Add 664 calls if run.
+
+> **Amended 2026-09-06 — routes changed.** `gpt` was renamed `gpt_ar` and moved
+> from OpenRouter to AgentRouter (no OpenRouter credit). `results/gpt/` still
+> holds the July OpenRouter panel and must not be written into. Every judge now
+> runs with reasoning disabled; `glm_ar` is the exception and cannot go below a
+> 5-token floor. See the disclosure notes in `judge_deepseek.MODEL_CONFIGS`.
 
 Four stages, cheapest first, each gating the next. You can abandon after stage 2
 having spent 14% of the budget.
@@ -14,9 +22,19 @@ having spent 14% of the budget.
 
 ```bash
 # Required. Do not commit these.
-export DEEPSEEK_API_KEY=...        # deepseek judge (direct API)
-export OPENROUTER_API_KEY=...      # claude_or and gpt (both routed via OpenRouter)
+export DEEPSEEK_API_KEY=...           # deepseek judge (direct API)
+export OPENROUTER_API_KEY=...         # claude_or only  <-- NOT YET AVAILABLE
+export AGENTROUTER_NEW_API_KEY=...    # gpt_ar and glm_ar
 ```
+
+On this machine the keys live in a gitignored `.env` at the repo root; load them
+with `set -a; . ./.env; set +a` before any command below.
+
+**Blocker:** there is no `OPENROUTER_API_KEY`, so `claude_or` cannot run and the
+panel is two judges. AgentRouter cannot substitute — its Anthropic budget pool
+returns 402 for both Claude models (verified with two separate keys). The 3-of-3
+rule needs all three; do not start stage 2 expecting a complete panel until this
+is resolved.
 
 The item set must already be built against the verified run:
 
@@ -42,7 +60,7 @@ panel and is refused (see Guards).
 ```bash
 python judging/judge_deepseek.py --model deepseek  --run_tag OFFLINE_FINAL --review_only
 python judging/judge_deepseek.py --model claude_or --run_tag OFFLINE_FINAL --review_only
-python judging/judge_deepseek.py --model gpt       --run_tag OFFLINE_FINAL --review_only
+python judging/judge_deepseek.py --model gpt_ar    --run_tag OFFLINE_FINAL --review_only
 ```
 
 Confirms API keys are visible, `items.jsonl` was built against the bank on disk,
@@ -57,7 +75,7 @@ templates are frozen, config names are absent from the prompts, temperature is 0
 ```bash
 python judging/judge_deepseek.py --model deepseek  --run_tag OFFLINE_PROBE --limit 2
 python judging/judge_deepseek.py --model claude_or --run_tag OFFLINE_PROBE --limit 2
-python judging/judge_deepseek.py --model gpt       --run_tag OFFLINE_PROBE --limit 2
+python judging/judge_deepseek.py --model gpt_ar    --run_tag OFFLINE_PROBE --limit 2
 ```
 
 A throwaway tag, so probe rows never land in the real judgments file.
@@ -75,7 +93,7 @@ than after 582 calls.
 ```bash
 python judging/judge_deepseek.py --model deepseek  --run_tag OFFLINE_FINAL --controls_only
 python judging/judge_deepseek.py --model claude_or --run_tag OFFLINE_FINAL --controls_only
-python judging/judge_deepseek.py --model gpt       --run_tag OFFLINE_FINAL --controls_only
+python judging/judge_deepseek.py --model gpt_ar    --run_tag OFFLINE_FINAL --controls_only
 
 python judging/check_controls.py --all --run_tag OFFLINE_FINAL
 ```
@@ -88,7 +106,7 @@ prints pass/fail per judge against `controls_key.json`.
 ```
   deepseek    45/45  PASS
   claude_or   45/45  PASS
-  gpt         45/45  PASS
+  gpt_ar      45/45  PASS
 GATE PASSED — every control inside its expected range.
 ```
 
@@ -116,7 +134,7 @@ already judged and skips them, so you pay 574 rather than 664 per judge.
 ```bash
 python judging/judge_deepseek.py --model deepseek  --run_tag OFFLINE_FINAL
 python judging/judge_deepseek.py --model claude_or --run_tag OFFLINE_FINAL
-python judging/judge_deepseek.py --model gpt       --run_tag OFFLINE_FINAL
+python judging/judge_deepseek.py --model gpt_ar    --run_tag OFFLINE_FINAL
 ```
 
 Then aggregate each judge separately:
@@ -124,7 +142,7 @@ Then aggregate each judge separately:
 ```bash
 python judging/aggregate.py --model deepseek  --run_tag OFFLINE_FINAL
 python judging/aggregate.py --model claude_or --run_tag OFFLINE_FINAL
-python judging/aggregate.py --model gpt       --run_tag OFFLINE_FINAL
+python judging/aggregate.py --model gpt_ar    --run_tag OFFLINE_FINAL
 ```
 
 Outputs land in `judging/results/<model>/OFFLINE_FINAL/`:
@@ -165,6 +183,8 @@ Each was verified by execution, not by reading the code.
 | Bank alignment | Building items from a run whose embedded references differ from the live bank | `assemble_items.py` |
 | Items freshness | Judging an `items.jsonl` built against a different bank | `judge_deepseek.py`, also in `--review_only` |
 | Resume collision | Re-running into a `run_tag` that holds a different evaluation | `judge_deepseek.py` |
+| Decode drift | Serving a cached judgment produced under different reasoning / `max_tokens` settings. Added 2026-09-06 after 12 such entries were created during provider probing | `judge_deepseek.cache_key` via `decode_fingerprint` |
+| INVALID retry | A failed judgment being skipped forever on resume, so a partly-failed panel could not be repaired in place. Added 2026-09-06 | `judge_deepseek.py` resume block |
 | Model substitution | A provider serving a different tier than requested | `judge_deepseek.py` (aborts), `aggregate.py` (discloses) |
 
 ### Reading a refusal

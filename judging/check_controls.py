@@ -33,7 +33,17 @@ REPO_ROOT      = Path(__file__).resolve().parent.parent
 JUDGING_DIR    = REPO_ROOT / "judging"
 CONTROLS_KEY   = JUDGING_DIR / "controls_key.json"
 BLIND_MAP_PATH = JUDGING_DIR / "blind_map.json"
-JUDGES         = ["deepseek", "claude_or", "gpt"]
+# Canonical panel, 2026-09-06: deepseek direct, claude via OpenRouter, gpt via
+# AgentRouter. "gpt" was renamed to "gpt_ar" when its route moved, so that
+# results/gpt/ (the July OpenRouter panel) and the AgentRouter results stay in
+# separate namespaces.
+#
+# glm_ar is the FOURTH judge and is deliberately not in this list: it is a
+# good-to-have robustness check, it does not gate the 3-of-3 rule, and it is the
+# one judge that cannot fully satisfy the no-reasoning policy (5-token floor).
+# Pass --model glm_ar to check its controls explicitly.
+JUDGES         = ["deepseek", "claude_or", "gpt_ar"]
+OPTIONAL_JUDGES = ["glm_ar"]
 
 
 def load_rows(model: str, run_tag: str) -> tuple[list, dict]:
@@ -96,9 +106,21 @@ def check(model: str, run_tag: str) -> tuple[int, int, list]:
 
 
 def main() -> int:
+    # This is the stage-2 gate: its output is the decision. The banner and the
+    # failure messages contain characters outside cp1252 (the Windows console
+    # default), and every other script in this lane already guards against it.
+    # Without this the gate result can be mangled, or a print inside a failure
+    # path can raise and lose the verdict entirely.
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
+
     p = argparse.ArgumentParser(description="Controls gate — reads judgments, spends nothing")
-    p.add_argument("--model", default=None, choices=JUDGES)
-    p.add_argument("--all", action="store_true", help="check all three panel judges")
+    p.add_argument("--model", default=None, choices=JUDGES + OPTIONAL_JUDGES)
+    p.add_argument("--all", action="store_true",
+                   help="check the three panel judges (not the optional fourth)")
     p.add_argument("--run_tag", required=True)
     args = p.parse_args()
 

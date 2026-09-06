@@ -220,6 +220,42 @@ scorers "canonical implementation".
 
 ---
 
+## 2026-09-06 — judging routes, reasoning policy, and the GLM question
+
+Recorded **before any offline-run judgments exist**. Full detail in
+`judging/PRECOMMIT.md`; this is the decision log entry.
+
+**Decided.** The gpt judge moves to AgentRouter and is renamed `gpt_ar` (no
+OpenRouter credit). Claude stays on OpenRouter and remains required — AgentRouter
+returns 402 for both Claude models on an exhausted Anthropic pool, verified with
+two keys. DeepSeek stays on its direct API. Reasoning is disabled for every
+judge; `glm_ar` is the one exception and cannot go below 0–44 residual tokens,
+which is declared as a deviation.
+
+**Still open — whether GLM-5.3 appears in the paper.** Two acceptable resolutions,
+and the *rule* is fixed now even though the verdict is not:
+
+1. **Reported as exploratory.** `glm_ar` is registered in `PRECOMMIT.md` as an
+   exploratory fourth judge, so it is reported whichever way it falls. It never
+   gates the 3-of-3 rule.
+2. **Internal QA only, never reported.** Acceptable *only* as a blanket
+   commitment made in advance and honoured regardless of outcome. Choosing after
+   reading `stats.csv` would make inclusion outcome-dependent, which is the exact
+   failure pre-registration exists to prevent.
+
+If (2) is chosen, note that judging artifacts are tracked in git and pushed to a
+public remote: a `judging/results/glm_ar/` directory in history, with a
+`manifest.json` stamping model, route, timestamp and commit, is visible to anyone
+reading the repo beside the paper. An unreported run is therefore not an invisible
+one, and the honest form of (2) is a dated line here saying it was run as QA —
+not an omission.
+
+**The line that must not be crossed either way:** if GLM contradicts a
+confirmatory result, silence is no longer non-reporting, it is suppression of
+disconfirming evidence about a published claim.
+
+---
+
 ## Deferred — not yet decided
 
 | Question | Blocks |

@@ -42,6 +42,92 @@ of this amendment. Contrasts 1–7 are unchanged from the 2026-07-10 registratio
 
 ---
 
+## Panel composition
+
+**Registered 2026-07-10, amended 2026-09-06 (below). No judgments exist for the
+offline run at the time of this amendment.**
+
+| Role | Judge name | Model | Route |
+|------|-----------|-------|-------|
+| Confirmatory | `deepseek` | `deepseek-v4-pro` | DeepSeek direct API |
+| Confirmatory | `claude_or` | `anthropic/claude-opus-4.8` | OpenRouter |
+| Confirmatory | `gpt_ar` | `gpt-5.6-sol` | AgentRouter |
+| Exploratory | `glm_ar` | `glm-5.3` | AgentRouter |
+
+A contrast is **confirmed** only when all three confirmatory judges agree in
+direction and each is independently significant by the rule above. Judges
+disagreeing on sign makes a contrast *inconclusive*, not null.
+
+`glm_ar` is a fourth, exploratory judge. It **does not gate the 3-of-3 rule**
+and no conclusion about the system rests on it, whichever way it falls.
+
+---
+
+## Amendment, 2026-09-06 — routes, reasoning policy, fourth judge
+
+Registered **before any offline-run judgments exist**. Contrasts 1–8 are
+unchanged; this amendment concerns only how the judges are reached and
+configured.
+
+**1. The gpt judge moved from OpenRouter to AgentRouter, and was renamed.**
+No OpenRouter credit was available. The model is the same (`gpt-5.6-sol`); the
+route is not. It was renamed `gpt` → `gpt_ar` because `judging/results/<judge>/`
+is the results namespace and `results/gpt/` already holds the July OpenRouter
+panel — the resume guard compares template and bank hashes but not model or
+base URL, so one directory serving two routes could be welded together by a
+resume that no guard can detect.
+
+Two properties of AgentRouter must be disclosed in the write-up:
+
+- **Client allowlist.** The gateway rejects unrecognised clients with 401
+  "unauthorized client detected". The harness sends a coding-agent User-Agent so
+  its requests are accepted. This is a deliberate workaround of the provider's
+  access control, adopted knowingly under a budget constraint.
+- **Judge identity is asserted, not verified.** Every model is reported as
+  `owned_by: "custom"`; AgentRouter is a reseller, so the served model cannot be
+  attributed to a first-party snapshot, and a reseller may echo back any string.
+  These routes therefore require an exact model-string match rather than the
+  token-subset test. Cf. finding #38 and the July `deepseek-v4-flash`
+  substitution. AgentRouter's own catalogue lists `deepseek-v4-flash`, not
+  `-pro`, which is why the deepseek judge stays on the direct API.
+
+**2. Claude stays on OpenRouter and remains required.** AgentRouter cannot serve
+it — its Anthropic budget pool returns 402 for both `claude-opus-5` and
+`claude-opus-4-8`, verified with two separate keys. The panel is incomplete
+until an OpenRouter key exists; a two-judge panel confirms nothing under the
+3-of-3 rule.
+
+**3. Reasoning is disabled for every judge.** Judges that reason spend tokens on
+hidden deliberation the rubric never sees, and the setting is not recoverable
+from the saved output, so it is fixed here and recorded per run in
+`manifest.json` (`extra_body` plus a `decode_fingerprint`).
+
+| Judge | Setting | Measured effect |
+|---|---|---|
+| `deepseek` | `thinking: {type: disabled}` | already in force |
+| `claude_or` | `reasoning: {exclude: true}` | **not yet verified** — no key |
+| `gpt_ar` | `reasoning_effort: "none"` | completion tokens roughly halved (163→81, 192→111), confirming it had been reasoning |
+| `glm_ar` | `reasoning_effort: "low"` | see deviation below |
+
+**Declared deviation — `glm_ar` cannot be made non-reasoning.** GLM-5.3 rejects
+both `thinking: {type: disabled}` and `reasoning_effort: "none"` with HTTP 400
+("this model always thinks"). `reasoning_effort: "low"` is the minimum it
+accepts. Measured on real judging prompts it leaves a variable residue of
+**0–44 reasoning tokens** (4 calls: 0, 16, 35, 44). This is one further reason
+`glm_ar` is exploratory rather than confirmatory, and it must be stated in the
+paper.
+
+**4. `glm_ar` registered as an exploratory fourth judge.** Chosen for family
+independence — Zhipu, unrelated to the subject (Gemma), to DeepSeek and to
+OpenAI — satisfying the same rule that excluded Gemini from the panel. It is
+**not** a substitute for Claude. Its inclusion is registered here so that
+reporting it is not contingent on what it says; whether it agrees or disagrees
+with the confirmatory three, it is reported as an exploratory robustness check.
+If it is instead run only as internal QA and left unreported, that decision is
+recorded in `DECISIONS.md` and applies regardless of outcome.
+
+---
+
 ## Statistical method
 
 - Paired bootstrap: 10,000 resamples, seed=2026
@@ -56,5 +142,10 @@ of this amendment. Contrasts 1–7 are unchanged from the 2026-07-10 registratio
 - aggregate.py reads contrasts from `load_precommit_contrasts()` which hard-codes these names
   and config strings. To update the contrasts, update both this file and that function,
   commit both together, and re-run only if camera-ready judgments have not yet been inspected.
+  Verified in sync 2026-09-06: all eight contrasts present, D−B included.
+- A contrast whose configs carry no judgments is **skipped silently** by
+  aggregate.py — it does not appear in `stats.csv` and nothing reports it as
+  missing. This is why D−B is absent from every July output. Confirm D−B is
+  present in `stats.csv` for the offline panel rather than assuming it ran.
 - blind_map.json is excluded from released artifacts until after de-anonymization.
 - This file is committed before any aggregate output exists in git history.

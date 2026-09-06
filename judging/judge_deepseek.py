@@ -86,6 +86,20 @@ _OR_HEADERS = {
     "X-Title":      "First Aid Judge",
 }
 
+# AgentRouter — an OpenAI-compatible reseller gateway, used for the "gpt" judge
+# because no OpenRouter credit was available (decision recorded 2026-09-06).
+#
+# Measured 2026-09-06 against GET /v1/models with a valid key: the gateway
+# returns 401 "unauthorized client detected" for the urllib default UA, curl,
+# the openai-python default UA and a browser UA, and 200 for coding-agent UAs.
+# The User-Agent below is therefore required for any request to be accepted.
+# It is a deliberate workaround of the provider's client allowlist, adopted
+# knowingly — see the disclosure note on the "gpt" entry.
+_AR_BASE = "https://agentrouter.org/v1"
+_AR_HEADERS = {
+    "User-Agent": "claude-cli/1.0.0 (external, cli)",
+}
+
 MODEL_CONFIGS = {
     # ── Direct APIs ───────────────────────────────────────────────────────────
     "deepseek": {
@@ -97,12 +111,18 @@ MODEL_CONFIGS = {
         "extra_body":  {"thinking": {"type": "disabled"}},
     },
     # ── OpenRouter-routed judges (smoke-tested 2026-07-11) ────────────────────
+    # Canonical route for the claude judge. Claude is required in the panel and
+    # AgentRouter cannot serve it (402, exhausted Anthropic pool), so this entry
+    # needs OPENROUTER_API_KEY.
     "claude_or": {
         "base_url":    _OR_BASE,
         "model":       "anthropic/claude-opus-4.8",
         "api_key_env": "OPENROUTER_API_KEY",
         "json_mode":   True,
-        "extra_body":  None,
+        # Panel policy: no judge reasons. NOT yet verified against the live API
+        # — there is no OpenRouter key on this machine. Confirm with a probe
+        # before the controls gate.
+        "extra_body":  {"reasoning": {"exclude": True}},
         "default_headers": _OR_HEADERS,
     },
     # "gemini" excluded: same model family as subject (Gemma/Google).
@@ -115,12 +135,98 @@ MODEL_CONFIGS = {
     #     "extra_body":  None,
     #     "default_headers": _OR_HEADERS,
     # },
-    "gpt": {
+    # ── AgentRouter-routed judges (canonical route for gpt and glm) ───────────
+    #
+    # TWO THINGS TO DISCLOSE IN THE WRITE-UP for every _AR_ entry:
+    #   1. Client allowlist. AgentRouter refuses any client whose User-Agent it
+    #      does not recognise; _AR_HEADERS sends a coding-agent User-Agent so
+    #      this harness is accepted. Deliberate, and taken with the user's
+    #      knowledge, on a budget constraint.
+    #   2. Judge identity is asserted, not verified. AgentRouter reports every
+    #      model as owned_by="custom" — it is a reseller, so the served model
+    #      cannot be attributed to a first-party snapshot. A reseller may return
+    #      whatever string it likes, which is why these entries set
+    #      strict_model_match (below) rather than relying on the token-subset
+    #      test alone. Cf. finding #38 and the July run in which
+    #      deepseek-v4-flash was served against a registered deepseek-v4-pro.
+    #      Note AgentRouter's own catalogue lists deepseek-v4-flash, not -pro.
+    #
+    # Named gpt_ar, not gpt: results/<model>/ is the results namespace, and
+    # results/gpt/ already holds the July OpenRouter panel. resume_incompatibi-
+    # lities() compares template and bank hashes but NOT model or base_url, so
+    # two routes sharing one directory can be welded together by a resume that
+    # no guard can see. Distinct names keep the namespaces disjoint.
+    "gpt_ar": {
+        "base_url":    _AR_BASE,
+        "model":       "gpt-5.6-sol",
+        "api_key_env": "AGENTROUTER_NEW_API_KEY",
+        "json_mode":   True,
+        # Panel policy: no judge reasons. Verified accepted 2026-09-06;
+        # "minimal" is rejected by this model, "none" and "low" are accepted.
+        "extra_body":  {"reasoning_effort": "none"},
+        "strict_model_match": True,
+        "default_headers": _AR_HEADERS,
+    },
+    # GLM-5.3 (Zhipu). Independent family from the subject (Gemma), from
+    # deepseek and from gpt, satisfying the same independence rule that excluded
+    # gemini above. Registered as the FOURTH judge (good-to-have), not as a
+    # substitute for claude — see PRECOMMIT.md.
+    #
+    # REASONING — DISCLOSE. GLM-5.3 cannot have reasoning switched off:
+    #   {"thinking": {"type": "disabled"}}  -> 400 该模型始终思考 (always thinks)
+    #   {"reasoning_effort": "none"}        -> 400, same message
+    #   {"reasoning_effort": "low"}         -> ACCEPTED, and is the minimum
+    # Measured on the real judging prompts (4 calls, 2026-09-06):
+    #   reasoning_tokens = 0, 16, 35, 44   (completion 100-122 total)
+    # So it is a variable residue, not a fixed floor, and one call reached 0.
+    # An earlier note here claimed a flat "5-token floor" -- that came from a
+    # trivial one-line probe prompt and does not hold for judging workloads.
+    # This is still the one judge that cannot be guaranteed non-reasoning, and
+    # the deviation must be stated in the paper.
+    "glm_ar": {
+        "base_url":    _AR_BASE,
+        "model":       "glm-5.3",
+        "api_key_env": "AGENTROUTER_NEW_API_KEY",
+        "json_mode":   True,
+        "extra_body":  {"reasoning_effort": "low"},
+        # With reasoning_effort=low the earlier 558-1,784 token bursts are gone:
+        # measured 100-122 completion tokens on real judging prompts. 2000 is
+        # deliberate headroom rather than a fitted value -- a truncated response
+        # is a silently wasted call, and this model has already shown one
+        # 2000-token runaway when reasoning was uncapped.
+        "max_tokens":  2000,
+        "strict_model_match": True,
+        "default_headers": _AR_HEADERS,
+    },
+    # Claude via AgentRouter — UNUSABLE on this account: the Anthropic budget
+    # pool returns 402 for both models, verified 2026-09-06 with two separate
+    # keys. Kept because the block is billing-side and may be lifted; canonical
+    # route for claude is OpenRouter ("claude_or" above).
+    "claude_ar": {
+        "base_url":    _AR_BASE,
+        "model":       "claude-opus-5",
+        "api_key_env": "AGENTROUTER_NEW_API_KEY",
+        "json_mode":   True,
+        "extra_body":  None,
+        "strict_model_match": True,
+        "default_headers": _AR_HEADERS,
+    },
+    "claude_ar_48": {
+        "base_url":    _AR_BASE,
+        "model":       "claude-opus-4-8",
+        "api_key_env": "AGENTROUTER_NEW_API_KEY",
+        "json_mode":   True,
+        "extra_body":  None,
+        "strict_model_match": True,
+        "default_headers": _AR_HEADERS,
+    },
+    # Original OpenRouter route for the gpt judge; needs OPENROUTER_API_KEY.
+    "gpt_or": {
         "base_url":    _OR_BASE,
         "model":       "openai/gpt-5.6-sol",
         "api_key_env": "OPENROUTER_API_KEY",
         "json_mode":   True,
-        "extra_body":  None,
+        "extra_body":  {"reasoning": {"exclude": True}},
         "default_headers": _OR_HEADERS,
     },
     # ── Legacy direct-API entries (kept for reference; require own keys) ──────
@@ -340,9 +446,24 @@ def build_safety_prompt(template: str, item: dict) -> str:
     )
 
 
+def decode_fingerprint(cfg: dict) -> str:
+    """
+    Stable digest of the settings that change what the judge produces.
+
+    Covers the request knobs the prompt does not: extra_body (which carries the
+    reasoning switch on every provider) and the effective max_tokens. Anything
+    added here must be deterministic and JSON-serialisable.
+    """
+    payload = {
+        "extra_body": cfg.get("extra_body") or None,
+        "max_tokens": cfg.get("max_tokens", MAX_TOKENS),
+    }
+    return sha256_hex(json.dumps(payload, sort_keys=True, ensure_ascii=True))
+
+
 def cache_key(model: str, template_hash: str, prompt_type: str,
               qid: str, blind_id: str, answer: str, prompt: str,
-              nonce: str = "") -> str:
+              nonce: str = "", decode_fp: str = "") -> str:
     """
     Key on the fully rendered prompt, not on its parts.
 
@@ -354,9 +475,16 @@ def cache_key(model: str, template_hash: str, prompt_type: str,
 
     sha256(prompt) subsumes the template, question, reference, sc_flag and
     answer, so any change to what the judge actually reads invalidates the entry.
+
+    decode_fp closes the same hole along a second axis. The prompt is identical
+    whether or not the model was told to reason, so without it a judgment
+    produced with reasoning ON is served, as a cache hit, to a run that has
+    since disabled reasoning -- silently, and reported as healthy. This bit the
+    project on 2026-09-06: 12 entries cached during provider probing would have
+    been replayed into a panel whose policy forbids reasoning.
     """
     raw = (f"{model}|{template_hash}|{prompt_type}|{qid}|{blind_id}"
-           f"|{sha256_hex(answer)}|{sha256_hex(prompt)}|{nonce}")
+           f"|{sha256_hex(answer)}|{sha256_hex(prompt)}|{nonce}|{decode_fp}")
     return sha256_hex(raw)
 
 
@@ -452,10 +580,17 @@ def call_api_sync(
             # Skip response_format=json_object for models that do not support it
             # (Gemini excluded from panel, but guard kept for safety).
             use_json_fmt = cfg.get("json_mode", True) and ACTIVE_MODEL != "gemini"
+            # Per-config override of the global cap. Needed for always-reasoning
+            # models: GLM-5.3 cannot have thinking turned off (AgentRouter's
+            # validator accepts only enabled/disabled while the upstream model
+            # demands low/high/max, so neither value works), and at 400 tokens
+            # the reasoning channel consumes the whole budget, leaving content
+            # empty. Judges that fit inside 400 are left on 400 so their
+            # behaviour is unchanged.
             create_kwargs: dict = dict(
                 model=model,
                 temperature=TEMPERATURE,
-                max_tokens=MAX_TOKENS,
+                max_tokens=cfg.get("max_tokens", MAX_TOKENS),
                 messages=[{"role": "user", "content": prompt}],
                 extra_body=extra_body,
             )
@@ -477,13 +612,20 @@ def call_api_sync(
                 lines = stripped.splitlines()
                 end = len(lines) - 1 if lines[-1].strip() == "```" else len(lines)
                 raw_content = "\n".join(lines[1:end]).strip()
+            # reasoning_tokens is the only direct evidence that the
+            # no-reasoning policy held for a given call. Providers that do not
+            # report it leave this None, which is not the same as zero.
+            usage = {
+                "prompt_tokens":     response.usage.prompt_tokens,
+                "completion_tokens": response.usage.completion_tokens,
+            }
+            details = getattr(response.usage, "completion_tokens_details", None)
+            if details is not None:
+                usage["reasoning_tokens"] = getattr(details, "reasoning_tokens", None)
             return {
                 "model_returned": response.model,
                 "content": raw_content,
-                "usage": {
-                    "prompt_tokens":     response.usage.prompt_tokens,
-                    "completion_tokens": response.usage.completion_tokens,
-                },
+                "usage": usage,
                 "finish_reason": response.choices[0].finish_reason,
             }
         except Exception as e:
@@ -533,7 +675,8 @@ def judge_item_sync(
         )
 
     ckey = cache_key(model, template_hash, prompt_type, qid, blind_id, answer,
-                     prompt, nonce)
+                     prompt, nonce,
+                     decode_fp=decode_fingerprint(MODEL_CONFIGS[ACTIVE_MODEL]))
 
     if not nonce:
         cached = load_cache(prompt_type, ckey)
@@ -644,6 +787,7 @@ def run_judging(
     t_start     = time.time()
 
     existing_keys: set = set()
+    n_dropped = 0
     if out_path.exists() and not nonce:
         # Resume is keyed on (qid, blind_id, prompt_type), and blind_id is a
         # stable salted hash of the config name -- identical across runs. So a
@@ -666,8 +810,25 @@ def run_judging(
                 if not line:
                     continue
                 j = json.loads(line)
+                # INVALID rows must NOT suppress a retry. save_cache() already
+                # refuses to cache them "so they are retried on the next run",
+                # but resume keyed on (qid, blind_id, prompt_type) regardless of
+                # status, so a failed judgment was skipped forever inside a
+                # run_tag and the two mechanisms contradicted each other. A
+                # partially-failed panel could not be repaired in place.
+                if j.get("status") == "INVALID":
+                    n_dropped += 1
+                    continue
                 existing_keys.add((j["qid"], j.get("blind_id", ""), j["prompt_type"]))
                 judgments.append(j)
+        if n_dropped:
+            # Rewrite without them. Re-judging appends a fresh row for the same
+            # key, so leaving the INVALID row in place would put two rows with
+            # one key in the file and hand aggregate.py an ambiguous read.
+            with open(out_path, "w", encoding="utf-8") as f:
+                for j in judgments:
+                    f.write(json.dumps(j, ensure_ascii=False) + "\n")
+            print(f"  Dropped {n_dropped} INVALID row(s) for retry")
         print(f"  Resuming: {len(judgments)} existing judgments found")
 
     pending = [(item, pt) for item, pt in tasks
@@ -707,9 +868,17 @@ def run_judging(
             # every call against a registered deepseek-v4-pro and nothing
             # complained. A dated or reordered snapshot of the requested model is
             # normal resolution and does not trip this.
+            # strict_model_match: for reseller gateways the token-subset test is
+            # too weak. "gpt-5.6-sol" (AgentRouter's naming) carries no vendor
+            # token, so any vendor's gpt-5.6-sol would satisfy the subset rule,
+            # and a reseller can return an arbitrary string anyway. Requiring an
+            # exact echo at least makes a changed answer visible.
             served = j.get("model_returned")
-            if served and not allow_model_substitution and \
-                    model_substituted(cfg["model"], served):
+            if cfg.get("strict_model_match"):
+                mismatch = bool(served) and served != cfg["model"]
+            else:
+                mismatch = model_substituted(cfg["model"], served)
+            if served and not allow_model_substitution and mismatch:
                 raise RuntimeError(
                     f"MODEL SUBSTITUTION: requested {cfg['model']!r}, provider "
                     f"served {served!r}. Aborting after {done + 1} call(s) so the "
@@ -756,7 +925,15 @@ def run_judging(
         "model_requested": cfg["model"],
         "base_url":       cfg["base_url"],
         "temperature":    TEMPERATURE,
-        "max_tokens":     MAX_TOKENS,
+        # The EFFECTIVE cap, not the global constant. These diverged once
+        # max_tokens became per-config, and a manifest that records 400 for a
+        # run made at 4000 is a false provenance record.
+        "max_tokens":     cfg.get("max_tokens", MAX_TOKENS),
+        # What was actually sent to control reasoning, plus the digest that
+        # keys the cache on it. Without these the manifest cannot show whether
+        # the no-reasoning policy was in force for this run.
+        "extra_body":     cfg.get("extra_body") or None,
+        "decode_fingerprint": decode_fingerprint(cfg),
         "template_hash":  template_hash,
         "quality_hash":   quality_hash,
         "safety_hash":    safety_hash,

@@ -60,11 +60,25 @@ ITEMS_PATH     = JUDGING_DIR / "items.jsonl"
 # RESULTS_DIR is set by init_model() after --model arg is parsed.
 RESULTS_DIR    = None
 
+#: Judge names that may be aggregated. MUST track MODEL_CONFIGS in
+#: judge_deepseek.py -- a name that can be judged but not aggregated is a dead
+#: end discovered only after the calls are paid for. Not imported from there
+#: because that module exits at import time when `openai` is missing, and
+#: aggregation is pure stdlib and must stay runnable without it.
+#:
+#: Canonical panel (2026-09-06): deepseek, claude_or, gpt_ar. glm_ar is the
+#: optional fourth. The rest are alternate routes and legacy entries.
+VALID_MODELS = [
+    "deepseek", "claude_or", "gpt_ar", "glm_ar",
+    "gpt_or", "claude_ar", "claude_ar_48",
+    "gemini", "gpt", "claude", "gpt4o",
+]
+
 
 def init_model(model_name: str) -> None:
     """Set RESULTS_DIR from chosen model name. Called once in main()."""
     global RESULTS_DIR
-    valid = ["deepseek", "claude_or", "gemini", "gpt", "claude", "gpt4o"]
+    valid = VALID_MODELS
     if model_name not in valid:
         print(f"ERROR: unknown model '{model_name}'. Choose from: {valid}",
               file=sys.stderr)
@@ -626,7 +640,11 @@ def load_precommit_contrasts() -> list[dict]:
     """
     Load or return default precommitted contrasts.
     Primary contrasts: F-B overall, F-B SC, B-A overall.
-    Secondary: E-B, C-B, G-B, G-F, H-B.
+    Secondary: E-B, C-B, G-B, G-F, D-B.
+
+    NOTE: a contrast whose configs have no judgments is skipped silently rather
+    than reported as missing. D-B was absent from every July run for this
+    reason; confirm D_T4_IMPROVED is present in stats.csv for the offline panel.
     """
     if not PRECOMMIT_PATH.exists():
         print("WARNING: judging/PRECOMMIT.md not found. Using default contrasts.")
@@ -808,7 +826,7 @@ def write_final_report(
 def main():
     parser = argparse.ArgumentParser(description="Phase 6: Aggregate judgments into final report")
     parser.add_argument("--model",       default="deepseek",
-                        choices=["deepseek", "claude_or", "gemini", "gpt", "claude", "gpt4o"],
+                        choices=VALID_MODELS,
                         help="Which judge's results to aggregate (default: deepseek)")
     parser.add_argument("--run_tag",     required=True,
                         help="Run tag for the judgments to aggregate (e.g. CAMERA_READY_FINAL)")
