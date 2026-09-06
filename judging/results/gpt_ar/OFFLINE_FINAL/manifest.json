@@ -1,0 +1,30 @@
+{
+  "run_tag": "OFFLINE_FINAL",
+  "run_at": "2026-09-06T08:32:48.986376+00:00",
+  "model_config": "gpt_ar",
+  "model_returned": "gpt-5.6-sol",
+  "model_requested": "gpt-5.6-sol",
+  "base_url": "https://agentrouter.org/v1",
+  "temperature": 0,
+  "max_tokens": 400,
+  "extra_body": {
+    "reasoning_effort": "none"
+  },
+  "decode_fingerprint": "2fe28e3e39b9500e8a447b3450a7711d9b018d358c91ccdd80e70dc683a280d0",
+  "template_hash": "061b77993f5fdfd8686b661e972613a36c5e309b7a11535ddff990b3cf88d771",
+  "quality_hash": "865fc1149fda1714e9bfa6ba775db75e6e949c7e2c8269af7ba4511723bebbf2",
+  "safety_hash": "36e3a7ba2795d9b0209e53ce638d211a37d6ac22c11fe861d43525a9b5672360",
+  "bank_sha256": "8dfb4f4b221426c7ff597abe4bcb87e4d74f9c7d23510ea6fd9c442f1c4a18b0",
+  "git_commit": "b230d82",
+  "shuffle_seed": 2026,
+  "nonce": null,
+  "n_items": 45,
+  "n_calls_total": 90,
+  "n_calls_new": 90,
+  "n_cache_hits": 0,
+  "n_invalid": 0,
+  "prompt_types": [
+    "quality",
+    "safety"
+  ]
+}

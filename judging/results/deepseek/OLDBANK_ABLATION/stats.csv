@@ -1,0 +1,9 @@
+name,cfg_a,cfg_b,filter,primary,n_pairs,mean_delta,ci_lo,ci_hi,wins,losses,ties,sign_p,confirmed,expected_direction,observed_direction,direction_match
+F−B overall,F_RAG_BM25,B_FINETUNED_4BIT,all,True,41,0.0976,-0.1707,0.3659,11,9,21,0.823803,False,positive,positive,True
+F−B SC,F_RAG_BM25,B_FINETUNED_4BIT,sc,True,11,0.3636,-0.1818,1.0,4,2,5,0.6875,False,positive,positive,True
+B−A overall,B_FINETUNED_4BIT,A_BASE_4BIT,all,True,41,1.0,0.6585,1.3415,28,4,9,1.9e-05,True,positive,positive,True
+E−B overall,E_T6_IMPROVED,B_FINETUNED_4BIT,all,False,41,-0.122,-0.3171,0.0732,4,7,30,0.548828,False,either,negative,True
+C−B overall,C_FINETUNED_8BIT,B_FINETUNED_4BIT,all,False,41,-0.0244,-0.2927,0.2439,10,11,20,1.0,False,either,negative,True
+G−B overall,G_BASE_RAG,B_FINETUNED_4BIT,all,False,41,-0.9512,-1.3415,-0.5854,4,25,12,0.000104,True,either,negative,True
+G−F overall,G_BASE_RAG,F_RAG_BM25,all,False,41,-1.0488,-1.3902,-0.7073,3,29,9,3e-06,True,either,negative,True
+D−B overall,D_T4_IMPROVED,B_FINETUNED_4BIT,all,False,41,-0.0244,-0.2439,0.1951,5,6,30,1.0,False,either,negative,True

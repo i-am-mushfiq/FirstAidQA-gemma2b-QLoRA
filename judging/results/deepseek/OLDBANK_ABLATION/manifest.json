@@ -1,0 +1,32 @@
+{
+  "run_tag": "OLDBANK_ABLATION",
+  "run_at": "2026-09-06T07:48:12.848515+00:00",
+  "model_config": "deepseek",
+  "model_returned": "deepseek-v4-pro",
+  "model_requested": "deepseek-v4-pro",
+  "base_url": "https://api.deepseek.com",
+  "temperature": 0,
+  "max_tokens": 400,
+  "extra_body": {
+    "thinking": {
+      "type": "disabled"
+    }
+  },
+  "decode_fingerprint": "3d6972fa37d7e02638233535f463401d279e43090750ba90f1483224ec2a4b19",
+  "template_hash": "061b77993f5fdfd8686b661e972613a36c5e309b7a11535ddff990b3cf88d771",
+  "quality_hash": "865fc1149fda1714e9bfa6ba775db75e6e949c7e2c8269af7ba4511723bebbf2",
+  "safety_hash": "36e3a7ba2795d9b0209e53ce638d211a37d6ac22c11fe861d43525a9b5672360",
+  "bank_sha256": "2d952501e066e1145e9dce99823b841c7d276243debae7e634e27cdaf3e3726d",
+  "git_commit": "b230d82",
+  "shuffle_seed": 2026,
+  "nonce": null,
+  "n_items": 332,
+  "n_calls_total": 664,
+  "n_calls_new": 664,
+  "n_cache_hits": 319,
+  "n_invalid": 0,
+  "prompt_types": [
+    "quality",
+    "safety"
+  ]
+}
