@@ -122,7 +122,12 @@ MODEL_CONFIGS = {
     "claude_or": {
         "base_url":    _OR_BASE,
         "model":       "anthropic/claude-opus-5",
-        "api_key_env": "CLAUDE_API",
+        # Switched 2026-09-07: CLAUDE_API's key hit its $7 hard cap (limit_reset:
+        # null -- does not refill) at 568/664. CLAUDE_NEW carries a fresh $1.30
+        # limit. Estimated cost for the remaining 96 calls from the prior key's
+        # measured $/token rate: ~$1.19 -- inside the limit but with little
+        # margin, so a second 403 before completion is plausible, not a bug.
+        "api_key_env": "CLAUDE_NEW",
         "json_mode":   True,
         # Panel policy: no judge reasons. claude-opus-5 REASONS BY DEFAULT --
         # measured 300 reasoning tokens with no parameter set -- so this is not
