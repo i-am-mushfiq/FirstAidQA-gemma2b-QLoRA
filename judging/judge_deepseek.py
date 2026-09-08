@@ -114,15 +114,30 @@ MODEL_CONFIGS = {
     # Canonical route for the claude judge. Claude is required in the panel and
     # AgentRouter cannot serve it (402, exhausted Anthropic pool), so this entry
     # needs OPENROUTER_API_KEY.
+    # Canonical claude judge. NOTE: this is claude-opus-5, whereas the July
+    # panel judged with claude-opus-4.8. That is a change of JUDGE, not just of
+    # route, so absolute scores are not comparable with July's claude_or column
+    # and the substitution must be disclosed. anthropic/claude-opus-4.8 is still
+    # available on OpenRouter if the July judge is wanted instead.
     "claude_or": {
         "base_url":    _OR_BASE,
-        "model":       "anthropic/claude-opus-4.8",
-        "api_key_env": "OPENROUTER_API_KEY",
+        "model":       "anthropic/claude-opus-5",
+        "api_key_env": "CLAUDE_API",
         "json_mode":   True,
-        # Panel policy: no judge reasons. NOT yet verified against the live API
-        # — there is no OpenRouter key on this machine. Confirm with a probe
-        # before the controls gate.
-        "extra_body":  {"reasoning": {"exclude": True}},
+        # Panel policy: no judge reasons. claude-opus-5 REASONS BY DEFAULT --
+        # measured 300 reasoning tokens with no parameter set -- so this is not
+        # optional. Measured 2026-09-07 on the same prompt:
+        #   no param                      reasoning=300
+        #   {"reasoning":{"exclude":True}} reasoning=300  <- hides it, does NOT
+        #                                                    disable it
+        #   {"reasoning":{"max_tokens":0}} reasoning=300
+        #   {"reasoning":{"effort":"minimal"}} reasoning=276
+        #   {"reasoning":{"enabled":False}} reasoning=0   <- the only real off
+        #   {"reasoning_effort":"none"}     reasoning=0
+        # "exclude" was the first spelling tried and it silently satisfied
+        # nothing: the first probe judged 4 items with 39-184 reasoning tokens
+        # while appearing correctly configured.
+        "extra_body":  {"reasoning": {"enabled": False}},
         "default_headers": _OR_HEADERS,
     },
     # "gemini" excluded: same model family as subject (Gemma/Google).

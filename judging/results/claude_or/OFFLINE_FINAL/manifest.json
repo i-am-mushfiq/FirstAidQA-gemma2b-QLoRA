@@ -1,16 +1,18 @@
 {
   "run_tag": "OFFLINE_FINAL",
-  "run_at": "2026-09-07T05:23:40.656549+00:00",
-  "model_config": "gpt_ar",
-  "model_returned": "gpt-5.6-sol",
-  "model_requested": "gpt-5.6-sol",
-  "base_url": "https://agentrouter.org/v1",
+  "run_at": "2026-09-08T04:19:56.656733+00:00",
+  "model_config": "claude_or",
+  "model_returned": "anthropic/claude-opus-5",
+  "model_requested": "anthropic/claude-opus-5",
+  "base_url": "https://openrouter.ai/api/v1",
   "temperature": 0,
   "max_tokens": 400,
   "extra_body": {
-    "reasoning_effort": "none"
+    "reasoning": {
+      "enabled": false
+    }
   },
-  "decode_fingerprint": "2fe28e3e39b9500e8a447b3450a7711d9b018d358c91ccdd80e70dc683a280d0",
+  "decode_fingerprint": "f78ad982f380856e56819bb97d85f1a0f5f4ca15e92528163a203fa5360ad106",
   "template_hash": "061b77993f5fdfd8686b661e972613a36c5e309b7a11535ddff990b3cf88d771",
   "quality_hash": "865fc1149fda1714e9bfa6ba775db75e6e949c7e2c8269af7ba4511723bebbf2",
   "safety_hash": "36e3a7ba2795d9b0209e53ce638d211a37d6ac22c11fe861d43525a9b5672360",
@@ -18,9 +20,9 @@
   "git_commit": "68c44cb",
   "shuffle_seed": 2026,
   "nonce": null,
-  "n_items": 332,
-  "n_calls_total": 664,
-  "n_calls_new": 359,
+  "n_items": 45,
+  "n_calls_total": 90,
+  "n_calls_new": 90,
   "n_cache_hits": 0,
   "n_invalid": 0,
   "prompt_types": [
