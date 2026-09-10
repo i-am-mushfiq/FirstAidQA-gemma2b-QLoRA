@@ -1,0 +1,92 @@
+[
+  {
+    "category": "Airway, Choking & Drowning",
+    "n": 4,
+    "A": 0.9166666666666666,
+    "B": 2.1666666666666665,
+    "best": "D_T4_IMPROVED",
+    "best_mean": 2.3333333333333335,
+    "BA": 1.25
+  },
+  {
+    "category": "Bites, Stings & Envenomation",
+    "n": 3,
+    "A": 1.0,
+    "B": 2.2222222222222223,
+    "best": "B_FINETUNED_4BIT",
+    "best_mean": 2.2222222222222223,
+    "BA": 1.2222222222222223
+  },
+  {
+    "category": "Bleeding & Wounds",
+    "n": 7,
+    "A": 1.2380952380952381,
+    "B": 2.0,
+    "best": "F_RAG_BM25",
+    "best_mean": 2.142857142857143,
+    "BA": 0.7619047619047619
+  },
+  {
+    "category": "Burns & Environmental Emergencies",
+    "n": 3,
+    "A": 0.8888888888888888,
+    "B": 2.6666666666666665,
+    "best": "D_T4_IMPROVED",
+    "best_mean": 3.0,
+    "BA": 1.7777777777777777
+  },
+  {
+    "category": "Cardiac & Resuscitation",
+    "n": 6,
+    "A": 1.0555555555555556,
+    "B": 2.0,
+    "best": "F_RAG_BM25",
+    "best_mean": 2.555555555555556,
+    "BA": 0.9444444444444444
+  },
+  {
+    "category": "Minor Injuries & General First Aid",
+    "n": 6,
+    "A": 1.3333333333333333,
+    "B": 1.9444444444444444,
+    "best": "F_RAG_BM25",
+    "best_mean": 2.7222222222222223,
+    "BA": 0.6111111111111112
+  },
+  {
+    "category": "Neurological & Altered Consciousness",
+    "n": 4,
+    "A": 1.6666666666666665,
+    "B": 2.0,
+    "best": "D_T4_IMPROVED",
+    "best_mean": 2.833333333333333,
+    "BA": 0.3333333333333335
+  },
+  {
+    "category": "Poisoning, Overdose & Toxic Exposure",
+    "n": 2,
+    "A": 1.3333333333333335,
+    "B": 3.333333333333333,
+    "best": "B_FINETUNED_4BIT",
+    "best_mean": 3.333333333333333,
+    "BA": 1.9999999999999996
+  },
+  {
+    "category": "Spinal Injuries & Patient Movement",
+    "n": 1,
+    "A": 0.6666666666666666,
+    "B": 2.6666666666666665,
+    "best": "D_T4_IMPROVED",
+    "best_mean": 3,
+    "BA": 2.0
+  },
+  {
+    "category": "Trauma & Musculoskeletal",
+    "n": 5,
+    "A": 1.2,
+    "B": 2.9333333333333336,
+    "best": "B_FINETUNED_4BIT",
+    "best_mean": 2.9333333333333336,
+    "BA": 1.7333333333333336
+  }
+]

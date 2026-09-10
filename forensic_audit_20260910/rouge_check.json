@@ -1,0 +1,44 @@
+{
+  "A_BASE_4BIT": {
+    "mean": 0.1011,
+    "reported": 0.1011,
+    "n_at_token_cap": 6,
+    "mean_words": 134.390243902439
+  },
+  "G_BASE_RAG": {
+    "mean": 0.0954,
+    "reported": 0.0954,
+    "n_at_token_cap": 7,
+    "mean_words": 161.8048780487805
+  },
+  "B_FINETUNED_4BIT": {
+    "mean": 0.1603,
+    "reported": 0.1603,
+    "n_at_token_cap": 0,
+    "mean_words": 42.78048780487805
+  },
+  "D_T4_IMPROVED": {
+    "mean": 0.162,
+    "reported": 0.162,
+    "n_at_token_cap": 0,
+    "mean_words": 45.31707317073171
+  },
+  "E_T6_IMPROVED": {
+    "mean": 0.1587,
+    "reported": 0.1587,
+    "n_at_token_cap": 0,
+    "mean_words": 41.90243902439025
+  },
+  "F_RAG_BM25": {
+    "mean": 0.1541,
+    "reported": 0.1541,
+    "n_at_token_cap": 0,
+    "mean_words": 43.36585365853659
+  },
+  "C_FINETUNED_8BIT": {
+    "mean": 0.1569,
+    "reported": 0.1569,
+    "n_at_token_cap": 0,
+    "mean_words": 42.63414634146341
+  }
+}

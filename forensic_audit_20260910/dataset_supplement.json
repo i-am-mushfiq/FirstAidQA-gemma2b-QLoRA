@@ -1,0 +1,133 @@
+{
+  "train": {
+    "bank_exact_q": [],
+    "bank_exact_ref": []
+  },
+  "val": {
+    "bank_exact_q": [],
+    "bank_exact_ref": []
+  },
+  "test": {
+    "bank_exact_q": [],
+    "bank_exact_ref": []
+  },
+  "raw": {
+    "bank_exact_q": [],
+    "bank_exact_ref": []
+  },
+  "split_reconstruction": {
+    "train": true,
+    "val": true,
+    "test": true
+  },
+  "near_candidate_counts": {
+    "bank": {
+      "0.75": 0,
+      "0.85": 0,
+      "0.95": 0,
+      "1": 0
+    },
+    "val": {
+      "0.75": 35,
+      "0.85": 13,
+      "0.95": 12,
+      "1": 12
+    },
+    "test": {
+      "0.75": 40,
+      "0.85": 17,
+      "0.95": 13,
+      "1": 13
+    }
+  },
+  "bank_top_near": [
+    {
+      "split": "bank",
+      "index": "30",
+      "qid": "V2Q31",
+      "question": "Why is it important to place an unconscious but breathing person in the recovery position?",
+      "jaccard": "0.7058823529411765",
+      "train_index": "529",
+      "train_question": "Why is it important to place an unconscious choking person in the lateral position?",
+      "train_answer": "Placing an unconscious choking person in the lateral position helps maintain their airway, monitor their breathing and pulse, and ensures that any obstructed airways can be cleared while waiting for medical assistance. This position also helps prevent choking on vomit.",
+      "reference": "An unconscious person loses the reflexes that stop the tongue obstructing the airway and stop vomit being inhaled. Lying on the side with the top knee bent forward and the head tilted back keeps the airway open and lets fluid drain. Do not use it if spinal injury is suspected unless the airway cannot be maintained otherwise."
+    },
+    {
+      "split": "bank",
+      "index": "33",
+      "qid": "V2Q34",
+      "question": "What should you do if someone is stung by a box jellyfish at a beach in tropical Australia?",
+      "jaccard": "0.7058823529411765",
+      "train_index": "503",
+      "train_question": "What should you do if someone is stung by a box jellyfish?",
+      "train_answer": "If stung by a box jellyfish, immediately remove the victim from the water and rinse the sting site with vinegar. Do not rub the sting site, and seek immediate medical aid, as these stings can be fatal.",
+      "reference": "Flood the sting with undiluted vinegar immediately for at least 30 seconds. Do not rub the area, apply fresh water, or handle tentacles bare-handed; each triggers further venom release. Remove tentacles with tweezers or gloved hands after the vinegar. If they stop breathing normally, start CPR at once."
+    },
+    {
+      "split": "bank",
+      "index": "13",
+      "qid": "V2Q14",
+      "question": "What should you do if a young child swallows a button battery or small magnet?",
+      "jaccard": "0.5333333333333333",
+      "train_index": "4070",
+      "train_question": "What if my child swallows a small button battery?",
+      "train_answer": "Swallowing a small button battery can be extremely dangerous and may cause burns, internal bleeding, or damage to the digestive tract. It requires immediate medical attention. Do not induce vomiting and avoid giving your child anything to eat or drink. Contact emergency services right away.",
+      "reference": "Give nothing to eat or drink. Do not induce vomiting. Note the time swallowed and the object type. A button battery in the oesophagus burns tissue within 2 hours; magnets attract through bowel walls and can perforate. Both need urgent endoscopy. Get the child to a facility capable of emergency endoscopy fast."
+    },
+    {
+      "split": "bank",
+      "index": "27",
+      "qid": "V2Q28",
+      "question": "What are the early warning signs that someone is about to faint?",
+      "jaccard": "0.5333333333333333",
+      "train_index": "2012",
+      "train_question": "What are the signs that a seizure is about to occur?",
+      "train_answer": "Some people with epilepsy may experience a warning sign called an aura before a seizure. This can include visual disturbances, strange smells, a feeling of déjà vu, or other sensory changes. However, not all individuals experience auras, and seizures can happen suddenly.",
+      "reference": "Warning signs include sudden lightheadedness, pale or ashen skin, cold clammy sweating, nausea, tunnel vision or greying out, a slow weak pulse, ringing in the ears, and leg weakness. These appear 30 seconds to a few minutes before collapse. Get them lying flat and raise their legs."
+    },
+    {
+      "split": "bank",
+      "index": "28",
+      "qid": "V2Q29",
+      "question": "What should you do if a conscious adult is choking on food, cannot speak or cough effectively, and is beginning to turn blue?",
+      "jaccard": "0.5",
+      "train_index": "3876",
+      "train_question": "What should I do if a choking adult is unable to cough or speak?",
+      "train_answer": "If a choking adult is unable to cough or speak, their airway is likely completely blocked. You should immediately perform the Heimlich maneuver. Position the person upright, place your hands just above their navel, and deliver quick, inward and upward thrusts until the object is expelled or they become unresponsive.",
+      "reference": "Lean the person forward and give up to 5 back blows between the shoulder blades with the heel of your hand, checking the mouth after each. If they fail, give up to 5 chest thrusts: same landmark as CPR compressions, on the lower half of the breastbone, but sharper and slower. Alternate until it clears. If they lose consciousness, start CPR."
+    },
+    {
+      "split": "bank",
+      "index": "12",
+      "qid": "V2Q13",
+      "question": "What should you do if you are the only person present when someone collapses in cardiac arrest and there is no phone signal available?",
+      "jaccard": "0.48",
+      "train_index": "1180",
+      "train_question": "What should you do if you are unsure whether the person is in cardiac arrest?",
+      "train_answer": "If you are unsure whether the person is in cardiac arrest, check for signs such as unresponsiveness and absence of normal breathing or pulse. If the person is unresponsive and not breathing or only gasping, start CPR immediately while waiting for emergency medical assistance.",
+      "reference": "Start CPR immediately: 30 compressions to 2 rescue breaths, at least 5 centimetres deep, 100 to 120 per minute. With no way to call for help, stay and keep compressing; leaving the patient more than 10 seconds sharply reduces survival. For a child, give 2 minutes of CPR before briefly leaving to signal."
+    },
+    {
+      "split": "bank",
+      "index": "40",
+      "qid": "V2Q41",
+      "question": "What precautions should you take when you need to help move a casualty who may have sustained a spinal injury?",
+      "jaccard": "0.47619047619047616",
+      "train_index": "375",
+      "train_question": "What precautions should you take when moving a casualty with a possible spinal injury?",
+      "train_answer": "When moving a casualty with a potential spinal injury, it's crucial to support the head, neck, and spine at all times. The movement should be smooth and controlled, without jerking the body. Improper handling can worsen spinal injuries and lead to permanent damage.",
+      "reference": "Do not move a suspected spinal injury casualty unless there is immediate danger to life. If movement is unavoidable, one person holds the head in neutral alignment with the spine. Use a log-roll with a minimum of three rescuers: one controls the head, two roll the body as one rigid unit. Do not sit or stand the casualty."
+    },
+    {
+      "split": "bank",
+      "index": "3",
+      "qid": "V2Q04",
+      "question": "What is the correct way to manage a small superficial splinter embedded in the skin?",
+      "jaccard": "0.47368421052631576",
+      "train_index": "907",
+      "train_question": "What is the best way to remove a tick that is deeply embedded in the skin?",
+      "train_answer": "The best way to remove a tick deeply embedded in the skin is to use fine-tipped tweezers or a tick-removal tool to grasp the tick as close to the skin's surface as possible. Gently pull the tick straight out without twisting. If the tick is difficult to remove, seek medical assistance to ensure proper removal.",
+      "reference": "Clean with soap and water. Sterilise fine-pointed tweezers with alcohol or a flame and let them cool. Grip the splinter close to the skin and pull it out at the angle it entered. Do not dig, squeeze or break it. Clean again and cover with a dressing. Seek care if deep, broken below the surface, or infected."
+    }
+  ]
+}

@@ -1,0 +1,782 @@
+[
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q01",
+    "train_index": 1701,
+    "retrieved_question": "What precautions should be taken while applying direct pressure to a bleeding wound on a limb?",
+    "score": 36.803,
+    "recorded_score": 36.803,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q02",
+    "train_index": 4087,
+    "retrieved_question": "What do I need to do if there is bleeding from a puncture wound?",
+    "score": 26.8117,
+    "recorded_score": 26.8117,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q03",
+    "train_index": 3615,
+    "retrieved_question": "What kind of dressing should I use after removing a fish hook?",
+    "score": 25.9202,
+    "recorded_score": 25.9202,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q04",
+    "train_index": 907,
+    "retrieved_question": "What is the best way to remove a tick that is deeply embedded in the skin?",
+    "score": 33.7071,
+    "recorded_score": 33.7071,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q05",
+    "train_index": 2572,
+    "retrieved_question": "Can I remove a foreign object from the eye if it's stuck in the cornea?",
+    "score": 31.8861,
+    "recorded_score": 31.8861,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q06",
+    "train_index": 2368,
+    "retrieved_question": "What should I do if someone faints after a traumatic injury?",
+    "score": 23.1015,
+    "recorded_score": 23.1015,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q07",
+    "train_index": 1554,
+    "retrieved_question": "How can you keep a casualty calm and still during a spinal injury situation?",
+    "score": 26.6,
+    "recorded_score": 26.6,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q08",
+    "train_index": 810,
+    "retrieved_question": "What should you do if you find someone unconscious but breathing normally?",
+    "score": 27.879,
+    "recorded_score": 27.879,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q09",
+    "train_index": 1180,
+    "retrieved_question": "What should you do if you are unsure whether the person is in cardiac arrest?",
+    "score": 24.3386,
+    "recorded_score": 24.3386,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q10",
+    "train_index": 877,
+    "retrieved_question": "What are the signs that mouth-to-mask resuscitation is being performed effectively?",
+    "score": 29.455,
+    "recorded_score": 29.455,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q11",
+    "train_index": 196,
+    "retrieved_question": "When should an AED (Automated External Defibrillator) be used during CPR?",
+    "score": 21.7149,
+    "recorded_score": 21.7149,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q12",
+    "train_index": 986,
+    "retrieved_question": "Why is it recommended to alternate between compressions and rescue breaths every 2 minutes during CPR?",
+    "score": 34.5447,
+    "recorded_score": 34.5447,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q13",
+    "train_index": 3958,
+    "retrieved_question": "What should you do if you are unsure whether a person is in cardiac arrest or just unconscious?",
+    "score": 34.7966,
+    "recorded_score": 34.7966,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q14",
+    "train_index": 4070,
+    "retrieved_question": "What if my child swallows a small button battery?",
+    "score": 45.4602,
+    "recorded_score": 45.4602,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q15",
+    "train_index": 3675,
+    "retrieved_question": "How should I treat a foreign object in the eye?",
+    "score": 39.0919,
+    "recorded_score": 39.0919,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q16",
+    "train_index": 644,
+    "retrieved_question": "How should I protect the eye if there is an embedded foreign body and I cannot remove it?",
+    "score": 28.6302,
+    "recorded_score": 28.6302,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q17",
+    "train_index": 4304,
+    "retrieved_question": "What are signs of a severe asthma attack that require urgent medical attention?",
+    "score": 27.3554,
+    "recorded_score": 27.3554,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q18",
+    "train_index": 3975,
+    "retrieved_question": "What is the best way to position someone who has fainted?",
+    "score": 27.9293,
+    "recorded_score": 27.9293,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q19",
+    "train_index": 4010,
+    "retrieved_question": "What should I do if someone faints but remains unresponsive for more than a few minutes?",
+    "score": 25.7133,
+    "recorded_score": 25.7133,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q20",
+    "train_index": 3716,
+    "retrieved_question": "How do you assess the severity of a fracture in the field?",
+    "score": 21.6692,
+    "recorded_score": 21.6692,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q21",
+    "train_index": 3434,
+    "retrieved_question": "What signs might suggest a child’s nosebleed is due to trauma rather than spontaneous causes?",
+    "score": 31.4073,
+    "recorded_score": 31.4073,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q22",
+    "train_index": 3678,
+    "retrieved_question": "Is it okay to straighten a deformed limb before applying a splint?",
+    "score": 25.1559,
+    "recorded_score": 25.1559,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q23",
+    "train_index": 1033,
+    "retrieved_question": "When should you use mouth-to-mask resuscitation instead of mouth-to-mouth?",
+    "score": 22.2006,
+    "recorded_score": 22.2006,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q24",
+    "train_index": 2361,
+    "retrieved_question": "What should you do if someone experiences a cramp while swimming?",
+    "score": 24.662,
+    "recorded_score": 24.662,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q25",
+    "train_index": 2392,
+    "retrieved_question": "What is the best way to help someone who feels faint after standing too long?",
+    "score": 23.5641,
+    "recorded_score": 23.5641,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q26",
+    "train_index": 1955,
+    "retrieved_question": "Can a person with a concussion return to physical activity immediately after the injury?",
+    "score": 39.5035,
+    "recorded_score": 39.5035,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q27",
+    "train_index": 149,
+    "retrieved_question": "How can extreme thirst help distinguish hyperglycaemia from hypoglycaemia?",
+    "score": 23.251,
+    "recorded_score": 23.251,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q28",
+    "train_index": 3252,
+    "retrieved_question": "How can I tell if someone is about to faint?",
+    "score": 25.8314,
+    "recorded_score": 25.8314,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q29",
+    "train_index": 3876,
+    "retrieved_question": "What should I do if a choking adult is unable to cough or speak?",
+    "score": 39.3714,
+    "recorded_score": 39.3714,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q30",
+    "train_index": 749,
+    "retrieved_question": "How should I assist someone having an asthma attack if they do not have their inhaler with them?",
+    "score": 41.8171,
+    "recorded_score": 41.8171,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q31",
+    "train_index": 529,
+    "retrieved_question": "Why is it important to place an unconscious choking person in the lateral position?",
+    "score": 31.0777,
+    "recorded_score": 31.0777,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q32",
+    "train_index": 2912,
+    "retrieved_question": "What are the signs that someone may need CPR after being rescued from water?",
+    "score": 27.5225,
+    "recorded_score": 27.5225,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q33",
+    "train_index": 1117,
+    "retrieved_question": "What should I do if the venomous snake bite victim is a child?",
+    "score": 26.8345,
+    "recorded_score": 26.8345,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q34",
+    "train_index": 991,
+    "retrieved_question": "What should you do if someone stung by a Box Jellyfish begins to show signs of shock?",
+    "score": 37.9772,
+    "recorded_score": 37.9772,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q36",
+    "train_index": 1629,
+    "retrieved_question": "How do you differentiate between heat exhaustion and heat stroke?",
+    "score": 18.9473,
+    "recorded_score": 18.9473,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q37",
+    "train_index": 3158,
+    "retrieved_question": "What should you do if someone has sustained a burn from a car accident?",
+    "score": 24.1437,
+    "recorded_score": 24.1437,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q38",
+    "train_index": 3149,
+    "retrieved_question": "Can I apply ice directly to the eye if it swells after an injury?",
+    "score": 24.2328,
+    "recorded_score": 24.2328,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q39",
+    "train_index": 2111,
+    "retrieved_question": "What are the signs of poisoning from inhaling carbon monoxide?",
+    "score": 38.3549,
+    "recorded_score": 38.3549,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "F_RAG_BM25",
+    "qid": "V2Q40",
+    "train_index": 2354,
+    "retrieved_question": "How can you recognize heat stroke in a person who is confused but still conscious?",
+    "score": 25.9975,
+    "recorded_score": 25.9975,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q01",
+    "train_index": 1701,
+    "retrieved_question": "What precautions should be taken while applying direct pressure to a bleeding wound on a limb?",
+    "score": 36.803,
+    "recorded_score": 36.803,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q02",
+    "train_index": 4087,
+    "retrieved_question": "What do I need to do if there is bleeding from a puncture wound?",
+    "score": 26.8117,
+    "recorded_score": 26.8117,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q03",
+    "train_index": 3615,
+    "retrieved_question": "What kind of dressing should I use after removing a fish hook?",
+    "score": 25.9202,
+    "recorded_score": 25.9202,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q04",
+    "train_index": 907,
+    "retrieved_question": "What is the best way to remove a tick that is deeply embedded in the skin?",
+    "score": 33.7071,
+    "recorded_score": 33.7071,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q05",
+    "train_index": 2572,
+    "retrieved_question": "Can I remove a foreign object from the eye if it's stuck in the cornea?",
+    "score": 31.8861,
+    "recorded_score": 31.8861,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q06",
+    "train_index": 2368,
+    "retrieved_question": "What should I do if someone faints after a traumatic injury?",
+    "score": 23.1015,
+    "recorded_score": 23.1015,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q07",
+    "train_index": 1554,
+    "retrieved_question": "How can you keep a casualty calm and still during a spinal injury situation?",
+    "score": 26.6,
+    "recorded_score": 26.6,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q08",
+    "train_index": 810,
+    "retrieved_question": "What should you do if you find someone unconscious but breathing normally?",
+    "score": 27.879,
+    "recorded_score": 27.879,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q09",
+    "train_index": 1180,
+    "retrieved_question": "What should you do if you are unsure whether the person is in cardiac arrest?",
+    "score": 24.3386,
+    "recorded_score": 24.3386,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q10",
+    "train_index": 877,
+    "retrieved_question": "What are the signs that mouth-to-mask resuscitation is being performed effectively?",
+    "score": 29.455,
+    "recorded_score": 29.455,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q11",
+    "train_index": 196,
+    "retrieved_question": "When should an AED (Automated External Defibrillator) be used during CPR?",
+    "score": 21.7149,
+    "recorded_score": 21.7149,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q12",
+    "train_index": 986,
+    "retrieved_question": "Why is it recommended to alternate between compressions and rescue breaths every 2 minutes during CPR?",
+    "score": 34.5447,
+    "recorded_score": 34.5447,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q13",
+    "train_index": 3958,
+    "retrieved_question": "What should you do if you are unsure whether a person is in cardiac arrest or just unconscious?",
+    "score": 34.7966,
+    "recorded_score": 34.7966,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q14",
+    "train_index": 4070,
+    "retrieved_question": "What if my child swallows a small button battery?",
+    "score": 45.4602,
+    "recorded_score": 45.4602,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q15",
+    "train_index": 3675,
+    "retrieved_question": "How should I treat a foreign object in the eye?",
+    "score": 39.0919,
+    "recorded_score": 39.0919,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q16",
+    "train_index": 644,
+    "retrieved_question": "How should I protect the eye if there is an embedded foreign body and I cannot remove it?",
+    "score": 28.6302,
+    "recorded_score": 28.6302,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q17",
+    "train_index": 4304,
+    "retrieved_question": "What are signs of a severe asthma attack that require urgent medical attention?",
+    "score": 27.3554,
+    "recorded_score": 27.3554,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q18",
+    "train_index": 3975,
+    "retrieved_question": "What is the best way to position someone who has fainted?",
+    "score": 27.9293,
+    "recorded_score": 27.9293,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q19",
+    "train_index": 4010,
+    "retrieved_question": "What should I do if someone faints but remains unresponsive for more than a few minutes?",
+    "score": 25.7133,
+    "recorded_score": 25.7133,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q20",
+    "train_index": 3716,
+    "retrieved_question": "How do you assess the severity of a fracture in the field?",
+    "score": 21.6692,
+    "recorded_score": 21.6692,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q21",
+    "train_index": 3434,
+    "retrieved_question": "What signs might suggest a child’s nosebleed is due to trauma rather than spontaneous causes?",
+    "score": 31.4073,
+    "recorded_score": 31.4073,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q22",
+    "train_index": 3678,
+    "retrieved_question": "Is it okay to straighten a deformed limb before applying a splint?",
+    "score": 25.1559,
+    "recorded_score": 25.1559,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q23",
+    "train_index": 1033,
+    "retrieved_question": "When should you use mouth-to-mask resuscitation instead of mouth-to-mouth?",
+    "score": 22.2006,
+    "recorded_score": 22.2006,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q24",
+    "train_index": 2361,
+    "retrieved_question": "What should you do if someone experiences a cramp while swimming?",
+    "score": 24.662,
+    "recorded_score": 24.662,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q25",
+    "train_index": 2392,
+    "retrieved_question": "What is the best way to help someone who feels faint after standing too long?",
+    "score": 23.5641,
+    "recorded_score": 23.5641,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q26",
+    "train_index": 1955,
+    "retrieved_question": "Can a person with a concussion return to physical activity immediately after the injury?",
+    "score": 39.5035,
+    "recorded_score": 39.5035,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q27",
+    "train_index": 149,
+    "retrieved_question": "How can extreme thirst help distinguish hyperglycaemia from hypoglycaemia?",
+    "score": 23.251,
+    "recorded_score": 23.251,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q28",
+    "train_index": 3252,
+    "retrieved_question": "How can I tell if someone is about to faint?",
+    "score": 25.8314,
+    "recorded_score": 25.8314,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q29",
+    "train_index": 3876,
+    "retrieved_question": "What should I do if a choking adult is unable to cough or speak?",
+    "score": 39.3714,
+    "recorded_score": 39.3714,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q30",
+    "train_index": 749,
+    "retrieved_question": "How should I assist someone having an asthma attack if they do not have their inhaler with them?",
+    "score": 41.8171,
+    "recorded_score": 41.8171,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q31",
+    "train_index": 529,
+    "retrieved_question": "Why is it important to place an unconscious choking person in the lateral position?",
+    "score": 31.0777,
+    "recorded_score": 31.0777,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q32",
+    "train_index": 2912,
+    "retrieved_question": "What are the signs that someone may need CPR after being rescued from water?",
+    "score": 27.5225,
+    "recorded_score": 27.5225,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q33",
+    "train_index": 1117,
+    "retrieved_question": "What should I do if the venomous snake bite victim is a child?",
+    "score": 26.8345,
+    "recorded_score": 26.8345,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q34",
+    "train_index": 991,
+    "retrieved_question": "What should you do if someone stung by a Box Jellyfish begins to show signs of shock?",
+    "score": 37.9772,
+    "recorded_score": 37.9772,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q36",
+    "train_index": 1629,
+    "retrieved_question": "How do you differentiate between heat exhaustion and heat stroke?",
+    "score": 18.9473,
+    "recorded_score": 18.9473,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q37",
+    "train_index": 3158,
+    "retrieved_question": "What should you do if someone has sustained a burn from a car accident?",
+    "score": 24.1437,
+    "recorded_score": 24.1437,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q38",
+    "train_index": 3149,
+    "retrieved_question": "Can I apply ice directly to the eye if it swells after an injury?",
+    "score": 24.2328,
+    "recorded_score": 24.2328,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q39",
+    "train_index": 2111,
+    "retrieved_question": "What are the signs of poisoning from inhaling carbon monoxide?",
+    "score": 38.3549,
+    "recorded_score": 38.3549,
+    "question_matches": true,
+    "score_matches": true
+  },
+  {
+    "config": "G_BASE_RAG",
+    "qid": "V2Q40",
+    "train_index": 2354,
+    "retrieved_question": "How can you recognize heat stroke in a person who is confused but still conscious?",
+    "score": 25.9975,
+    "recorded_score": 25.9975,
+    "question_matches": true,
+    "score_matches": true
+  }
+]

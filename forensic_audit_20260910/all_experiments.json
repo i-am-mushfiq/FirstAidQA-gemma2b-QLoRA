@@ -1,0 +1,1592 @@
+[
+  {
+    "path": "evaluations/CAMERA_READY_20260708_180411/run.json",
+    "timestamp": "2026-07-08T18:21:19.994680",
+    "metadata": {
+      "adapter_4bit": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337\\adapter",
+      "adapter_8bit": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_8bit_r16_lr1e-4_p3_20260508_195536\\adapter",
+      "model_path": "C:\\Personal_Endeavours\\Fine_Tuning\\models\\gemma-2b-it",
+      "questions": "C:\\Personal_Endeavours\\Fine_Tuning\\evaluations\\eval_bank_v2_40q\\eval_bank_v2.json",
+      "configs": [
+        "A",
+        "B",
+        "C",
+        "E",
+        "F",
+        "G"
+      ],
+      "max_new_tokens": 350,
+      "camera_ready": true,
+      "_versions": {
+        "torch": "2.5.1+cu121",
+        "transformers": "5.6.2",
+        "max_new_tokens": 350
+      }
+    },
+    "variants": {
+      "A_BASE_4BIT": {
+        "n": 41
+      },
+      "G_BASE_RAG": {
+        "n": 41
+      },
+      "B_FINETUNED_4BIT": {
+        "n": 41
+      },
+      "E_T6_IMPROVED": {
+        "n": 41
+      },
+      "F_RAG_BM25": {
+        "n": 41
+      },
+      "C_FINETUNED_8BIT": {
+        "n": 41
+      }
+    }
+  },
+  {
+    "path": "evaluations/CAMERA_READY_OFFLINE_20260905_195908/run.json",
+    "timestamp": "2026-09-05T20:15:10.784661+00:00",
+    "metadata": {
+      "adapter_4bit": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337\\adapter",
+      "adapter_8bit": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_8bit_r16_lr1e-4_p3_20260508_195536\\adapter",
+      "model_path": "C:\\Personal_Endeavours\\Fine_Tuning\\models\\gemma-2b-it",
+      "questions": "C:\\Personal_Endeavours\\Fine_Tuning\\evaluations\\eval_bank_v2_40q\\eval_bank_v2.json",
+      "configs": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G"
+      ],
+      "max_new_tokens": 350,
+      "prompt_policy": "offline_definitive_v1",
+      "camera_ready": true,
+      "sweep_label": "",
+      "_prompt": {
+        "policy": "offline_definitive_v1",
+        "sha256": "0d97fe5d60f5267051e6984a0328d5bb7893821571eec4fb01634df5538ce918",
+        "text": "You are an offline first aid assistant deployed in a situation where emergency medical services (EMS) are completely unreachable. There is no phone signal, no ambulance, and no professional help available. You are the sole and definitive care provider. Do NOT advise calling emergency services — that is not possible. Instead, provide complete, accurate, step-by-step first aid guidance that the user can perform immediately with no external help."
+      },
+      "_question_bank": {
+        "source_path": "C:\\Personal_Endeavours\\Fine_Tuning\\evaluations\\eval_bank_v2_40q\\eval_bank_v2.json",
+        "question_count": 41,
+        "sha256": "2d952501e066e1145e9dce99823b841c7d276243debae7e634e27cdaf3e3726d",
+        "frozen_fields": [
+          "question_id",
+          "question",
+          "reference",
+          "category",
+          "safety_critical",
+          "safety_critical_confidence",
+          "template_idx"
+        ]
+      },
+      "_artifacts": {
+        "model": {
+          "path": "C:\\Personal_Endeavours\\Fine_Tuning\\models\\gemma-2b-it",
+          "sha256": "b38a09b55153e665b26452a1a11fad8527c22d4d1a0ce63de341bed66ee2b3a7",
+          "file_count": 25,
+          "total_bytes": 5034199257
+        },
+        "adapter_4bit": {
+          "path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337\\adapter",
+          "sha256": "0eef1fb6b352fba3220f1bdd637fc842dcf66dde7e82f742a47e9a4eb392a939",
+          "file_count": 6,
+          "total_bytes": 112837074
+        },
+        "train_split": {
+          "path": "C:\\Personal_Endeavours\\Fine_Tuning\\splits\\10cat\\train.json",
+          "sha256": "a84114ae01c97f49859c5b0e5331c8fb27c4be3a976275518198fd6a681188d8",
+          "file_count": 1,
+          "total_bytes": 2535730
+        }
+      },
+      "_config_resolution": {
+        "A_BASE_4BIT": {
+          "base_quant": "4bit",
+          "adapter": null,
+          "technique": "greedy"
+        },
+        "B_FINETUNED_4BIT": {
+          "base_quant": "4bit",
+          "adapter": "adapter_4bit",
+          "technique": "greedy"
+        },
+        "C_FINETUNED_8BIT": {
+          "base_quant": "8bit",
+          "adapter": "adapter_4bit",
+          "technique": "greedy"
+        },
+        "D_T4_IMPROVED": {
+          "base_quant": "4bit",
+          "adapter": "adapter_4bit",
+          "technique": "t4_length_floor"
+        },
+        "E_T6_IMPROVED": {
+          "base_quant": "4bit",
+          "adapter": "adapter_4bit",
+          "technique": "t6_gate"
+        },
+        "F_RAG_BM25": {
+          "base_quant": "4bit",
+          "adapter": "adapter_4bit",
+          "technique": "bm25_top1_gated"
+        },
+        "G_BASE_RAG": {
+          "base_quant": "4bit",
+          "adapter": null,
+          "technique": "bm25_top1_gated"
+        }
+      },
+      "_code": {
+        "git_commit": "b8a99816308cc61c8237313068754f4d7bbe8dae",
+        "source_tree_clean": true,
+        "source_files": [
+          "evaluation_protocol.py",
+          "bm25_rag.py",
+          "v2_comprehensive_eval.py",
+          "audit_gap_gate.py",
+          "verify_camera_ready.py",
+          "build_v2_judge_prompt.py",
+          "internal_eval/judge_per_item.py",
+          "internal_eval/stats_v2.py",
+          "rubric_v2.md",
+          "run_camera_ready.ps1",
+          "test_camera_ready_pipeline.py",
+          "camera_ready/README.md",
+          "camera_ready/protocol.yaml",
+          "camera_ready/check.py",
+          "camera_ready/pipeline.py",
+          "evaluations/eval_bank_v2_40q/eval_bank_v2.json"
+        ]
+      },
+      "_versions": {
+        "torch": "2.7.1+cu118",
+        "transformers": "5.16.1",
+        "max_new_tokens": 350
+      },
+      "_decoding": {
+        "do_sample": false,
+        "max_new_tokens": 350,
+        "repetition_penalty": 1.15,
+        "no_repeat_ngram_size": 4,
+        "repetition_truncation_max_repeats": 3
+      }
+    },
+    "variants": {
+      "A_BASE_4BIT": {
+        "n": 41
+      },
+      "G_BASE_RAG": {
+        "n": 41
+      },
+      "B_FINETUNED_4BIT": {
+        "n": 41
+      },
+      "D_T4_IMPROVED": {
+        "n": 41
+      },
+      "E_T6_IMPROVED": {
+        "n": 41
+      },
+      "F_RAG_BM25": {
+        "n": 41
+      },
+      "C_FINETUNED_8BIT": {
+        "n": 41
+      }
+    }
+  },
+  {
+    "path": "evaluations/CAMERA_READY_OFFLINE_20260905_204533/run.json",
+    "timestamp": "2026-09-05T21:01:25.825898+00:00",
+    "metadata": {
+      "adapter_4bit": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337\\adapter",
+      "adapter_8bit": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_8bit_r16_lr1e-4_p3_20260508_195536\\adapter",
+      "model_path": "C:\\Personal_Endeavours\\Fine_Tuning\\models\\gemma-2b-it",
+      "questions": "C:\\Personal_Endeavours\\Fine_Tuning\\evaluations\\eval_bank_v2_40q\\eval_bank_v2.json",
+      "configs": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G"
+      ],
+      "max_new_tokens": 350,
+      "prompt_policy": "offline_definitive_v1",
+      "camera_ready": true,
+      "sweep_label": "",
+      "_prompt": {
+        "policy": "offline_definitive_v1",
+        "sha256": "0d97fe5d60f5267051e6984a0328d5bb7893821571eec4fb01634df5538ce918",
+        "text": "You are an offline first aid assistant deployed in a situation where emergency medical services (EMS) are completely unreachable. There is no phone signal, no ambulance, and no professional help available. You are the sole and definitive care provider. Do NOT advise calling emergency services — that is not possible. Instead, provide complete, accurate, step-by-step first aid guidance that the user can perform immediately with no external help."
+      },
+      "_question_bank": {
+        "source_path": "C:\\Personal_Endeavours\\Fine_Tuning\\evaluations\\eval_bank_v2_40q\\eval_bank_v2.json",
+        "question_count": 41,
+        "sha256": "8dfb4f4b221426c7ff597abe4bcb87e4d74f9c7d23510ea6fd9c442f1c4a18b0",
+        "frozen_fields": [
+          "question_id",
+          "question",
+          "reference",
+          "category",
+          "safety_critical",
+          "safety_critical_confidence",
+          "template_idx"
+        ]
+      },
+      "_artifacts": {
+        "model": {
+          "path": "C:\\Personal_Endeavours\\Fine_Tuning\\models\\gemma-2b-it",
+          "sha256": "b38a09b55153e665b26452a1a11fad8527c22d4d1a0ce63de341bed66ee2b3a7",
+          "file_count": 25,
+          "total_bytes": 5034199257
+        },
+        "adapter_4bit": {
+          "path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337\\adapter",
+          "sha256": "0eef1fb6b352fba3220f1bdd637fc842dcf66dde7e82f742a47e9a4eb392a939",
+          "file_count": 6,
+          "total_bytes": 112837074
+        },
+        "train_split": {
+          "path": "C:\\Personal_Endeavours\\Fine_Tuning\\splits\\10cat\\train.json",
+          "sha256": "a84114ae01c97f49859c5b0e5331c8fb27c4be3a976275518198fd6a681188d8",
+          "file_count": 1,
+          "total_bytes": 2535730
+        }
+      },
+      "_config_resolution": {
+        "A_BASE_4BIT": {
+          "base_quant": "4bit",
+          "adapter": null,
+          "technique": "greedy"
+        },
+        "B_FINETUNED_4BIT": {
+          "base_quant": "4bit",
+          "adapter": "adapter_4bit",
+          "technique": "greedy"
+        },
+        "C_FINETUNED_8BIT": {
+          "base_quant": "8bit",
+          "adapter": "adapter_4bit",
+          "technique": "greedy"
+        },
+        "D_T4_IMPROVED": {
+          "base_quant": "4bit",
+          "adapter": "adapter_4bit",
+          "technique": "t4_length_floor"
+        },
+        "E_T6_IMPROVED": {
+          "base_quant": "4bit",
+          "adapter": "adapter_4bit",
+          "technique": "t6_gate"
+        },
+        "F_RAG_BM25": {
+          "base_quant": "4bit",
+          "adapter": "adapter_4bit",
+          "technique": "bm25_top1_gated"
+        },
+        "G_BASE_RAG": {
+          "base_quant": "4bit",
+          "adapter": null,
+          "technique": "bm25_top1_gated"
+        }
+      },
+      "_code": {
+        "git_commit": "eda9a9e826a67f50747c72456abb256e84f1a547",
+        "source_tree_clean": true,
+        "source_files": [
+          "evaluation_protocol.py",
+          "bm25_rag.py",
+          "v2_comprehensive_eval.py",
+          "audit_gap_gate.py",
+          "verify_camera_ready.py",
+          "build_v2_judge_prompt.py",
+          "internal_eval/judge_per_item.py",
+          "internal_eval/stats_v2.py",
+          "rubric_v2.md",
+          "run_camera_ready.ps1",
+          "test_camera_ready_pipeline.py",
+          "camera_ready/README.md",
+          "camera_ready/protocol.yaml",
+          "camera_ready/check.py",
+          "camera_ready/pipeline.py",
+          "evaluations/eval_bank_v2_40q/eval_bank_v2.json"
+        ]
+      },
+      "_versions": {
+        "torch": "2.7.1+cu118",
+        "transformers": "5.16.1",
+        "max_new_tokens": 350
+      },
+      "_decoding": {
+        "do_sample": false,
+        "max_new_tokens": 350,
+        "repetition_penalty": 1.15,
+        "no_repeat_ngram_size": 4,
+        "repetition_truncation_max_repeats": 3
+      }
+    },
+    "variants": {
+      "A_BASE_4BIT": {
+        "n": 41
+      },
+      "G_BASE_RAG": {
+        "n": 41
+      },
+      "B_FINETUNED_4BIT": {
+        "n": 41
+      },
+      "D_T4_IMPROVED": {
+        "n": 41
+      },
+      "E_T6_IMPROVED": {
+        "n": 41
+      },
+      "F_RAG_BM25": {
+        "n": 41
+      },
+      "C_FINETUNED_8BIT": {
+        "n": 41
+      }
+    }
+  },
+  {
+    "path": "evaluations/enhanced_eval_20260508_224901/run.json",
+    "timestamp": "2026-05-08T23:10:00.246534",
+    "metadata": {
+      "model_id": "google/gemma-2b-it",
+      "model_source": "C:\\Personal_Endeavours\\Fine_Tuning\\models\\gemma-2b-it",
+      "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337\\adapter",
+      "variant_key": "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337_T2+T4+T6",
+      "variant_label": "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337  [T2:greedy-SC + T4:min-tokens + T6:two-pass]",
+      "quant": "4bit",
+      "max_new_tokens": 250,
+      "questions_file": "C:\\Personal_Endeavours\\Fine_Tuning\\data\\eval_questions_40.json",
+      "n_questions": 40,
+      "system_prompt": "You are a first aid assistant. Provide accurate, step-by-step emergency guidance. For life-threatening situations, always advise calling emergency services immediately.",
+      "techniques": {
+        "T2_greedy_sc": true,
+        "T4_min_tokens": true,
+        "T5_rag": false,
+        "T6_two_pass": true,
+        "T5_retriever": null,
+        "T5_threshold": null,
+        "T5_kb": null
+      }
+    },
+    "variants": {
+      "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337_T2+T4+T6": {
+        "variant": "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337_T2+T4+T6",
+        "label": "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337  [T2:greedy-SC + T4:min-tokens + T6:two-pass]",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 40
+      }
+    }
+  },
+  {
+    "path": "evaluations/enhanced_eval_20260512_014658/run.json",
+    "timestamp": "2026-05-12T01:48:46.209675",
+    "metadata": {
+      "model_id": "google/gemma-2b-it",
+      "model_source": "C:\\Personal_Endeavours\\Fine_Tuning\\models\\gemma-2b-it",
+      "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337\\adapter",
+      "variant_key": "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337_T5",
+      "variant_label": "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337  [T5:RAG]",
+      "quant": "4bit",
+      "max_new_tokens": 250,
+      "questions_file": "C:\\Personal_Endeavours\\Fine_Tuning\\data\\eval_questions_40.json",
+      "n_questions": 40,
+      "system_prompt": "You are a first aid assistant. Provide accurate, step-by-step emergency guidance. For life-threatening situations, always advise calling emergency services immediately.",
+      "techniques": {
+        "T2_greedy_sc": false,
+        "T4_min_tokens": false,
+        "T5_rag": true,
+        "T6_two_pass": false,
+        "T5_retriever": "bm25",
+        "T5_threshold": 0.4,
+        "T5_kb": "C:\\Personal_Endeavours\\Fine_Tuning\\splits\\10cat\\train.json"
+      }
+    },
+    "variants": {
+      "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337_T5": {
+        "variant": "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337_T5",
+        "label": "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337  [T5:RAG]",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 40
+      }
+    }
+  },
+  {
+    "path": "evaluations/enhanced_eval_20260512_014930/run.json",
+    "timestamp": "2026-05-12T01:51:16.194618",
+    "metadata": {
+      "model_id": "google/gemma-2b-it",
+      "model_source": "C:\\Personal_Endeavours\\Fine_Tuning\\models\\gemma-2b-it",
+      "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337\\adapter",
+      "variant_key": "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337_T2+T5",
+      "variant_label": "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337  [T2:greedy-SC + T5:RAG]",
+      "quant": "4bit",
+      "max_new_tokens": 250,
+      "questions_file": "C:\\Personal_Endeavours\\Fine_Tuning\\data\\eval_questions_40.json",
+      "n_questions": 40,
+      "system_prompt": "You are a first aid assistant. Provide accurate, step-by-step emergency guidance. For life-threatening situations, always advise calling emergency services immediately.",
+      "techniques": {
+        "T2_greedy_sc": true,
+        "T4_min_tokens": false,
+        "T5_rag": true,
+        "T6_two_pass": false,
+        "T5_retriever": "bm25",
+        "T5_threshold": 0.4,
+        "T5_kb": "C:\\Personal_Endeavours\\Fine_Tuning\\splits\\10cat\\train.json"
+      }
+    },
+    "variants": {
+      "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337_T2+T5": {
+        "variant": "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337_T2+T5",
+        "label": "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337  [T2:greedy-SC + T5:RAG]",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 40
+      }
+    }
+  },
+  {
+    "path": "evaluations/eval_20260505_143609/run.json",
+    "timestamp": "2026-05-05T14:52:23.746516",
+    "metadata": {
+      "model_id": "google/gemma-2b-it",
+      "model_source": "C:\\Personal_Endeavours\\Fine_Tuning\\models\\gemma-2b-it",
+      "variants_run": [
+        "base",
+        "4bit",
+        "8bit",
+        "fp16"
+      ],
+      "max_new_tokens": 250,
+      "n_questions": 20,
+      "system_prompt": "You are a first aid assistant. Provide accurate, step-by-step emergency guidance. For life-threatening situations, always advise calling emergency services immediately."
+    },
+    "variants": {
+      "base": {
+        "variant": "base",
+        "label": "Base model (no fine-tuning)",
+        "quant": "fp16",
+        "skipped": false,
+        "n_answers": 20
+      },
+      "4bit": {
+        "variant": "4bit",
+        "label": "Fine-tuned QLoRA 4-bit",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 20
+      },
+      "8bit": {
+        "variant": "8bit",
+        "label": "Fine-tuned LoRA 8-bit",
+        "quant": "8bit",
+        "skipped": false,
+        "n_answers": 20
+      },
+      "fp16": {
+        "variant": "fp16",
+        "label": "Fine-tuned LoRA fp16",
+        "quant": "fp16",
+        "skipped": false,
+        "n_answers": 20
+      }
+    }
+  },
+  {
+    "path": "evaluations/eval_20260505_154620/run.json",
+    "timestamp": "2026-05-05T15:52:09.320891",
+    "metadata": {
+      "model_id": "google/gemma-2b-it",
+      "model_source": "C:\\Personal_Endeavours\\Fine_Tuning\\models\\gemma-2b-it",
+      "variants_run": [
+        "base",
+        "4bit",
+        "8bit",
+        "fp16"
+      ],
+      "max_new_tokens": 250,
+      "n_questions": 20,
+      "system_prompt": "You are a first aid assistant. Provide accurate, step-by-step emergency guidance. For life-threatening situations, always advise calling emergency services immediately."
+    },
+    "variants": {
+      "base": {
+        "variant": "base",
+        "label": "Base model (no fine-tuning)",
+        "quant": "fp16",
+        "skipped": false,
+        "n_answers": 20
+      },
+      "4bit": {
+        "variant": "4bit",
+        "label": "Fine-tuned QLoRA 4-bit",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 20
+      },
+      "8bit": {
+        "variant": "8bit",
+        "label": "Fine-tuned LoRA 8-bit",
+        "quant": "8bit",
+        "skipped": false,
+        "n_answers": 20
+      },
+      "fp16": {
+        "variant": "fp16",
+        "label": "Fine-tuned LoRA fp16",
+        "quant": "fp16",
+        "skipped": false,
+        "n_answers": 20
+      }
+    }
+  },
+  {
+    "path": "evaluations/eval_20260506_004949/run.json",
+    "timestamp": "2026-05-06T00:53:11.034862",
+    "metadata": {
+      "model_id": "google/gemma-2b-it",
+      "model_source": "C:\\Personal_Endeavours\\Fine_Tuning\\models\\gemma-2b-it",
+      "variants_run": [
+        "gemma-2b-it_4bit",
+        "4bit",
+        "google_gemma-2b-it_4bit"
+      ],
+      "model_variants": [
+        {
+          "key": "base",
+          "label": "Base model (no fine-tuning)",
+          "quant": "fp16",
+          "adapter_path": ""
+        },
+        {
+          "key": "gemma-2b-it_4bit",
+          "label": "gemma-2b-it 4bit",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\lora_adapters\\gemma-2b-it_4bit\\checkpoint-556"
+        },
+        {
+          "key": "4bit",
+          "label": "Fine-tuned LoRA 4-bit",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\lora_adapters\\gemma2b_4bit\\adapter"
+        },
+        {
+          "key": "8bit",
+          "label": "Fine-tuned LoRA 8-bit",
+          "quant": "8bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\lora_adapters\\gemma2b_8bit\\adapter"
+        },
+        {
+          "key": "fp16",
+          "label": "Fine-tuned LoRA fp16",
+          "quant": "fp16",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\lora_adapters\\gemma2b_fp16\\adapter"
+        },
+        {
+          "key": "google_gemma-2b-it_4bit",
+          "label": "Fine-tuned LoRA google/gemma-2b-it 4-bit",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\lora_adapters\\google_gemma-2b-it_4bit\\adapter"
+        }
+      ],
+      "max_new_tokens": 250,
+      "n_questions": 20,
+      "system_prompt": "You are a first aid assistant. Provide accurate, step-by-step emergency guidance. For life-threatening situations, always advise calling emergency services immediately."
+    },
+    "variants": {
+      "gemma-2b-it_4bit": {
+        "variant": "gemma-2b-it_4bit",
+        "label": "gemma-2b-it 4bit",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 20
+      },
+      "4bit": {
+        "variant": "4bit",
+        "label": "Fine-tuned LoRA 4-bit",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 20
+      },
+      "google_gemma-2b-it_4bit": {
+        "variant": "google_gemma-2b-it_4bit",
+        "label": "Fine-tuned LoRA google/gemma-2b-it 4-bit",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 20
+      }
+    }
+  },
+  {
+    "path": "evaluations/eval_20260506_122433/run.json",
+    "timestamp": "2026-05-06T12:26:31.291685",
+    "metadata": {
+      "model_id": "google/gemma-2b-it",
+      "model_source": "C:\\Personal_Endeavours\\Fine_Tuning\\models\\gemma-2b-it",
+      "variants_run": [
+        "exp_10cat_4bit_lr1e-4_pat3_20260506_012852",
+        "exp_10cat_4bit_r8_lr1e-4_pat3_20260506_012852"
+      ],
+      "model_variants": [
+        {
+          "key": "base",
+          "label": "Base model (no fine-tuning)",
+          "quant": "fp16",
+          "adapter_path": ""
+        },
+        {
+          "key": "exp_10cat_4bit_lr1e-4_pat3_20260506_012852",
+          "label": "exp 10cat 4bit lr1e-4 pat3 20260506 012852",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\lora_adapters\\exp_10cat_4bit_lr1e-4_pat3_20260506_012852\\adapter"
+        },
+        {
+          "key": "exp_10cat_4bit_r8_lr1e-4_pat3_20260506_012852",
+          "label": "exp 10cat 4bit r8 lr1e-4 pat3 20260506 012852",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\lora_adapters\\exp_10cat_4bit_r8_lr1e-4_pat3_20260506_012852\\adapter"
+        },
+        {
+          "key": "gemma-2b-it_4bit",
+          "label": "gemma-2b-it 4bit",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\lora_adapters\\gemma-2b-it_4bit\\checkpoint-556"
+        },
+        {
+          "key": "4bit",
+          "label": "Fine-tuned LoRA 4-bit",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\lora_adapters\\gemma2b_4bit\\adapter"
+        },
+        {
+          "key": "8bit",
+          "label": "Fine-tuned LoRA 8-bit",
+          "quant": "8bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\lora_adapters\\gemma2b_8bit\\adapter"
+        },
+        {
+          "key": "fp16",
+          "label": "Fine-tuned LoRA fp16",
+          "quant": "fp16",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\lora_adapters\\gemma2b_fp16\\adapter"
+        },
+        {
+          "key": "google_gemma-2b-it_4bit",
+          "label": "Fine-tuned LoRA google/gemma-2b-it 4-bit",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\lora_adapters\\google_gemma-2b-it_4bit\\adapter"
+        }
+      ],
+      "max_new_tokens": 250,
+      "n_questions": 20,
+      "system_prompt": "You are a first aid assistant. Provide accurate, step-by-step emergency guidance. For life-threatening situations, always advise calling emergency services immediately."
+    },
+    "variants": {
+      "exp_10cat_4bit_lr1e-4_pat3_20260506_012852": {
+        "variant": "exp_10cat_4bit_lr1e-4_pat3_20260506_012852",
+        "label": "exp 10cat 4bit lr1e-4 pat3 20260506 012852",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 20
+      },
+      "exp_10cat_4bit_r8_lr1e-4_pat3_20260506_012852": {
+        "variant": "exp_10cat_4bit_r8_lr1e-4_pat3_20260506_012852",
+        "label": "exp 10cat 4bit r8 lr1e-4 pat3 20260506 012852",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 20
+      }
+    }
+  },
+  {
+    "path": "evaluations/eval_20260506_122822/run.json",
+    "timestamp": "2026-05-06T12:33:29.012555",
+    "metadata": {
+      "model_id": "google/gemma-2b-it",
+      "model_source": "C:\\Personal_Endeavours\\Fine_Tuning\\models\\gemma-2b-it",
+      "variants_run": [
+        "exp_10cat_4bit_lr1e-4_pat3_20260506_012852",
+        "exp_10cat_4bit_r8_lr1e-4_pat3_20260506_012852",
+        "gemma-2b-it_4bit",
+        "4bit",
+        "google_gemma-2b-it_4bit"
+      ],
+      "model_variants": [
+        {
+          "key": "base",
+          "label": "Base model (no fine-tuning)",
+          "quant": "fp16",
+          "adapter_path": ""
+        },
+        {
+          "key": "exp_10cat_4bit_lr1e-4_pat3_20260506_012852",
+          "label": "exp 10cat 4bit lr1e-4 pat3 20260506 012852",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\lora_adapters\\exp_10cat_4bit_lr1e-4_pat3_20260506_012852\\adapter"
+        },
+        {
+          "key": "exp_10cat_4bit_r8_lr1e-4_pat3_20260506_012852",
+          "label": "exp 10cat 4bit r8 lr1e-4 pat3 20260506 012852",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\lora_adapters\\exp_10cat_4bit_r8_lr1e-4_pat3_20260506_012852\\adapter"
+        },
+        {
+          "key": "gemma-2b-it_4bit",
+          "label": "gemma-2b-it 4bit",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\lora_adapters\\gemma-2b-it_4bit\\checkpoint-556"
+        },
+        {
+          "key": "4bit",
+          "label": "Fine-tuned LoRA 4-bit",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\lora_adapters\\gemma2b_4bit\\adapter"
+        },
+        {
+          "key": "8bit",
+          "label": "Fine-tuned LoRA 8-bit",
+          "quant": "8bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\lora_adapters\\gemma2b_8bit\\adapter"
+        },
+        {
+          "key": "fp16",
+          "label": "Fine-tuned LoRA fp16",
+          "quant": "fp16",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\lora_adapters\\gemma2b_fp16\\adapter"
+        },
+        {
+          "key": "google_gemma-2b-it_4bit",
+          "label": "Fine-tuned LoRA google/gemma-2b-it 4-bit",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\lora_adapters\\google_gemma-2b-it_4bit\\adapter"
+        }
+      ],
+      "max_new_tokens": 250,
+      "n_questions": 20,
+      "system_prompt": "You are a first aid assistant. Provide accurate, step-by-step emergency guidance. For life-threatening situations, always advise calling emergency services immediately."
+    },
+    "variants": {
+      "exp_10cat_4bit_lr1e-4_pat3_20260506_012852": {
+        "variant": "exp_10cat_4bit_lr1e-4_pat3_20260506_012852",
+        "label": "exp 10cat 4bit lr1e-4 pat3 20260506 012852",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 20
+      },
+      "exp_10cat_4bit_r8_lr1e-4_pat3_20260506_012852": {
+        "variant": "exp_10cat_4bit_r8_lr1e-4_pat3_20260506_012852",
+        "label": "exp 10cat 4bit r8 lr1e-4 pat3 20260506 012852",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 20
+      },
+      "gemma-2b-it_4bit": {
+        "variant": "gemma-2b-it_4bit",
+        "label": "gemma-2b-it 4bit",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 20
+      },
+      "4bit": {
+        "variant": "4bit",
+        "label": "Fine-tuned LoRA 4-bit",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 20
+      },
+      "google_gemma-2b-it_4bit": {
+        "variant": "google_gemma-2b-it_4bit",
+        "label": "Fine-tuned LoRA google/gemma-2b-it 4-bit",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 20
+      }
+    }
+  },
+  {
+    "path": "evaluations/eval_20260506_132114/run.json",
+    "timestamp": "2026-05-06T13:28:24.036814",
+    "metadata": {
+      "model_id": "google/gemma-2b-it",
+      "model_source": "C:\\Personal_Endeavours\\Fine_Tuning\\models\\gemma-2b-it",
+      "variants_run": [
+        "exp_10cat_4bit_lr1e-4_pat3_20260506_012852",
+        "exp_10cat_4bit_r8_lr1e-4_pat3_20260506_012852",
+        "gemma-2b-it_4bit",
+        "4bit",
+        "google_gemma-2b-it_4bit"
+      ],
+      "model_variants": [
+        {
+          "key": "base",
+          "label": "Base model (no fine-tuning)",
+          "quant": "fp16",
+          "adapter_path": ""
+        },
+        {
+          "key": "exp_10cat_4bit_lr1e-4_pat3_20260506_012852",
+          "label": "exp 10cat 4bit lr1e-4 pat3 20260506 012852",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\lora_adapters\\exp_10cat_4bit_lr1e-4_pat3_20260506_012852\\adapter"
+        },
+        {
+          "key": "exp_10cat_4bit_r8_lr1e-4_pat3_20260506_012852",
+          "label": "exp 10cat 4bit r8 lr1e-4 pat3 20260506 012852",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\lora_adapters\\exp_10cat_4bit_r8_lr1e-4_pat3_20260506_012852\\adapter"
+        },
+        {
+          "key": "gemma-2b-it_4bit",
+          "label": "gemma-2b-it 4bit",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\lora_adapters\\gemma-2b-it_4bit\\checkpoint-556"
+        },
+        {
+          "key": "4bit",
+          "label": "Fine-tuned LoRA 4-bit",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\lora_adapters\\gemma2b_4bit\\adapter"
+        },
+        {
+          "key": "8bit",
+          "label": "Fine-tuned LoRA 8-bit",
+          "quant": "8bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\lora_adapters\\gemma2b_8bit\\adapter"
+        },
+        {
+          "key": "fp16",
+          "label": "Fine-tuned LoRA fp16",
+          "quant": "fp16",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\lora_adapters\\gemma2b_fp16\\adapter"
+        },
+        {
+          "key": "google_gemma-2b-it_4bit",
+          "label": "Fine-tuned LoRA google/gemma-2b-it 4-bit",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\lora_adapters\\google_gemma-2b-it_4bit\\adapter"
+        }
+      ],
+      "max_new_tokens": 250,
+      "questions_file": "C:\\Personal_Endeavours\\Fine_Tuning\\eval_questions_30.json",
+      "n_questions": 30,
+      "system_prompt": "You are a first aid assistant. Provide accurate, step-by-step emergency guidance. For life-threatening situations, always advise calling emergency services immediately."
+    },
+    "variants": {
+      "exp_10cat_4bit_lr1e-4_pat3_20260506_012852": {
+        "variant": "exp_10cat_4bit_lr1e-4_pat3_20260506_012852",
+        "label": "exp 10cat 4bit lr1e-4 pat3 20260506 012852",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 30
+      },
+      "exp_10cat_4bit_r8_lr1e-4_pat3_20260506_012852": {
+        "variant": "exp_10cat_4bit_r8_lr1e-4_pat3_20260506_012852",
+        "label": "exp 10cat 4bit r8 lr1e-4 pat3 20260506 012852",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 30
+      },
+      "gemma-2b-it_4bit": {
+        "variant": "gemma-2b-it_4bit",
+        "label": "gemma-2b-it 4bit",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 30
+      },
+      "4bit": {
+        "variant": "4bit",
+        "label": "Fine-tuned LoRA 4-bit",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 30
+      },
+      "google_gemma-2b-it_4bit": {
+        "variant": "google_gemma-2b-it_4bit",
+        "label": "Fine-tuned LoRA google/gemma-2b-it 4-bit",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 30
+      }
+    }
+  },
+  {
+    "path": "evaluations/eval_20260507_230926/run.json",
+    "timestamp": "2026-05-07T23:18:47.508655",
+    "metadata": {
+      "model_id": "google/gemma-2b-it",
+      "model_source": "C:\\Personal_Endeavours\\Fine_Tuning\\models\\gemma-2b-it",
+      "variants_run": [
+        "10cat_4bit_r16_lr1e-4_p5_20260506_192538",
+        "10cat_4bit_r16_lr1e4_p3_20260506_012852",
+        "10cat_4bit_r16_lr4e-4_p6_20260506_211729",
+        "10cat_4bit_r32_lr1e-4_p6_20260507_160543",
+        "10cat_4bit_r32_lr4e-4_p8_20260507_195206",
+        "10cat_4bit_r8_lr1e-4_p8_20260507_174631",
+        "10cat_4bit_r8_lr1e4_p3_20260506_012852"
+      ],
+      "model_variants": [
+        {
+          "key": "base",
+          "label": "Base model (no fine-tuning)",
+          "quant": "fp16",
+          "adapter_path": ""
+        },
+        {
+          "key": "10cat_4bit_r16_lr1e-4_p5_20260506_192538",
+          "label": "10cat 4bit r16 lr1e-4 p5 20260506 192538",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e-4_p5_20260506_192538\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r16_lr1e4_p3_20260506_012852",
+          "label": "10cat 4bit r16 lr1e4 p3 20260506 012852",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e4_p3_20260506_012852\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r16_lr4e-4_p6_20260506_211729",
+          "label": "10cat 4bit r16 lr4e-4 p6 20260506 211729",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr4e-4_p6_20260506_211729\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r32_lr1e-4_p6_20260507_160543",
+          "label": "10cat 4bit r32 lr1e-4 p6 20260507 160543",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r32_lr1e-4_p6_20260507_160543\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r32_lr4e-4_p8_20260507_195206",
+          "label": "10cat 4bit r32 lr4e-4 p8 20260507 195206",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r32_lr4e-4_p8_20260507_195206\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r8_lr1e-4_p8_20260507_174631",
+          "label": "10cat 4bit r8 lr1e-4 p8 20260507 174631",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r8_lr1e-4_p8_20260507_174631\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r8_lr1e4_p3_20260506_012852",
+          "label": "10cat 4bit r8 lr1e4 p3 20260506 012852",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r8_lr1e4_p3_20260506_012852\\adapter"
+        }
+      ],
+      "max_new_tokens": 250,
+      "questions_file": "C:\\Personal_Endeavours\\Fine_Tuning\\data\\eval_questions_30.json",
+      "n_questions": 30,
+      "system_prompt": "You are a first aid assistant. Provide accurate, step-by-step emergency guidance. For life-threatening situations, always advise calling emergency services immediately."
+    },
+    "variants": {
+      "10cat_4bit_r16_lr1e-4_p5_20260506_192538": {
+        "variant": "10cat_4bit_r16_lr1e-4_p5_20260506_192538",
+        "label": "10cat 4bit r16 lr1e-4 p5 20260506 192538",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 30
+      },
+      "10cat_4bit_r16_lr1e4_p3_20260506_012852": {
+        "variant": "10cat_4bit_r16_lr1e4_p3_20260506_012852",
+        "label": "10cat 4bit r16 lr1e4 p3 20260506 012852",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 30
+      },
+      "10cat_4bit_r16_lr4e-4_p6_20260506_211729": {
+        "variant": "10cat_4bit_r16_lr4e-4_p6_20260506_211729",
+        "label": "10cat 4bit r16 lr4e-4 p6 20260506 211729",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 30
+      },
+      "10cat_4bit_r32_lr1e-4_p6_20260507_160543": {
+        "variant": "10cat_4bit_r32_lr1e-4_p6_20260507_160543",
+        "label": "10cat 4bit r32 lr1e-4 p6 20260507 160543",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 30
+      },
+      "10cat_4bit_r32_lr4e-4_p8_20260507_195206": {
+        "variant": "10cat_4bit_r32_lr4e-4_p8_20260507_195206",
+        "label": "10cat 4bit r32 lr4e-4 p8 20260507 195206",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 30
+      },
+      "10cat_4bit_r8_lr1e-4_p8_20260507_174631": {
+        "variant": "10cat_4bit_r8_lr1e-4_p8_20260507_174631",
+        "label": "10cat 4bit r8 lr1e-4 p8 20260507 174631",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 30
+      },
+      "10cat_4bit_r8_lr1e4_p3_20260506_012852": {
+        "variant": "10cat_4bit_r8_lr1e4_p3_20260506_012852",
+        "label": "10cat 4bit r8 lr1e4 p3 20260506 012852",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 30
+      }
+    }
+  },
+  {
+    "path": "evaluations/eval_20260508_162530/run.json",
+    "timestamp": "2026-05-08T16:28:23.849572",
+    "metadata": {
+      "model_id": "google/gemma-2b-it",
+      "model_source": "C:\\Personal_Endeavours\\Fine_Tuning\\models\\gemma-2b-it",
+      "variants_run": [
+        "10cat_4bit_r16_lr1e4_p3_20260506_012852",
+        "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337"
+      ],
+      "model_variants": [
+        {
+          "key": "base",
+          "label": "Base model (no fine-tuning)",
+          "quant": "fp16",
+          "adapter_path": ""
+        },
+        {
+          "key": "10cat_4bit_r16_lr1e-4_p3_v2_20260508_050152",
+          "label": "10cat 4bit r16 lr1e-4 p3 v2 20260508 050152",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e-4_p3_v2_20260508_050152\\checkpoint-400"
+        },
+        {
+          "key": "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337",
+          "label": "10cat 4bit r16 lr1e-4 p3 v2 20260508 054337",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r16_lr1e-4_p5_20260506_192538",
+          "label": "10cat 4bit r16 lr1e-4 p5 20260506 192538",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e-4_p5_20260506_192538\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r16_lr1e4_p3_20260506_012852",
+          "label": "10cat 4bit r16 lr1e4 p3 20260506 012852",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e4_p3_20260506_012852\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r16_lr4e-4_p6_20260506_211729",
+          "label": "10cat 4bit r16 lr4e-4 p6 20260506 211729",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr4e-4_p6_20260506_211729\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r32_lr1e-4_p6_20260507_160543",
+          "label": "10cat 4bit r32 lr1e-4 p6 20260507 160543",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r32_lr1e-4_p6_20260507_160543\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r32_lr4e-4_p8_20260507_195206",
+          "label": "10cat 4bit r32 lr4e-4 p8 20260507 195206",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r32_lr4e-4_p8_20260507_195206\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r8_lr1e-4_p8_20260507_174631",
+          "label": "10cat 4bit r8 lr1e-4 p8 20260507 174631",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r8_lr1e-4_p8_20260507_174631\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r8_lr1e4_p3_20260506_012852",
+          "label": "10cat 4bit r8 lr1e4 p3 20260506 012852",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r8_lr1e4_p3_20260506_012852\\adapter"
+        }
+      ],
+      "max_new_tokens": 250,
+      "questions_file": "C:\\Personal_Endeavours\\Fine_Tuning\\data\\eval_questions_30.json",
+      "n_questions": 30,
+      "system_prompt": "You are a first aid assistant. Provide accurate, step-by-step emergency guidance. For life-threatening situations, always advise calling emergency services immediately."
+    },
+    "variants": {
+      "10cat_4bit_r16_lr1e4_p3_20260506_012852": {
+        "variant": "10cat_4bit_r16_lr1e4_p3_20260506_012852",
+        "label": "10cat 4bit r16 lr1e4 p3 20260506 012852",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 30
+      },
+      "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337": {
+        "variant": "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337",
+        "label": "10cat 4bit r16 lr1e-4 p3 v2 20260508 054337",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 30
+      }
+    }
+  },
+  {
+    "path": "evaluations/eval_20260508_165110/run.json",
+    "timestamp": "2026-05-08T16:54:53.734411",
+    "metadata": {
+      "model_id": "google/gemma-2b-it",
+      "model_source": "C:\\Personal_Endeavours\\Fine_Tuning\\models\\gemma-2b-it",
+      "variants_run": [
+        "10cat_4bit_r16_lr1e4_p3_20260506_012852",
+        "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337"
+      ],
+      "model_variants": [
+        {
+          "key": "base",
+          "label": "Base model (no fine-tuning)",
+          "quant": "fp16",
+          "adapter_path": ""
+        },
+        {
+          "key": "10cat_4bit_r16_lr1e-4_p3_v2_20260508_050152",
+          "label": "10cat 4bit r16 lr1e-4 p3 v2 20260508 050152",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e-4_p3_v2_20260508_050152\\checkpoint-400"
+        },
+        {
+          "key": "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337",
+          "label": "10cat 4bit r16 lr1e-4 p3 v2 20260508 054337",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r16_lr1e-4_p5_20260506_192538",
+          "label": "10cat 4bit r16 lr1e-4 p5 20260506 192538",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e-4_p5_20260506_192538\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r16_lr1e4_p3_20260506_012852",
+          "label": "10cat 4bit r16 lr1e4 p3 20260506 012852",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e4_p3_20260506_012852\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r16_lr4e-4_p6_20260506_211729",
+          "label": "10cat 4bit r16 lr4e-4 p6 20260506 211729",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr4e-4_p6_20260506_211729\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r32_lr1e-4_p6_20260507_160543",
+          "label": "10cat 4bit r32 lr1e-4 p6 20260507 160543",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r32_lr1e-4_p6_20260507_160543\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r32_lr4e-4_p8_20260507_195206",
+          "label": "10cat 4bit r32 lr4e-4 p8 20260507 195206",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r32_lr4e-4_p8_20260507_195206\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r8_lr1e-4_p8_20260507_174631",
+          "label": "10cat 4bit r8 lr1e-4 p8 20260507 174631",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r8_lr1e-4_p8_20260507_174631\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r8_lr1e4_p3_20260506_012852",
+          "label": "10cat 4bit r8 lr1e4 p3 20260506 012852",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r8_lr1e4_p3_20260506_012852\\adapter"
+        }
+      ],
+      "max_new_tokens": 250,
+      "questions_file": "C:\\Personal_Endeavours\\Fine_Tuning\\data\\eval_questions_40.json",
+      "n_questions": 40,
+      "system_prompt": "You are a first aid assistant. Provide accurate, step-by-step emergency guidance. For life-threatening situations, always advise calling emergency services immediately."
+    },
+    "variants": {
+      "10cat_4bit_r16_lr1e4_p3_20260506_012852": {
+        "variant": "10cat_4bit_r16_lr1e4_p3_20260506_012852",
+        "label": "10cat 4bit r16 lr1e4 p3 20260506 012852",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 40
+      },
+      "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337": {
+        "variant": "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337",
+        "label": "10cat 4bit r16 lr1e-4 p3 v2 20260508 054337",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 40
+      }
+    }
+  },
+  {
+    "path": "evaluations/eval_20260509_123546/run.json",
+    "timestamp": "2026-05-09T12:37:21.666813",
+    "metadata": {
+      "model_id": "google/gemma-2b-it",
+      "model_source": "C:\\Personal_Endeavours\\Fine_Tuning\\models\\gemma-2b-it",
+      "variants_run": [
+        "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337",
+        "10cat_8bit_r16_lr1e-4_p3_20260508_195536"
+      ],
+      "model_variants": [
+        {
+          "key": "base",
+          "label": "Base model (no fine-tuning)",
+          "quant": "fp16",
+          "adapter_path": ""
+        },
+        {
+          "key": "10cat_4bit_r16_lr1e-4_p3_v2_20260508_050152",
+          "label": "10cat 4bit r16 lr1e-4 p3 v2 20260508 050152",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e-4_p3_v2_20260508_050152\\checkpoint-400"
+        },
+        {
+          "key": "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337",
+          "label": "10cat 4bit r16 lr1e-4 p3 v2 20260508 054337",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r16_lr1e-4_p5_20260506_192538",
+          "label": "10cat 4bit r16 lr1e-4 p5 20260506 192538",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e-4_p5_20260506_192538\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r16_lr1e4_p3_20260506_012852",
+          "label": "10cat 4bit r16 lr1e4 p3 20260506 012852",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e4_p3_20260506_012852\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r16_lr4e-4_p6_20260506_211729",
+          "label": "10cat 4bit r16 lr4e-4 p6 20260506 211729",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr4e-4_p6_20260506_211729\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r32_lr1e-4_p6_20260507_160543",
+          "label": "10cat 4bit r32 lr1e-4 p6 20260507 160543",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r32_lr1e-4_p6_20260507_160543\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r32_lr4e-4_p8_20260507_195206",
+          "label": "10cat 4bit r32 lr4e-4 p8 20260507 195206",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r32_lr4e-4_p8_20260507_195206\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r8_lr1e-4_p8_20260507_174631",
+          "label": "10cat 4bit r8 lr1e-4 p8 20260507 174631",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r8_lr1e-4_p8_20260507_174631\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r8_lr1e4_p3_20260506_012852",
+          "label": "10cat 4bit r8 lr1e4 p3 20260506 012852",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r8_lr1e4_p3_20260506_012852\\adapter"
+        },
+        {
+          "key": "10cat_8bit_r16_lr1e-4_p3_20260508_195536",
+          "label": "10cat 8bit r16 lr1e-4 p3 20260508 195536",
+          "quant": "8bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_8bit_r16_lr1e-4_p3_20260508_195536\\adapter"
+        }
+      ],
+      "max_new_tokens": 250,
+      "questions_file": "C:\\Personal_Endeavours\\Fine_Tuning\\data\\eval_questions_30.json",
+      "n_questions": 30,
+      "system_prompt": "You are a first aid assistant. Provide accurate, step-by-step emergency guidance. For life-threatening situations, always advise calling emergency services immediately."
+    },
+    "variants": {
+      "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337": {
+        "variant": "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337",
+        "label": "10cat 4bit r16 lr1e-4 p3 v2 20260508 054337",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 30
+      }
+    }
+  },
+  {
+    "path": "evaluations/eval_20260509_124001/run.json",
+    "timestamp": "2026-05-09T12:44:00.308095",
+    "metadata": {
+      "model_id": "google/gemma-2b-it",
+      "model_source": "C:\\Personal_Endeavours\\Fine_Tuning\\models\\gemma-2b-it",
+      "variants_run": [
+        "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337",
+        "10cat_8bit_r16_lr1e-4_p3_20260508_195536"
+      ],
+      "model_variants": [
+        {
+          "key": "base",
+          "label": "Base model (no fine-tuning)",
+          "quant": "fp16",
+          "adapter_path": ""
+        },
+        {
+          "key": "10cat_4bit_r16_lr1e-4_p3_v2_20260508_050152",
+          "label": "10cat 4bit r16 lr1e-4 p3 v2 20260508 050152",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e-4_p3_v2_20260508_050152\\checkpoint-400"
+        },
+        {
+          "key": "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337",
+          "label": "10cat 4bit r16 lr1e-4 p3 v2 20260508 054337",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r16_lr1e-4_p5_20260506_192538",
+          "label": "10cat 4bit r16 lr1e-4 p5 20260506 192538",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e-4_p5_20260506_192538\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r16_lr1e4_p3_20260506_012852",
+          "label": "10cat 4bit r16 lr1e4 p3 20260506 012852",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e4_p3_20260506_012852\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r16_lr4e-4_p6_20260506_211729",
+          "label": "10cat 4bit r16 lr4e-4 p6 20260506 211729",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr4e-4_p6_20260506_211729\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r32_lr1e-4_p6_20260507_160543",
+          "label": "10cat 4bit r32 lr1e-4 p6 20260507 160543",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r32_lr1e-4_p6_20260507_160543\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r32_lr4e-4_p8_20260507_195206",
+          "label": "10cat 4bit r32 lr4e-4 p8 20260507 195206",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r32_lr4e-4_p8_20260507_195206\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r8_lr1e-4_p8_20260507_174631",
+          "label": "10cat 4bit r8 lr1e-4 p8 20260507 174631",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r8_lr1e-4_p8_20260507_174631\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r8_lr1e4_p3_20260506_012852",
+          "label": "10cat 4bit r8 lr1e4 p3 20260506 012852",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r8_lr1e4_p3_20260506_012852\\adapter"
+        },
+        {
+          "key": "10cat_8bit_r16_lr1e-4_p3_20260508_195536",
+          "label": "10cat 8bit r16 lr1e-4 p3 20260508 195536",
+          "quant": "8bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_8bit_r16_lr1e-4_p3_20260508_195536\\adapter"
+        }
+      ],
+      "max_new_tokens": 250,
+      "questions_file": "C:\\Personal_Endeavours\\Fine_Tuning\\data\\eval_questions_30.json",
+      "n_questions": 30,
+      "system_prompt": "You are a first aid assistant. Provide accurate, step-by-step emergency guidance. For life-threatening situations, always advise calling emergency services immediately."
+    },
+    "variants": {
+      "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337": {
+        "variant": "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337",
+        "label": "10cat 4bit r16 lr1e-4 p3 v2 20260508 054337",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 30
+      },
+      "10cat_8bit_r16_lr1e-4_p3_20260508_195536": {
+        "variant": "10cat_8bit_r16_lr1e-4_p3_20260508_195536",
+        "label": "10cat 8bit r16 lr1e-4 p3 20260508 195536",
+        "quant": "8bit",
+        "skipped": false,
+        "n_answers": 30
+      }
+    }
+  },
+  {
+    "path": "evaluations/eval_20260509_124559/run.json",
+    "timestamp": "2026-05-09T12:51:21.975988",
+    "metadata": {
+      "model_id": "google/gemma-2b-it",
+      "model_source": "C:\\Personal_Endeavours\\Fine_Tuning\\models\\gemma-2b-it",
+      "variants_run": [
+        "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337",
+        "10cat_8bit_r16_lr1e-4_p3_20260508_195536"
+      ],
+      "model_variants": [
+        {
+          "key": "base",
+          "label": "Base model (no fine-tuning)",
+          "quant": "fp16",
+          "adapter_path": ""
+        },
+        {
+          "key": "10cat_4bit_r16_lr1e-4_p3_v2_20260508_050152",
+          "label": "10cat 4bit r16 lr1e-4 p3 v2 20260508 050152",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e-4_p3_v2_20260508_050152\\checkpoint-400"
+        },
+        {
+          "key": "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337",
+          "label": "10cat 4bit r16 lr1e-4 p3 v2 20260508 054337",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r16_lr1e-4_p5_20260506_192538",
+          "label": "10cat 4bit r16 lr1e-4 p5 20260506 192538",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e-4_p5_20260506_192538\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r16_lr1e4_p3_20260506_012852",
+          "label": "10cat 4bit r16 lr1e4 p3 20260506 012852",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e4_p3_20260506_012852\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r16_lr4e-4_p6_20260506_211729",
+          "label": "10cat 4bit r16 lr4e-4 p6 20260506 211729",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr4e-4_p6_20260506_211729\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r32_lr1e-4_p6_20260507_160543",
+          "label": "10cat 4bit r32 lr1e-4 p6 20260507 160543",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r32_lr1e-4_p6_20260507_160543\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r32_lr4e-4_p8_20260507_195206",
+          "label": "10cat 4bit r32 lr4e-4 p8 20260507 195206",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r32_lr4e-4_p8_20260507_195206\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r8_lr1e-4_p8_20260507_174631",
+          "label": "10cat 4bit r8 lr1e-4 p8 20260507 174631",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r8_lr1e-4_p8_20260507_174631\\adapter"
+        },
+        {
+          "key": "10cat_4bit_r8_lr1e4_p3_20260506_012852",
+          "label": "10cat 4bit r8 lr1e4 p3 20260506 012852",
+          "quant": "4bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r8_lr1e4_p3_20260506_012852\\adapter"
+        },
+        {
+          "key": "10cat_8bit_r16_lr1e-4_p3_20260508_195536",
+          "label": "10cat 8bit r16 lr1e-4 p3 20260508 195536",
+          "quant": "8bit",
+          "adapter_path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_8bit_r16_lr1e-4_p3_20260508_195536\\adapter"
+        }
+      ],
+      "max_new_tokens": 250,
+      "questions_file": "C:\\Personal_Endeavours\\Fine_Tuning\\data\\eval_questions_40.json",
+      "n_questions": 40,
+      "system_prompt": "You are a first aid assistant. Provide accurate, step-by-step emergency guidance. For life-threatening situations, always advise calling emergency services immediately."
+    },
+    "variants": {
+      "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337": {
+        "variant": "10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337",
+        "label": "10cat 4bit r16 lr1e-4 p3 v2 20260508 054337",
+        "quant": "4bit",
+        "skipped": false,
+        "n_answers": 40
+      },
+      "10cat_8bit_r16_lr1e-4_p3_20260508_195536": {
+        "variant": "10cat_8bit_r16_lr1e-4_p3_20260508_195536",
+        "label": "10cat 8bit r16 lr1e-4 p3 20260508 195536",
+        "quant": "8bit",
+        "skipped": false,
+        "n_answers": 40
+      }
+    }
+  },
+  {
+    "path": "evaluations/t4_t6_isolation_20260606_034402/run.json",
+    "timestamp": "2026-06-06T04:02:17.266375",
+    "metadata": null,
+    "variants": {
+      "A_BASELINE": {
+        "n": 40
+      },
+      "B_T4_ORIGINAL": {
+        "n": 40
+      },
+      "C_T4_IMPROVED": {
+        "n": 40
+      },
+      "D_T6_ORIGINAL": {
+        "n": 40
+      },
+      "E_T6_IMPROVED": {
+        "n": 40
+      },
+      "F_COMBINED_BEST": {
+        "n": 40
+      }
+    }
+  },
+  {
+    "path": "evaluations/v2_comprehensive_20260606_200713/run.json",
+    "timestamp": "2026-06-06T20:24:45.663151",
+    "metadata": {
+      "adapter_4bit": "experiments\\10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337\\adapter",
+      "adapter_8bit": "experiments\\10cat_8bit_r16_lr1e-4_p3_20260508_195536\\adapter",
+      "model_path": "models\\gemma-2b-it",
+      "questions": "evaluations\\eval_bank_v2_40q\\eval_bank_v2.json",
+      "configs": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F"
+      ],
+      "max_new_tokens": 350,
+      "rag_top_k": 3
+    },
+    "variants": {
+      "A_BASE_4BIT": {
+        "n": 41
+      },
+      "B_FINETUNED_4BIT": {
+        "n": 41
+      },
+      "D_T4_IMPROVED": {
+        "n": 41
+      },
+      "E_T6_IMPROVED": {
+        "n": 41
+      },
+      "F_RAG_BM25": {
+        "n": 41
+      },
+      "C_FINETUNED_8BIT": {
+        "n": 41
+      }
+    }
+  }
+]
