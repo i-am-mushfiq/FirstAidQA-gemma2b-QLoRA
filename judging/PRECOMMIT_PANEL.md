@@ -1,6 +1,33 @@
 # Multi-Judge Panel Precommit
 ## Committed: 2026-07-11
 
+> **READ FIRST — added 2026-09-10.**
+>
+> This file is a **July registration** and the result figures in it are **July
+> results**, computed on `CAMERA_READY_FINAL` (582 calls, 3 judges, the
+> pre-ANZCOR rubric and the pre-compression reference bank). That run was
+> retired on 2026-09-05 (`DECISIONS.md`, "The aligned offline run will SUPERSEDE
+> the July run"). **Do not quote any number below in the paper.**
+>
+> Three specific corrections, so the stale figures are not merely unmarked but
+> contradicted where they are wrong:
+>
+> - *"§6.2 verdict: quantization is neutral at this scale"* — **does not hold.**
+>   On the canonical run C−B is **inconclusive**: the confirmatory judges split
+>   +0.098 / −0.049 / −0.049, and sign disagreement is inconclusive rather than
+>   null under this project's own rule. The study is underpowered to establish
+>   quantization equivalence.
+> - *"B−A = +0.902 CONFIRMED"*, *"G−B = −1.024"* — superseded. Canonical panel
+>   means are **B−A +1.089** and **G−B −0.951**.
+> - The panel table below lists `anthropic/claude-opus-4.8`. The canonical run
+>   used `anthropic/claude-opus-5`; see `PRECOMMIT.md`, Amendment 2026-09-10.
+>
+> A registration file should not carry result verdicts at all. The canonical
+> verdicts live in **`judging/PANEL_VERDICT_OFFLINE_FINAL.md`**, generated from
+> the committed `stats.csv` files by `judging/panel_verdict.py`. The rule stated
+> in this file (3/3 direction, Gemini exclusion, controls-first) is unchanged and
+> still governs.
+
 ### Active panel (3 judges)
 | Handle     | Model string                  | API           | Key env var          |
 |------------|-------------------------------|---------------|----------------------|
