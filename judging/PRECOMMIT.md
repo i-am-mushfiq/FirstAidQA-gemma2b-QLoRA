@@ -198,6 +198,13 @@ the panel was already complete and already aggregated:
 > route amendment (`848ab90`, 06:59 UTC) still precedes it, so that ordering
 > conclusion is unchanged, but the figure was wrong. Both errors were found by an
 > independent audit in `forensic_audit_20260910/REPORT.md` §11.
+>
+> **Unrelated retraction, same date.** That same audit pass claimed elsewhere
+> that `FINDINGS_20260905.md` §A6's `july` branch "does not exist". It does:
+> `origin/july`, tip `bac28cf` (2026-09-05 15:03 +0600), containing no
+> `CAMERA_READY_OFFLINE_*` run — i.e. exactly the pre-session state §A6
+> describes. The false claim came from running `git branch -a` against a
+> checkout that had not been fetched. **§A6 is correct and needs no fix.**
 
 So **the identity of the third confirmatory judge was fixed after the other two
 confirmatory arms and the exploratory arm were complete and aggregated.** That is

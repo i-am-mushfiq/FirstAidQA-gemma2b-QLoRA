@@ -23,12 +23,15 @@
 > is untouched on disk and the previous version of this file is in git history.
 > What changed is which run this document points the paper at.
 >
-> **Correction, 2026-09-10:** an earlier draft of this banner repeated
-> `FINDINGS_20260905.md` §A6's claim that a `july` branch preserves the
-> pre-session state. **That branch does not exist** — `git branch -a` returns
-> only `main` and `fix/generation-blockers-20260905`. The July run is preserved
-> by its committed result directories and by git history, not by a branch. Fix
-> §A6 or create the branch; do not cite it until one of those is done.
+> **Correction, 2026-09-10, and its retraction the same day:** a draft of this
+> banner claimed `FINDINGS_20260905.md` §A6's `july` branch "does not exist",
+> on the strength of a `git branch -a` run against a checkout that had not been
+> fetched. **That was wrong.** `origin/july` exists, its tip is `bac28cf`
+> (2026-09-05 15:03 +0600), and it contains no
+> `CAMERA_READY_OFFLINE_20260905_204533` — so it does preserve the pre-session
+> state exactly as §A6 says. §A6 is correct and needs no fix. The lesson is
+> recorded rather than erased: `git fetch` before asserting anything about
+> remote refs.
 >
 > Every superseded statement is itemised in **§7 Corrections log**, including one
 > contrast that has been **withdrawn** rather than restated. Nothing was silently
@@ -407,7 +410,7 @@ Each item is evidenced in the repository; none is optional.
 | `judging/controls_key.json`, `make_controls.py` | The 45 planted controls and their expected bands. |
 | `judging/OPEN_FINDINGS.md`, `FINDINGS_20260905.md`, `FINDINGS_CLOSED.md`, `DECISIONS.md` | Defect and decision registers, including a *Retracted claims* section. |
 | `paper/NUMBER_FORENSICS.md` | Reconciles the corpus, SC-rate and EMS-first counts. Independently re-verified 2026-09-10; every figure correct. Preserve as a supplementary artifact. |
-| `judging/results/*/CAMERA_READY_FINAL/` | The retired July run. Its **`judgments.jsonl` files are untouched**, but the derived reports (`stats.csv`, `controls_report.md`, `FINAL_REPORT.md`) were **regenerated on 2026-09-05** at commit `1253760` when the control-key correction was re-aggregated — so the directory is not a frozen July snapshot. There is no `july` branch (see the banner correction above). |
+| `judging/results/*/CAMERA_READY_FINAL/`, branch `origin/july` | The retired July run. Its **`judgments.jsonl` files are untouched**, but the derived reports (`stats.csv`, `controls_report.md`, `FINAL_REPORT.md`) were **regenerated on 2026-09-05** at commit `1253760` when the control-key correction was re-aggregated — so the directory is not a frozen July snapshot. The **`origin/july` branch is** a frozen pre-session snapshot: tip `bac28cf`, and it does not contain the offline run. |
 
 ---
 
