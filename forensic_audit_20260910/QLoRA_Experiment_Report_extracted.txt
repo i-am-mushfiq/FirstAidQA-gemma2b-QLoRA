@@ -1,0 +1,493 @@
+Gemma 2B First Aid
+QLoRA Fine-Tuning Experiment Report
+4-bit Quantisation  |  Profiles 1-5  |  May 2026
+
+
+Sittul Muna
+sittul.muna666@gmail.com
+Offline First Aid LLM — Research Preview
+
+1. Project Background
+
+1.1 Goal
+This project fine-tunes Google's Gemma 2B Instruct model to answer medical emergency first-aid questions reliably in an offline, resource-constrained setting. The target deployment is a consumer mobile device (no internet, approximately 10 GB VRAM during training) for use in mass-casualty events, remote areas, or infrastructure failures where standard LLMs requiring connectivity are unavailable.
+
+1.2 Why LoRA / QLoRA
+Full fine-tuning of a 2B-parameter model is prohibitive on consumer hardware. QLoRA (4-bit quantisation + Low-Rank Adapters) allows training on a single 12 GB GPU by keeping the base model frozen in NF4 format and learning a small set of adapter weights (approximately 2-8M parameters). The adapter is merged at inference time with no speed penalty.
+
+1.3 Dataset
+firstaidqa_v1.json contains 5,550 question-answer pairs across 10 first-aid categories, enriched with NLI-based category labels and safety-critical flags (22% of training examples are safety-critical). The 10-category split used for all experiments: 4,441 train / 556 val / 553 test.
+
+Category
+Train Samples
+Bleeding & Wounds
+827
+Cardiac & Resuscitation
+698
+Minor Injuries & General First Aid
+512
+Trauma & Musculoskeletal
+510
+Neurological & Altered Consciousness
+478
+Airway, Choking & Drowning
+444
+Bites, Stings & Envenomation
+329
+Burns & Environmental Emergencies
+317
+Poisoning, Overdose & Toxic Exposure
+208
+Spinal Injuries & Patient Movement
+118
+
+1.4 Hardware
+All experiments ran on a single NVIDIA GPU with 12 GB VRAM. 4-bit QLoRA peak usage: 9.8 GB. Two runs cannot share a single 12 GB card. All 5 profiles executed sequentially via run_profiles.ps1 (PowerShell 5.1). Approximate total runtime: 9-11 hours.
+
+2. Training Setup
+
+2.1 Architecture
+Base model: google/gemma-2b-it (2.51B parameters, instruction-tuned)
+Quantisation: BitsAndBytes NF4 4-bit (double quantisation enabled)
+Adapter: PEFT LoRA on all 7 projection modules: q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj
+Tokeniser: Gemma tokeniser, max sequence length 512 tokens. Loss computed on answer tokens only (instruction prefix masked).
+Optimizer: AdamW (paged 8-bit) with gradient checkpointing
+
+2.2 Fixed Parameters (all runs)
+Parameter
+Value
+Quantisation
+4-bit NF4
+Max epochs
+10 (early stopping active)
+Eval steps
+200 (val checkpoint every 200 steps)
+LR warmup ratio
+0.03
+LoRA dropout
+0.05
+LoRA target modules
+q, k, v, o, gate, up, down proj
+Seed
+42
+Splits
+splits/10cat
+
+2.3 Critical Pre-Run Discovery: Gradient Clipping Was Firing on 100% of Steps
+Before designing the 5 profiles, the training logs from the two prior baseline runs were audited for grad_norm values. The finding changed the entire profile design:
+KEY FINDING:  max_grad_norm=1.0 fired on every single training step in both prior runs.  Mean gradient norm: 3.7 (r16 run), 3.9 (r8 run).  Effective LR = nominal_lr x (1.0 / 3.7) = approx 0.27 x nominal_lr.  A nominal lr=1e-4 was really acting as ~2.7e-5 throughout training.  This was a significant implicit self-regulation. The 5 profiles were designed to determine whether this was limiting performance or actually helping.
+
+3. The Five Experimental Profiles
+
+Each profile was independently motivated by a distinct hypothesis. The best case for each approach was articulated before seeing results (steelmanning). All profiles use 4-bit QLoRA.
+
+Profile
+r / alpha
+lr
+max_grad_norm
+Scheduler
+Eff. batch
+Hypothesis
+P1 Unleash
+16 / 32
+1e-4
+10.0
+cosine
+8
+Clipping suppressed true gradient signal. Unleash it and let the model learn at the actual intended LR.
+P2 Calibrate
+16 / 32
+4e-4
+0.3
+linear
+16
+Design deliberately around clipping: tight clip for direction stability, higher nominal LR, linear schedule, larger batch.
+P3 Capacity
+32 / 64
+1e-4
+10.0
+cosine
+8
+r16 beat r8. Doubling to r32 at the true LR may capture richer representations.
+P4 Compress
+8 / 8
+1e-4
+1.0
+cosine
+8
+alpha/r=1 (conservative scaling), heavy regularisation — stable generalisation beats aggressive memorisation.
+P5 Synthesis
+32 / 32
+4e-4
+0.3
+linear
+16
+Apply every prior finding simultaneously: high rank, calibrated LR, linear schedule, large batch.
+
+4. Results
+
+4.1 Summary — All Runs
+Green = best performers. Red = catastrophic divergence (val loss above 2.0 at termination). The original 10cat r16 baseline (val loss 1.3600) remains the best adapter.
+
+Run
+r
+alpha
+lr nominal
+max_grad_norm
+Sched.
+Best Val Loss
+Best Epoch
+v1_archive r16 (initial run)
+16
+32
+2e-4
+1.0
+cosine
+1.3753
+1.800
+10cat r16 — Original Best
+16
+32
+1e-4
+1.0
+cosine
+1.3600
+1.800
+P1 Unleash r16 unclipped
+16
+32
+1e-4
+10.0
+cosine
+1.3650
+1.800
+P3 Capacity r32 unclipped
+32
+64
+1e-4
+10.0
+cosine
+1.3822
+1.800
+P4 Compress r8 heavy reg
+8
+8
+1e-4
+1.0
+cosine
+1.4005
+1.800
+P2 Calibrate linear+high LR
+16
+32
+4e-4
+0.3
+linear
+1.4651
+0.720
+P5 Synthesis r32 linear+high LR
+32
+32
+4e-4
+0.3
+linear
+1.4669
+0.720
+
+4.2 Checkpoint Detail — P1 Unleash (r16, max_grad_norm=10.0)
+Best result among the 5 new profiles. Almost identical to the original baseline.
+
+Epoch
+Train Loss
+Val Loss
+Note
+0.360
+~1.60
+1.5423
+
+0.720
+~1.41
+1.4361
+
+1.079
+~1.12
+1.4065
+
+1.439
+~1.11
+1.3858
+
+1.800
+~1.19
+1.3650
+BEST — adapter saved here
+2.158
+~0.67
+1.5228
+Epoch-2 cliff hit; train halved, val spiked +0.16
+2.519
+~0.71
+1.5060
+Val not recovering
+2.879
+~0.74
+1.4923
+
+3.238
+~0.34
+1.8412
+Second cliff; diverging
+3.598
+~0.36
+1.7946
+Early stopping triggered
+
+4.3 Checkpoint Detail — P2 Calibrate (linear scheduler, lr=4e-4)
+Peaked at first checkpoint. Catastrophic divergence to val loss 2.29.
+
+Epoch
+Train Loss
+Val Loss
+Note
+0.720
+~1.52
+1.4651
+BEST — already diverging from here
+1.439
+~1.24
+1.4682
+Slightly worse at next checkpoint
+2.158
+~0.67
+1.5969
+
+2.879
+~0.83
+1.5161
+
+3.598
+~0.46
+1.7859
+
+4.317
+~0.25
+2.0347
+Severe overfitting
+5.036
+~0.11
+2.2881
+Train 0.11, val 2.29 — catastrophic divergence
+
+4.4 Checkpoint Detail — P3 Capacity (r32, unclipped)
+More capacity = harder cliff. Epoch-2 train loss fell to 0.48 vs 0.67 for r16.
+
+Epoch
+Train Loss
+Val Loss
+Note
+0.360
+~1.58
+1.5273
+
+0.720
+~1.40
+1.4167
+
+1.079
+~1.05
+1.4123
+
+1.439
+~1.05
+1.3982
+
+1.800
+~1.12
+1.3822
+BEST — 0.017 worse than P1
+2.158
+~0.51
+1.6074
+Harder cliff than P1 — more memorisation capacity
+2.519
+~0.57
+1.6180
+
+2.879
+~0.60
+1.5737
+
+3.238
+~0.24
+1.9862
+Second cliff
+3.958
+~0.26
+1.9485
+Early stopping
+
+4.5 Checkpoint Detail — P4 Compress (r8, heavy regularisation)
+Most scientifically interesting. Only run where val loss continued improving after the epoch-2 cliff.
+
+Epoch
+Train Loss
+Val Loss
+Note
+0.360
+~1.65
+1.5940
+Slower start — smaller adapter
+0.720
+~1.45
+1.4825
+
+1.079
+~1.29
+1.4410
+
+1.439
+~1.30
+1.4163
+
+1.800
+~1.33
+1.4005
+BEST — train/val gap only 0.09 (vs 0.18 for P1)
+2.158
+~1.00
+1.4422
+Cliff much softer! Train went 1.33->1.00 not 1.19->0.67
+2.519
+~1.03
+1.4391
+
+2.879
+~1.05
+1.4099
+Val STILL IMPROVING post-cliff — unique behaviour
+3.238
+~0.77
+1.5578
+Second cliff
+3.598
+~0.80
+1.5419
+
+3.958
+~0.80
+1.5208
+
+4.317
+~0.50
+1.7725
+Third cliff
+4.677
+~0.52
+1.7645
+Early stopping triggered
+
+4.6 Checkpoint Detail — P5 Synthesis (r32, linear, lr=4e-4)
+Mirror image of P2. Ran to epoch 6.475 with patience=8 before stopping. Final val loss 2.26, train loss 0.10.
+
+Epoch
+Train Loss
+Val Loss
+Note
+0.720
+~1.51
+1.4669
+BEST — already diverging
+1.439
+~1.27
+1.4705
+Worse at next checkpoint
+2.158
+~0.68
+1.5832
+
+3.598
+~0.45
+1.7802
+
+4.317
+~0.25
+2.0326
+Severe overfitting
+5.036
+~0.11
+2.2425
+Mirror of P2 failure
+6.475
+~0.10
+2.2629
+Worst run — 6.5 epochs of wasted compute
+
+5. Analysis
+
+5.1 The Epoch-2 Cliff — The Primary Bottleneck
+ROOT CAUSE OF PERFORMANCE CEILING:  At approx training step 1,000 (epoch 2.014), train loss drops 40-50% in a single 200-step eval window while val loss spikes sharply upward.  This pattern appears in every cosine-scheduled run regardless of rank (r8, r16, r32), clip norm, or learning rate.  Mechanism: the model likely discovers a formatting or template shortcut in the training data and memorises it rapidly.  Only P4 (heavy regularisation) softened this — val stayed near 1.44 post-cliff instead of jumping to 1.52+.  None of the 5 profiles eliminated the cliff. It is the primary bottleneck for 4-bit QLoRA on this dataset.
+
+5.2 Unclipping Did Not Help (P1, P3)
+Hypothesis: clipping was discarding useful gradient signal.
+P1 result: 1.3650 vs original 1.3600 — difference of 0.005, within noise.
+P3 result: 1.3822 — actually worse than P1.
+Conclusion: the suppressed gradient component was noise, not signal. The clip was performing useful implicit regularisation.
+For 8-bit and FP16 runs: keep max_grad_norm=1.0.
+
+5.3 Linear Scheduler + High LR Caused Catastrophic Overfitting (P2, P5)
+Both P2 and P5 used lr=4e-4 with a linear scheduler and peaked at epoch 0.720.
+By epoch 5, train loss was 0.10-0.11 while val loss was 2.26-2.29 — a train/val gap of 2.15+.
+Root cause: a linear scheduler does not decay fast enough. By epoch 2, LR is still ~80% of peak, meaning the model makes large updates into the memorisation minimum at the cliff.
+Lesson: high nominal LR requires cosine decay to pull the rate down before the epoch-2 cliff. Linear + high LR is a dangerous combination on this dataset.
+
+5.4 P4 Is the Most Scientifically Valuable Result
+P4's train/val gap at best checkpoint: 0.09 (vs 0.18 for P1). Dramatically healthier generalisation.
+Post-cliff behaviour: val loss continued improving (1.4422 -> 1.4099) instead of diverging. Unique to P4.
+Cost: absolute val loss 1.4005 vs 1.3650. Higher val loss does not necessarily mean worse answer quality.
+IMPORTANT:  Val loss measures cross-entropy on training-distribution examples. It is not a direct measure of answer quality.  P4's more stable training may produce better-calibrated answers on the 30-question holdout despite the higher val loss.  The LLM judge evaluation on held-out questions is the definitive comparison — val loss alone cannot resolve this.
+
+5.5 r32 Did Not Help
+P3 (r32) performed worse than P1 (r16): 1.3822 vs 1.3650.
+Reason: r32 has more capacity to memorise. The epoch-2 cliff was harder (train fell to 0.48 vs 0.67 for r16).
+With 5,500 training examples, r=16 appears sufficient. r=32 adds capacity that the data cannot fill with generalisation.
+
+6. Plain Language Explanation
+
+Why did none of the 5 profiles beat the original?
+The original setup was accidentally well-configured. The gradient clipping (max_grad_norm=1.0) was firing on every step, quietly acting as a brake that kept training stable. When that brake was removed (P1, P3), nothing better happened — the model just got the same result without the brake. When a higher learning rate was tried (P2, P5), the model learned the training examples too perfectly and forgot how to answer new questions. And when heavier regularisation was added (P4), stability improved but the model became too conservative to reach the same level of performance.
+
+The deeper problem — the epoch-2 cliff — was not solved by any of these approaches. Around the second epoch, the model hits what looks like a memorisation event. It starts pattern-matching the training data format rather than learning the medical knowledge behind the answers. Training loss plunges, validation loss spikes. No hyperparameter change prevented this. The fix likely lies in the training data itself, not in the hyperparameters.
+
+What does val loss actually mean in practice?
+Val loss measures how surprised the model is by the next word in held-out examples. Lower = less surprised = better modelling of the training distribution. However, it does not directly tell you whether the model's first-aid answers are accurate, safe, or useful. A model that is slightly less good at predicting the next word might still give better structured, safer answers in practice. The LLM judge evaluation on 30 independent questions is the only way to know which adapter is actually most useful.
+
+What should be done next?
+The most important next step is the LLM judge evaluation on the 30-question holdout. P4 in particular needs to be judged against P1 and the original baseline — its training stability suggests it might outperform them on actual answer quality despite the higher val loss number.
+After that, the 8-bit and FP16 experiments should proceed using the original configuration (r=16, alpha=32, lr=1e-4, max_grad_norm=1.0, cosine). The question those experiments will answer is whether the higher numerical precision of 8-bit or FP16 changes the epoch-2 cliff dynamics. If the cliff is less severe at higher precision, that tells us the quantisation noise is part of the memorisation trigger.
+
+7. Recommended Next Steps
+
+#
+Action
+Purpose
+1
+Run LLM judge on 30-question holdout for all 4-bit adapters (incl. P4 vs P1 vs original)
+Definitive answer quality comparison beyond val loss
+2
+Run 8-bit LoRA: r=16, alpha=32, lr=1e-4, max_grad_norm=1.0, cosine
+Does higher precision shift or soften the epoch-2 cliff?
+3
+Run FP16 LoRA: same config
+Upper bound on fine-tuning quality at full precision
+4
+Cross-quantisation LLM judge: 4-bit vs 8-bit vs FP16
+Which quantisation level is worth the VRAM cost?
+5
+If cliff persists: data curriculum experiment
+Order training by difficulty/category to delay memorisation onset
+6
+Paper write-up formalising all findings
+Publish methodology and results
+
+
+Report generated May 7, 2026  |  All experiments: 4-bit QLoRA, single 12 GB GPU  |  Base model: google/gemma-2b-it  |  Dataset: firstaidqa_v1 (5,550 pairs)

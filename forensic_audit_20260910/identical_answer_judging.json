@@ -1,0 +1,83 @@
+[
+  {
+    "a": "B_FINETUNED_4BIT",
+    "b": "D_T4_IMPROVED",
+    "n_identical": 27,
+    "judge_disagreements": {
+      "deepseek": {
+        "n": 3,
+        "mean_delta": 0.037037037037037035,
+        "max_absolute": 1
+      },
+      "claude_or": {
+        "n": 4,
+        "mean_delta": 0,
+        "max_absolute": 1
+      },
+      "gpt_ar": {
+        "n": 5,
+        "mean_delta": -0.037037037037037035,
+        "max_absolute": 1
+      },
+      "glm_ar": {
+        "n": 5,
+        "mean_delta": 0.037037037037037035,
+        "max_absolute": 1
+      }
+    }
+  },
+  {
+    "a": "B_FINETUNED_4BIT",
+    "b": "E_T6_IMPROVED",
+    "n_identical": 34,
+    "judge_disagreements": {
+      "deepseek": {
+        "n": 9,
+        "mean_delta": 0.029411764705882353,
+        "max_absolute": 1
+      },
+      "claude_or": {
+        "n": 1,
+        "mean_delta": -0.029411764705882353,
+        "max_absolute": 1
+      },
+      "gpt_ar": {
+        "n": 11,
+        "mean_delta": -0.029411764705882353,
+        "max_absolute": 2
+      },
+      "glm_ar": {
+        "n": 8,
+        "mean_delta": 0,
+        "max_absolute": 1
+      }
+    }
+  },
+  {
+    "a": "B_FINETUNED_4BIT",
+    "b": "F_RAG_BM25",
+    "n_identical": 2,
+    "judge_disagreements": {
+      "deepseek": {
+        "n": 1,
+        "mean_delta": 0.5,
+        "max_absolute": 1
+      },
+      "claude_or": {
+        "n": 0,
+        "mean_delta": 0,
+        "max_absolute": 0
+      },
+      "gpt_ar": {
+        "n": 1,
+        "mean_delta": -1,
+        "max_absolute": 2
+      },
+      "glm_ar": {
+        "n": 1,
+        "mean_delta": -0.5,
+        "max_absolute": 1
+      }
+    }
+  }
+]

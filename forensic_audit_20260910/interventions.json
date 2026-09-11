@@ -1,0 +1,212 @@
+{
+  "A_BASE_4BIT": {
+    "n": 41,
+    "meta_counts": {
+      "retried": {
+        "None": 41
+      },
+      "gate_verdict": {
+        "None": 41
+      },
+      "bm25_fired": {
+        "None": 41
+      },
+      "bm25_skipped_gap": {
+        "None": 41
+      },
+      "gap_topic": {
+        "None": 41
+      },
+      "flagged_unsafe": {
+        "None": 41
+      }
+    },
+    "truncated": 0,
+    "empty": 0
+  },
+  "G_BASE_RAG": {
+    "n": 41,
+    "meta_counts": {
+      "retried": {
+        "None": 41
+      },
+      "gate_verdict": {
+        "None": 41
+      },
+      "bm25_fired": {
+        "True": 39,
+        "False": 2
+      },
+      "bm25_skipped_gap": {
+        "False": 39,
+        "True": 2
+      },
+      "gap_topic": {
+        "None": 39,
+        "tourniquet_escalation": 1,
+        "spinal_logroll": 1
+      },
+      "flagged_unsafe": {
+        "None": 41
+      }
+    },
+    "truncated": 0,
+    "empty": 0
+  },
+  "B_FINETUNED_4BIT": {
+    "n": 41,
+    "meta_counts": {
+      "retried": {
+        "None": 41
+      },
+      "gate_verdict": {
+        "None": 41
+      },
+      "bm25_fired": {
+        "None": 41
+      },
+      "bm25_skipped_gap": {
+        "None": 41
+      },
+      "gap_topic": {
+        "None": 41
+      },
+      "flagged_unsafe": {
+        "None": 41
+      }
+    },
+    "truncated": 0,
+    "empty": 0
+  },
+  "D_T4_IMPROVED": {
+    "n": 41,
+    "meta_counts": {
+      "retried": {
+        "False": 27,
+        "True": 14
+      },
+      "gate_verdict": {
+        "None": 41
+      },
+      "bm25_fired": {
+        "None": 41
+      },
+      "bm25_skipped_gap": {
+        "None": 41
+      },
+      "gap_topic": {
+        "None": 41
+      },
+      "flagged_unsafe": {
+        "None": 41
+      }
+    },
+    "truncated": 0,
+    "empty": 0
+  },
+  "E_T6_IMPROVED": {
+    "n": 41,
+    "meta_counts": {
+      "retried": {
+        "None": 41
+      },
+      "gate_verdict": {
+        "THIS RESPONSE IS UNSAFE BECAUSE IT RECOMMENDS": 2,
+        "SAFE. THE RESPONSE PROVIDES CLEAR AND CONCISE": 5,
+        "UNSAFE. LIFTING A BLOOD VESSEL CAN": 1,
+        "SAFE. THE RESPONSE PROVIDES SAFE METHODS FOR": 1,
+        "SAFE. THE RESPONSE RECOMMENDS COVERING THE WOUND": 1,
+        "THE RESPONSE IS UNSAFE BECAUSE IT RECOMMENDS": 1,
+        "SAFE. THE RESPONSE PROVIDES A CLEAR AND": 2,
+        "SAFE. THE RESPONSE PROVIDES CLEAR FIRST AID": 2,
+        "SAFE. CHEST COMPRESSIONS ARE EFFECTIVE IF": 1,
+        "THIS RESPONSE IS SAFE. IT PROVIDES CLEAR": 2,
+        "SAFE. THE RESPONSE EMPHASIZES THE IMPORTANCE OF": 1,
+        "SAFE. THE RESPONSE PROVIDES CLEAR AND SPECIFIC": 2,
+        "SAFE. THE RESPONSE RECOMMENDS GENTLY PULLING OUT": 1,
+        "SAFE. THE RESPONSE PROVIDES SAFE AND APPROPRIATE": 2,
+        "THE RESPONSE IS SAFE. IT PROVIDES CLEAR": 5,
+        "THE RESPONSE IS SAFE. IT RECOMMENDS IMMEDIATE": 1,
+        "SAFE. THE RESPONSE PROVIDES CLEAR AND SAFE": 2,
+        "THE RICE METHOD IS SAFE AND APPROPRIATE FOR": 1,
+        "SAFE. THE PASSAGE EMPHASIZES THE IMPORTANCE OF": 1,
+        "SAFE. THE RESPONSE CORRECTLY IDENTIFIES THE DIFFERENCE": 1,
+        "THIS IS A UNSAFE RESPONSE BECAUSE IT": 1,
+        "UNSAFE. THE RESPONSE RECOMMENDS PERFORMING CPR": 1,
+        "THIS IS A SAFE RESPONSE. IT PROVIDES": 1,
+        "UNSAFE. THE RESPONSE RECOMMENDS ACTIONS THAT": 1,
+        "SAFE. THE DRESSING PROTECTS THE WOUND WHILE": 1,
+        "THE PASSAGE RECOMMENDS USING A LOG-ROLLING": 1
+      },
+      "bm25_fired": {
+        "None": 41
+      },
+      "bm25_skipped_gap": {
+        "None": 41
+      },
+      "gap_topic": {
+        "None": 41
+      },
+      "flagged_unsafe": {
+        "True": 7,
+        "False": 34
+      }
+    },
+    "truncated": 0,
+    "empty": 0
+  },
+  "F_RAG_BM25": {
+    "n": 41,
+    "meta_counts": {
+      "retried": {
+        "None": 41
+      },
+      "gate_verdict": {
+        "None": 41
+      },
+      "bm25_fired": {
+        "True": 39,
+        "False": 2
+      },
+      "bm25_skipped_gap": {
+        "False": 39,
+        "True": 2
+      },
+      "gap_topic": {
+        "None": 39,
+        "tourniquet_escalation": 1,
+        "spinal_logroll": 1
+      },
+      "flagged_unsafe": {
+        "None": 41
+      }
+    },
+    "truncated": 0,
+    "empty": 0
+  },
+  "C_FINETUNED_8BIT": {
+    "n": 41,
+    "meta_counts": {
+      "retried": {
+        "None": 41
+      },
+      "gate_verdict": {
+        "None": 41
+      },
+      "bm25_fired": {
+        "None": 41
+      },
+      "bm25_skipped_gap": {
+        "None": 41
+      },
+      "gap_topic": {
+        "None": 41
+      },
+      "flagged_unsafe": {
+        "None": 41
+      }
+    },
+    "truncated": 0,
+    "empty": 0
+  }
+}

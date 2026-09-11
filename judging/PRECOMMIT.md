@@ -50,7 +50,7 @@ offline run at the time of this amendment.**
 | Role | Judge name | Model | Route |
 |------|-----------|-------|-------|
 | Confirmatory | `deepseek` | `deepseek-v4-pro` | DeepSeek direct API |
-| Confirmatory | `claude_or` | `anthropic/claude-opus-4.8` | OpenRouter |
+| Confirmatory | `claude_or` | `anthropic/claude-opus-4.8` **‡ SUPERSEDED — the run used `anthropic/claude-opus-5`; see Amendment 2026-09-10** | OpenRouter |
 | Confirmatory | `gpt_ar` | `gpt-5.6-sol` | AgentRouter |
 | Exploratory | `glm_ar` | `glm-5.3` | AgentRouter |
 
@@ -105,7 +105,7 @@ from the saved output, so it is fixed here and recorded per run in
 | Judge | Setting | Measured effect |
 |---|---|---|
 | `deepseek` | `thinking: {type: disabled}` | already in force |
-| `claude_or` | `reasoning: {exclude: true}` | **not yet verified** — no key |
+| `claude_or` | `reasoning: {exclude: true}` | **‡ SUPERSEDED — this spelling does not disable reasoning; the run used `reasoning: {enabled: false}`. See Amendment 2026-09-10** |
 | `gpt_ar` | `reasoning_effort: "none"` | completion tokens roughly halved (163→81, 192→111), confirming it had been reasoning |
 | `glm_ar` | `reasoning_effort: "low"` | see deviation below |
 
@@ -148,4 +148,175 @@ recorded in `DECISIONS.md` and applies regardless of outcome.
   missing. This is why D−B is absent from every July output. Confirm D−B is
   present in `stats.csv` for the offline panel rather than assuming it ran.
 - blind_map.json is excluded from released artifacts until after de-anonymization.
-- This file is committed before any aggregate output exists in git history.
+- **Ordering, stated per section rather than as a blanket claim.** The original
+  registration (2026-07-10) and the 2026-09-06 amendments were each committed
+  **before** the judgments they govern existed — verifiable in git: the routes and
+  reasoning policy landed in `848ab90` at 12:59 +0600 = 06:59 UTC, and the first
+  offline judgment is stamped 07:17 UTC. The **2026-09-10 amendment is the one
+  exception: it is post-hoc**, and is labelled as such in its own heading. Do not
+  cite this file as wholly pre-registered.
+
+---
+
+## Amendment, 2026-09-10 — POST-HOC: the claude judge was substituted, and two measurements corrected
+
+**This amendment is not a pre-registration.** Every amendment above was
+committed before the judgments it governs existed. This one is written **after**
+the panel finished, and it records a deviation rather than registering a plan.
+It is placed here, in the registration file, because a deviation that lives only
+in a commit message and a source comment is not discoverable by anyone reading
+the registration — which is exactly how this went unrecorded.
+
+### 1. The substitution
+
+| | |
+|---|---|
+| Registered (2026-07-10, unchanged by the 2026-09-06 amendments) | `anthropic/claude-opus-4.8` |
+| Requested by the code for the offline run | `anthropic/claude-opus-5` |
+| Served by the provider, all 664 rows | `anthropic/claude-opus-5` |
+| Changed at | in the working tree before 2026-09-08 04:17:04 UTC (first `claude_or` call); **recorded** at commit `32b027c`, 2026-09-08 04:35:43 UTC (= 10:35:43 +0600), which committed the change together with the first 568 rows |
+
+**The timing, stated plainly.** At the moment that change was made the rest of
+the panel was already complete and already aggregated:
+
+| Judge | State when commit `32b027c` was made, 2026-09-08 04:35:43 UTC |
+|---|---|
+| `deepseek` | 664/664, aggregated (first call 2026-09-06 07:03:51 UTC, last 07:17:25) |
+| `glm_ar` | 664/664, aggregated (first call 2026-09-06 07:05:32 UTC, last 07:21:42) |
+| `gpt_ar` | 664/664, aggregated (first call 2026-09-06 08:23:59 UTC, last 2026-09-07 05:23:40) |
+| `claude_or` | **568/664 already judged** — first call 2026-09-08 04:17:04 UTC, i.e. **19 minutes before this commit**, which committed those 568 rows together with the code change |
+
+> **Correction, 2026-09-10.** An earlier version of this table stated that
+> `claude_or` was *"not started"* at this commit. **That is false**, and the
+> commit's own message says so: *"claude_or halted at 568/664 on a key spend
+> cap."* `git show --stat 32b027c` shows it adding 568 rows to
+> `claude_or/OFFLINE_FINAL/judgments.jsonl`. The substitution was therefore made
+> in the working tree, run to 568 calls, and *then* committed with its results —
+> the commit records the decision rather than making it. The same earlier version
+> cited deepseek's first offline judgment as 07:17 UTC; that is `manifest.run_at`,
+> which is the **finishing** time. The true first call is **07:03:51 UTC**. The
+> route amendment (`848ab90`, 06:59 UTC) still precedes it, so that ordering
+> conclusion is unchanged, but the figure was wrong. Both errors were found by an
+> independent audit in `forensic_audit_20260910/REPORT.md` §11.
+>
+> **Unrelated retraction, same date.** That same audit pass claimed elsewhere
+> that `FINDINGS_20260905.md` §A6's `july` branch "does not exist". It does:
+> `origin/july`, tip `bac28cf` (2026-09-05 15:03 +0600), containing no
+> `CAMERA_READY_OFFLINE_*` run — i.e. exactly the pre-session state §A6
+> describes. The false claim came from running `git branch -a` against a
+> checkout that had not been fetched. **§A6 is correct and needs no fix.**
+
+So **the identity of the third confirmatory judge was fixed after the other two
+confirmatory arms and the exploratory arm were complete and aggregated.** That is
+a researcher degree of freedom and it must be reported as one. Nothing in the
+repository establishes that the choice was made without reference to those
+results, and this amendment does not claim otherwise. Equally, nothing here is
+evidence that it was chosen *to* obtain a favourable result — see section 2.
+
+**Why it happened.** `OPENROUTER_API_KEY` — the credential registered for
+`claude-opus-4.8` — was never available; AgentRouter returns 402 for every
+Anthropic model on two separate keys (verified 2026-09-06); a different
+OpenRouter key (`CLAUDE_API`, later `CLAUDE_NEW`) became available on 2026-09-08
+and was used. `anthropic/claude-opus-4.8` **was still available on OpenRouter at
+that moment** — the binding constraint was budget and credential, not model
+availability. The honest statement is that a newer model was used because it was
+the one being paid for, not because the registered one had become unreachable.
+
+### 2. What limits the damage — evidence, not reassurance
+
+None of this excuses the ordering; it bounds what the ordering can have done.
+
+- `claude_or` is the **harshest** judge in the panel: overall mean 1.882 against
+  deepseek 2.021, gpt_ar 2.125, glm_ar 2.258. A substitution chosen to
+  manufacture confirmations would not have installed the strictest scorer.
+- The three CONFIRMED contrasts (B−A, G−B, G−F) are confirmed **4/4 including
+  the exploratory judge**, so each survives deleting the claude arm entirely.
+  `PANEL_VERDICT_OFFLINE_FINAL.md` prints every judge separately so a reader can
+  perform that deletion.
+- The substitution is a change of *judge*, so **absolute scores are not
+  comparable with July's `claude_or` column**. July is retired
+  (`DECISIONS.md`, 2026-09-05), so no published comparison is affected, but any
+  sentence comparing the two runs must be removed rather than adjusted.
+
+### 3. The reasoning parameter, corrected before spending
+
+The registered setting for `claude_or` was `{"reasoning": {"exclude": true}}`,
+flagged in the 2026-09-06 amendment as **not yet verified**. Measured against
+the live API on 2026-09-07 it **suppresses the reasoning text from the response
+without disabling reasoning**: 300 reasoning tokens with it set, identical to no
+parameter at all. Of five spellings tried, only `{"reasoning": {"enabled":
+false}}` and `{"reasoning_effort": "none"}` reduced `reasoning_tokens` to 0.
+
+The run used `{"reasoning": {"enabled": false}}` throughout. **Verified after the
+fact across all 664 rows: `reasoning_tokens` is 0 on every one, and the field is
+reported on every one.** `claude_or` is the only judge in the panel whose
+no-reasoning compliance is positively evidenced rather than assumed. This
+correction moved the run *toward* the registered policy and is a fix, not a
+deviation — but it changed a registered string, so it is recorded here.
+
+### 4. Correction: the `glm_ar` reasoning residue was understated
+
+The 2026-09-06 amendment registered *"a variable residue of 0–44 reasoning
+tokens (4 calls: 0, 16, 35, 44)"*. That was a four-call probe. Measured across
+all 664 judging calls of the offline run:
+
+| | Registered (4 calls) | Measured (664 calls) |
+|---|---|---|
+| Calls with nonzero reasoning | — | **285 of 664** |
+| Median | — | 0 |
+| p90 | — | 56 |
+| Maximum | 44 | **185** |
+
+**Use 0–185 in the paper, not 0–44.** `judging/RUNBOOK.md` is staler still and
+repeats a superseded "5-token floor"; that figure is retracted. The conclusion
+the range was cited to support — that `glm_ar` cannot be made non-reasoning and
+is therefore exploratory rather than confirmatory — is unchanged, and if anything
+strengthened.
+
+### 5. Disclosure: the no-reasoning policy did not hold uniformly
+
+Measured from `usage.reasoning_tokens` across all 2,656 judgments of the offline
+run. This was not previously recorded anywhere.
+
+| Judge | Setting sent | Reasoning tokens observed | Policy status |
+|---|---|---|---|
+| `claude_or` | `reasoning: {enabled: false}` | 0 on all 664, field reported | **Held, and verified** |
+| `deepseek` | `thinking: {type: disabled}` | field never reported (0/664) | Plausible, **unverifiable** |
+| `gpt_ar` | `reasoning_effort: "none"` | **nonzero on 15 calls** (20–156, 1,016 total); field absent on the other 649 | **Breached on 15 calls, unverifiable on 649** |
+| `glm_ar` | `reasoning_effort: "low"` | nonzero on 285, max 185 | Declared deviation (section 4) |
+
+Six of the fifteen `gpt_ar` breaches are quality scores — V2Q32/G, V2Q20/C,
+V2Q06/F, V2Q04/C, V2Q19/C, V2Q36/C — so **6 of 1,148 quality scores in the
+canonical run were produced under a reasoning regime this file forbids**, one of
+them inside primary contrast F−B. Six scores cannot move a delta computed over
+41 pairs by more than about 0.15, and F−B is null in any case, so no verdict
+changes. It is recorded because the `decode_fingerprint` in every manifest
+attests to what was *requested*, never to what the provider did.
+
+### 6. Standing instructions for the write-up
+
+1. State that the claude arm is `claude-opus-5`, that `claude-opus-4.8` was
+   registered, and that the substitution was made after the other three judges
+   had completed. Do not describe the panel as fully pre-registered.
+2. Report per-judge results alongside every panel mean, so a reader can drop the
+   claude arm.
+3. State the reasoning-policy table in section 5 as-is, including the two
+   unverifiable rows.
+4. Use 0–185 for `glm_ar`.
+5. Nothing in sections 1–5 changes any contrast, threshold, decision rule or
+   judge *role*. Contrasts 1–8, the per-judge criterion and the 3-of-3 rule are
+   exactly as registered.
+
+### 7. Consequences for the other registration files
+
+- `PRECOMMIT_PANEL.md` (2026-07-11) still carries **July result verdicts**,
+  including *"§6.2 verdict: quantization is neutral at this scale"*. That verdict
+  does not hold on the canonical run, where C−B is **inconclusive** (the
+  confirmatory judges split +0.098 / −0.049 / −0.049). A registration file should
+  not carry result verdicts at all; those in it are superseded by
+  `PANEL_VERDICT_OFFLINE_FINAL.md` and must not be quoted.
+- The 3-of-3 rule is now applied mechanically by `judging/panel_verdict.py` and
+  written to `judging/PANEL_VERDICT_OFFLINE_FINAL.md`. The rule itself is
+  unchanged and the human sign-off is retained; what changed is that the step can
+  no longer be silently skipped, which is how the canonical run came to have no
+  written verdict at all.

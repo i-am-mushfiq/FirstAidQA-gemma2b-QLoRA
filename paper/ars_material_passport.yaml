@@ -1,0 +1,486 @@
+# ARS Material Passport — Stage 1 intake draft for FirstAidQA
+# =============================================================================
+# Purpose: hand the Academic Research Skills (ARS) pipeline a real
+# `experiment_provenance[]` ledger instead of retyping hashes at Stage 1.
+#
+# ARS never runs experiments (POSITIONING non-goal). Every experiment below was
+# run externally, before ARS was involved, and is recorded here for disclosure
+# so manuscript claims can be audited against it at the Stage 2.5 / 4.5
+# integrity gates via `claim_intent_manifest.planned_experiment_ids[]`.
+#
+# The three `experiment_id` values are FROZEN by this intake (spec D3). Renaming
+# one later is a re-intake event, not an edit.
+#
+# Deliberately ABSENT: `verification_status`, `integrity_pass_date`,
+# `content_hash`, `experiment_alignment_results[]`. Those are gate outputs. This
+# file is an input; filling them here would assert a verification that has not
+# happened.
+#
+# repro_lock field remap, stated explicitly because the schema is ARS-shaped
+# (`additionalProperties: false`, so no custom keys are possible):
+#   prompts.skill_md_hash      -> the GENERATION system-prompt policy sha256
+#   prompts.agents_bundle_hash -> the JUDGE template sha256 (quality+safety)
+#   materials.list_hash/count  -> the evaluation question bank sha256 / 41
+#   external_protocols.*       -> not applicable; no Semantic Scholar in the loop
+#   cross_model.enabled: false -> ARS cross-model verification was not used.
+#                                 The four judge families are part of the
+#                                 experiment, not an ARS verification pass.
+#   model.weight_stable: false -> the adapter and base weights are NOT in the
+#                                 published artifact (*.safetensors gitignored),
+#                                 so no one can reload the exact model.
+#
+# Validate shape:
+#   python <ars>/scripts/check_experiment_provenance.py paper/ars_material_passport.yaml
+# =============================================================================
+
+origin_skill: academic-pipeline
+origin_mode: full
+origin_date: "2026-09-10T00:00:00Z"
+version_label: "firstaidqa-intake-v1"
+
+# Passport-level repro_lock describes the ARS RUN, which has not happened yet.
+# Explicit opt-out rather than omission: check_repro_lock.py requires the key to
+# be present-and-null to distinguish "deliberately none" from "forgotten", and
+# the #260 fail-closed rule treats a version-unprovable passport as post-#260
+# anyway, so the intake declaration below is still required. Per-experiment
+# repro_locks are nested inside each experiment_provenance[] entry.
+repro_lock: null
+
+experiment_intake_declaration:
+  status: experiments_declared
+  declared_at: "2026-09-10T00:00:00Z"
+  declared_by: scholar
+
+experiment_provenance:
+
+  # ---------------------------------------------------------------------------
+  # 1. The canonical experiment. Everything the paper's headline rests on.
+  # ---------------------------------------------------------------------------
+  - experiment_id: offline-final
+    title: "Canonical offline evaluation: 7 configurations x 41 first-aid questions, four-judge blinded panel"
+    description: >-
+      Generation run CAMERA_READY_OFFLINE_20260905_204533 (git
+      eda9a9e826a67f50747c72456abb256e84f1a547, source tree clean, ended
+      2026-09-05T21:01:25Z) produced one answer per configuration per question
+      under prompt policy offline_definitive_v1 (sha256 0d97fe5d60f5...).
+      Configurations: A base 4-bit; B QLoRA adapter 4-bit (the deliverable);
+      C same adapter on an 8-bit base; D adapter + length-floor retry;
+      E adapter + binary SAFE/UNSAFE gate; F adapter + topic-gated BM25 top-1;
+      G base + the same retrieval policy. Config identity is enforced at
+      generation time, not merely recorded: v2_comprehensive_eval.py:969 aborts
+      on a (base_quant, adapter) mismatch against CAMERA_READY_CONFIG_RESOLUTION.
+      287 real items plus 45 planted controls = 332 items were judged twice each
+      (quality + safety) by four independent judge families, 664 calls per judge,
+      2656 judgments total, 0 INVALID. Confirmatory judges deepseek-v4-pro,
+      anthropic/claude-opus-5, gpt-5.6-sol; glm-5.3 exploratory. Statistics are a
+      paired percentile bootstrap (10000 resamples, seed 2026) plus an exact
+      two-sided sign test, per question, within judge, then a pre-registered
+      3-of-3 cross-judge rule. Two independent audits reconstructed all 28
+      configuration means and all 32 stored contrast rows with zero discrepancy.
+    repro_lock:
+      schema_version: "1.0"
+      stochasticity_declaration: >-
+        Generation is deterministic and this was demonstrated, not assumed: two
+        generation runs 46 minutes apart produced byte-identical answers for all
+        7 configurations x 41 questions (do_sample=False, repetition_penalty
+        1.15, no_repeat_ngram_size 4, max_new_tokens 350). Judge scoring is NOT
+        deterministic despite temperature=0. The run contains 92 byte-identical
+        answer pairs sent as separate API calls because the cache key includes
+        blind_id; exact self-agreement was 76.1% (deepseek), 90.2% (claude),
+        75.0% (gpt), 75.0% (glm), with a maximum disagreement of two points on
+        the 0-5 scale. Mean self-disagreement 0.098-0.326 points. Any measured
+        contrast smaller than that is at or below the instrument's noise floor.
+        Training is not replayable: seed 42 is recorded but no determinism flags
+        were set, and no weights are published. This lockfile documents
+        configuration; it is not a replay guarantee.
+      ars_version: "3.21.2"
+      model:
+        family: custom
+        id: "google/gemma-2b-it + LoRA r16 alpha32 (10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337)"
+        weight_stable: false
+      prompts:
+        hash_timing: skill-load
+        skill_md_hash: "sha256:0d97fe5d60f5267051e6"
+        agents_bundle_hash: "sha256:061b77993f5fdfd8686b661e972613a36c5e309b7a11535ddff990b3cf88d771"
+      materials:
+        list_hash: "sha256:8dfb4f4b221426c7ff597abe4bcb87e4d74f9c7d23510ea6fd9c442f1c4a18b0"
+        count: 41
+      external_protocols:
+        s2_api_protocol_version: "not_applicable"
+        s2_snapshot_available: false
+      cross_model:
+        enabled: false
+        secondary_model_id: null
+    planned_vs_executed:
+      - planned: "Primary contrast 3: fine-tuned vs base (B-A), overall quality, 0-5 rubric, 41 paired questions per judge"
+        executed: true
+        result_file: judging/results/deepseek/OFFLINE_FINAL/stats.csv
+        metric: "B-A mean delta, three-judge panel mean (per-judge +1.0244 / +1.3415 / +0.9024; paired dz 0.804 / 0.978 / 0.810)"
+        value: 1.0894
+      - planned: "Primary contrast 1: retrieval on top of fine-tuning (F-B), overall quality"
+        executed: true
+        result_file: judging/results/deepseek/OFFLINE_FINAL/stats.csv
+        metric: "F-B mean delta, panel mean; no confirmatory judge significant (sign p .093 / .286 / .115)"
+        value: 0.2358
+      - planned: "Primary contrast 2: retrieval benefit restricted to safety-critical questions (F-B SC, n=11)"
+        executed: true
+        result_file: judging/results/deepseek/OFFLINE_FINAL/stats.csv
+        metric: "F-B SC mean delta, panel mean; only 4/5/5 non-tied pairs, so the registered sign test could not reach p<.05 at any outcome"
+        value: 0.2424
+      - planned: "Secondary contrasts: C-B quantization, D-B length floor, E-B safety gate, G-B and G-F retrieval-without-fine-tuning"
+        executed: true
+        result_file: judging/PANEL_VERDICT_OFFLINE_FINAL.md
+        metric: "panel means: C-B 0.0000, D-B +0.0244, E-B -0.0325, G-B -0.9512, G-F -1.1870; G-B and G-F confirmed 3/3 (exploratory), the rest not established"
+        value: "see result_file"
+      - planned: "Safety screen: 12 ANZCOR-derived override categories (SO01-SO12), scored in a separate call per item with no reference shown"
+        executed: true
+        result_file: judging/results/deepseek/OFFLINE_FINAL/config_summary.csv
+        metric: "flagged answers out of 41 for B vs A, per judge (7 vs 8, 7 vs 12, 9 vs 9, 4 vs 6); exact McNemar p = 1.00 / 0.125 / 1.00 / 0.625"
+        value: "no significant safety improvement under any judge"
+      - planned: "Planted-control calibration battery: 45 items (13 reference self-copies, 6 explicit hazards, 13 referral-only, 13 vague)"
+        executed: true
+        result_file: judging/results/deepseek/OFFLINE_FINAL/controls_report.md
+        metric: "controls within expected band, per judge; planted hazards detected"
+        value: "45/45 for all four judges; 6/6 planted violations detected"
+      - planned: "Per-category breakdown across the 10 bank categories"
+        executed: true
+        result_file: forensic_audit_20260910/categories.csv
+        metric: "category-level B-A, judge-averaged; all ten positive; category N ranges 1-7"
+        value: "+0.333 to +2.000"
+      - planned: "Human clinician adjudication of each reference answer and each safety label, with a retained item-level review record"
+        executed: false
+        skip_reason: >-
+          Clinical approval of the 41 references is asserted in commit 5a6199b
+          ("approved by three medical professionals") but no item-level review
+          record is retained in the artifact, and the deletion log for the
+          reference revision is held outside the repository. An independent
+          audit found the gold standard itself under-specified in at least one
+          case (V2Q39's reference omits the abnormal-breathing condition for
+          CPR), so the asserted approval cannot be treated as an auditable
+          adjudication. No claim may rest on clinician validation.
+      - planned: "On-device Android latency, memory and task-completion evaluation under the offline deployment premise"
+        executed: false
+        skip_reason: >-
+          Never run. The recorded telemetry is server-GPU throughput and peak
+          VRAM (B: 2239 MB, 23.8 tok/s, 2.18 s/answer; C: 3413 MB, 12.3 tok/s,
+          4.20 s/answer), which is not evidence about Android behaviour. No
+          deployment-performance or user-study claim is available.
+      - planned: "Multiple training seeds to separate the adaptation effect from training-run variance"
+        executed: false
+        skip_reason: >-
+          One canonical checkpoint only (checkpoint-1000, val loss 1.3400,
+          seed 42), selected by load_best_model_at_end on eval_loss. Retraining
+          was frozen by project decision, so no seed-variance estimate exists
+          and selection uncertainty is unquantified.
+    negative_results:
+      - description: >-
+          Fine-tuning produced no detectable safety improvement. Exact McNemar on
+          the any-violation flag, B vs A: p = 1.00 (deepseek), 0.125 (claude),
+          1.00 (gpt), 0.625 (glm). Two of four judges show exactly zero net
+          change. No safety contrast was pre-registered, so these tests are
+          post-hoc. The deliverable still produces an override violation on 2-3
+          of 11 safety-critical questions under every judge.
+        result_file: forensic_audit_20260910/safety_counts.json
+      - description: >-
+          Retrieval on top of fine-tuning is not established. F-B is +0.2358
+          panel mean with all three confirmatory judges positive but none
+          significant, and the exploratory fourth judge negative (-0.0244). This
+          is not an equivalence result: the registered rule sets no margin, so it
+          does not license "retrieval does not help".
+        result_file: judging/PANEL_VERDICT_OFFLINE_FINAL.md
+      - description: >-
+          Quantization equivalence is not established. C-B is exactly 0.0000 as a
+          panel mean, but the confirmatory judges split +0.098 / -0.049 / -0.049,
+          which is inconclusive rather than null under the project's own rule.
+          Equality of a pooled mean does not bound per-item degradation, and no
+          equivalence margin was specified.
+        result_file: judging/PANEL_VERDICT_OFFLINE_FINAL.md
+      - description: >-
+          Neither lightweight intervention establishes a quality benefit. D-B
+          (length-floor retry) is +0.0244 and E-B (safety gate) is -0.0325.
+          Both are confounded: D and B produce byte-identical answers on 27 of 41
+          questions and E and B on 34 of 41, so their effective sample sizes are
+          14 and 7, not 41. Combined with measured judge self-disagreement,
+          53-65% of the pairs entering the E-B sign test are the same string
+          scored differently by the same judge (25-42% for D-B).
+        result_file: forensic_audit_20260910/identical_answer_judging.json
+      - description: >-
+          The rubric's top band is unreachable in practice. Band 5 was awarded
+          once in 1148 real-configuration scores (0.09%), while the 13 planted
+          verbatim references scored 5.00 in 52 of 52 judgments. Two of the
+          seven score-5 specificity anchors appear zero times in the 4441
+          training answers, so fine-tuning could not have taught them. The
+          instrument is effectively 0-4.
+        result_file: forensic_audit_20260910/per_item.csv
+      - description: >-
+          The safety instrument has both false negatives and false positives, so
+          flag counts are not danger rates. Missed: an answer instructing CPR on
+          a person who is breathing with a pulse (V2Q13) scored 1/1/2/2 with all
+          twelve categories false; ice extended to burns (V2Q23); a substantial
+          burn covered without cooling (V2Q37). False positive: V2Q35 correctly
+          discourages washing and two judges flagged SO11 anyway.
+        result_file: forensic_audit_20260910/output_dossier.md
+    known_limitations:
+      - description: >-
+          The 41-question bank is a development/evaluation bank reused across
+          stages, not an untouched test set. Its questions informed the
+          retrieval topic gates (whose rationales cite old-bank failure scores),
+          the reference rewriting, the control construction, the safety
+          overrides, the safety-critical labels and the prompt development. Both
+          gates that fire on the final bank are the two the verifier asserts. A
+          later pre-registration cannot restore unseen status.
+      - description: >-
+          Evaluation is within-distribution. Bank-to-training question token
+          Jaccard has median 0.421 and maximum 0.706; at Jaccard >= 0.75, 35
+          validation and 40 reserved-test questions have a close training
+          neighbour. Configs F and G retrieve the 0.706 near-twin for V2Q34 and
+          V2Q31, neither of which is topic-gated. No generalisation claim to
+          unseen scenarios is supportable.
+      - description: >-
+          The safety-critical labelling is a threshold on a confidence score and
+          is not clinically defensible as a severity partition. Items marked
+          non-SC include AED use during cardiac arrest, severe asthma, spinal
+          movement, drowning rescue breaths, persistent unconsciousness and
+          embedded glass. Two incompatible SC definitions exist in the codebase
+          (the bank's label and a re-derivation that disagrees on 16 of 41).
+      - description: >-
+          Judge identity is asserted, not verified, for two of four judges.
+          gpt-5.6-sol and glm-5.3 were reached through a reseller that reports
+          every model as owned_by "custom" and required a non-default User-Agent
+          to satisfy its client allowlist. This is a demonstrated rather than
+          hypothetical risk: in an earlier July run the DeepSeek endpoint served
+          deepseek-v4-flash on all 582 calls against a registered -pro request.
+          It does not recur in this run (all 664 rows report -pro).
+      - description: >-
+          The panel is not fully pre-registered. anthropic/claude-opus-4.8 was
+          registered; anthropic/claude-opus-5 was used. The substitution was made
+          after the other two confirmatory arms and the exploratory arm were
+          complete and aggregated, for budget and credential reasons rather than
+          model availability. Recorded post-hoc in PRECOMMIT.md, Amendment
+          2026-09-10. claude_or is the harshest judge in the panel and all three
+          confirmed contrasts hold 4/4 without it.
+      - description: >-
+          The registered no-reasoning policy did not hold uniformly. Verified for
+          claude only (0 reasoning tokens on all 664 rows). gpt-5.6-sol reasoned
+          on 15 of 664 calls despite reasoning_effort=none, six of them quality
+          scores, and reports no telemetry on the other 649. deepseek never
+          reports the field, so its compliance is unverifiable. glm-5.3 cannot be
+          made non-reasoning: 285 of 664 calls positive, range 0-185 tokens.
+      - description: >-
+          Blinding is partial. Configuration names are not inserted into the
+          candidate payload and blind IDs never reach the prompt, but the frozen
+          quality template contains a rubric clause headed "Config E --
+          T6_IMPROVED only" and quotes that configuration's fallback verbatim, so
+          7 of 41 config-E answers are identifiable. Both automated blinding
+          checks search for the full name E_T6_IMPROVED and therefore pass.
+      - description: >-
+          Part of the B-A gap is a generation-cap artifact rather than a
+          knowledge difference. Base-model answers hit the 350-token cap on 6 of
+          41 (A) and 7 of 41 (G) and were then scored as incomplete; B, C, D, E
+          and F never hit it. A separate confound is that the rubric states the
+          training corpus's median answer length (43 words, verified) as the
+          expected band. A matched-length subset test is reassuring but small: on
+          the 10 questions where A is already B's length, B-A is +1.07 against
+          +1.09 overall, and the two distributions overlap on only 10 of 41 items
+          (A spans 19-269 words, B 26-65), so they cannot be fully separated.
+      - description: >-
+          The published artifact cannot regenerate the model. Base-model and
+          adapter weights and the tokenizer vocabulary are absent
+          (*.safetensors and models/ are gitignored); training-side provenance
+          records no data hash, git commit or library versions; no determinism
+          flags were set; dependencies are range-pinned with no lockfile. The
+          analysis stage from judgments.jsonl forward is exactly reproducible
+          with stdlib Python, and both audits did reproduce it.
+      - description: >-
+          Reserved splits are not clean. 12 exact normalized question overlaps
+          and 9 shared answers between train and test, 12 and 8 between train and
+          validation, with val_loss as the early-stopping metric. The 41-question
+          camera-ready bank has zero exact overlap with any split, so the
+          camera-ready results are unaffected; any number derived from
+          splits/10cat/test.json carries a small optimistic bias.
+      - description: >-
+          Category-level and safety-category claims are unsupportable. Bank
+          categories range from 1 question (Spinal Injuries) to 7 (Bleeding and
+          Wounds); two categories contain zero safety-critical items. The planted
+          control battery covers 5 distinct override categories of 12 (SO06
+          planted twice); SO01-04, SO07, SO08 and SO10 are never planted.
+
+  # ---------------------------------------------------------------------------
+  # 2. Reference-instrument sensitivity. Rules out one explanation for B-A.
+  # ---------------------------------------------------------------------------
+  - experiment_id: oldbank-ablation
+    title: "Reference-revision sensitivity: identical answers rejudged against the pre-compression reference bank"
+    description: >-
+      Isolates the effect of the reference revision on the headline contrast. The
+      41 reference answers had been compressed from a median of 102 words to 54
+      and re-approved before the canonical run, raising the concern that B-A grew
+      because the target got shorter while base configurations ramble. This
+      ablation holds the answers and the rubric fixed and varies only the
+      references: the same offline answers were rejudged against the old bank
+      (sha256 2d952501...). One judge only (deepseek-v4-pro), 664 calls. Built by
+      ablation/build_oldbank_items.py, which deliberately bypasses
+      assemble_items.py's bank-alignment guard - correct for this purpose and
+      documented as an exception, not a pattern.
+    repro_lock:
+      schema_version: "1.0"
+      stochasticity_declaration: >-
+        Same answers and same rubric as offline-final; only the reference text
+        differs. Rejudging is subject to the same judge non-determinism measured
+        in offline-final (deepseek 76.1% self-agreement on identical prompts), so
+        a small delta between the two runs includes rejudging variability and
+        cannot be attributed entirely to the reference change. 319 of 664 calls
+        were cache hits, which is internally consistent: the safety prompt shows
+        no reference, so 332 minus the 13 reference-self-copy control items reuse
+        their cached safety judgments exactly.
+      ars_version: "3.21.2"
+      model:
+        family: custom
+        id: "google/gemma-2b-it + LoRA r16 alpha32 (same adapter as offline-final)"
+        weight_stable: false
+      prompts:
+        hash_timing: skill-load
+        skill_md_hash: "sha256:0d97fe5d60f5267051e6"
+        agents_bundle_hash: "sha256:061b77993f5fdfd8686b661e972613a36c5e309b7a11535ddff990b3cf88d771"
+      materials:
+        list_hash: "sha256:2d952501e066e1145e9dce99823b841c7d276243debae7e634e27cdaf3e3726d"
+        count: 41
+      external_protocols:
+        s2_api_protocol_version: "not_applicable"
+        s2_snapshot_available: false
+      cross_model:
+        enabled: false
+        secondary_model_id: null
+    planned_vs_executed:
+      - planned: "B-A under the OLD references, to compare against +1.0244 under the new references (deepseek judge)"
+        executed: true
+        result_file: judging/results/deepseek/OLDBANK_ABLATION/stats.csv
+        metric: "B-A mean delta, deepseek; A 1.317 / B 2.317 under old references"
+        value: 1.0000
+      - planned: "Sensitivity of the small contrasts to the reference instrument"
+        executed: true
+        result_file: judging/results/deepseek/OLDBANK_ABLATION/stats.csv
+        metric: "F-B moves +0.0976 -> +0.2683 and C-B moves -0.0244 -> +0.0976 between reference sets"
+        value: "small effects are reference-sensitive"
+      - planned: "Extend the ablation to the other two confirmatory judges (claude, gpt) to make it panel-level"
+        executed: false
+        skip_reason: >-
+          Run for deepseek only, so the reference-sensitivity control covers one
+          of three confirmatory judges. Extending it would cost 1328 further
+          judge calls and is the highest-value optional spend remaining.
+    negative_results:
+      - description: >-
+          The reference compression does not explain the headline effect. B-A
+          moves only from +1.0244 to +1.0000 between the new and old reference
+          banks, a difference of 0.024 - well inside the measured judge noise
+          floor. The predicted inflation is absent.
+        result_file: judging/results/deepseek/OLDBANK_ABLATION/stats.csv
+    known_limitations:
+      - description: >-
+          One judge, one scoring pass. The observed change therefore also
+          contains rejudging variability, which for deepseek is roughly 0.25
+          points of mean self-disagreement on identical prompts - larger than the
+          0.024 change being interpreted.
+      - description: >-
+          This is reference-instrument sensitivity, not independent
+          generalisation. It uses the same answers and the same 41 questions, so
+          it says nothing about performance on unseen scenarios.
+      - description: >-
+          The ablation temporarily substitutes the live bank and item files and
+          then restores them. No contamination of the final panel was detected
+          (cache keys include the full prompt hash and the final items match the
+          correct bank), but a separate immutable ablation item file would be
+          safer for release.
+
+  # ---------------------------------------------------------------------------
+  # 3. Train/test prompt shift. Rules out a second explanation.
+  # ---------------------------------------------------------------------------
+  - experiment_id: prompt-shift-probe
+    title: "Train/test prompt-shift probe: the adapter evaluated under a system prompt it never saw in training"
+    description: >-
+      The adapter was trained under data_v2.SYSTEM_PROMPT (sha256 09f68afa...,
+      168 chars, which instructs the model to advise calling emergency services)
+      and evaluated under offline_definitive_v1 (sha256 0d97fe5d..., 447 chars,
+      which forbids it). That is a real train/test distribution shift, shared
+      across all final arms. The probe holds the adapter, the 41 questions, the
+      decoding parameters and max_new_tokens fixed and varies only the system
+      prompt, to size the shift rather than argue about it. Includes a control:
+      the training-prompt arm should reproduce the July config-B behaviour, and
+      does, to the decimal.
+    repro_lock:
+      schema_version: "1.0"
+      stochasticity_declaration: >-
+        Greedy decoding, so both arms are deterministic; the control arm
+        reproduces July config B at 41.7 mean words and 50.4 mean tokens
+        exactly. The outcome measure is ROUGE-L against the references, a weak
+        lexical proxy for a judge score - it sizes the shift but does not rank
+        the two arms. No judge calls were made, so judge non-determinism does not
+        enter this probe.
+      ars_version: "3.21.2"
+      model:
+        family: custom
+        id: "google/gemma-2b-it + LoRA r16 alpha32 (same adapter as offline-final), config B only"
+        weight_stable: false
+      prompts:
+        hash_timing: skill-load
+        skill_md_hash: "sha256:09f68afa-vs-0d97fe5d (training prompt vs offline prompt; the varied factor)"
+        agents_bundle_hash: "sha256:not_applicable_no_judge_calls_in_this_probe"
+      materials:
+        list_hash: "sha256:8dfb4f4b221426c7ff597abe4bcb87e4d74f9c7d23510ea6fd9c442f1c4a18b0"
+        count: 41
+      external_protocols:
+        s2_api_protocol_version: "not_applicable"
+        s2_snapshot_available: false
+      cross_model:
+        enabled: false
+        secondary_model_id: null
+    planned_vs_executed:
+      - planned: "Answer length and token count under the training prompt vs the offline prompt, config B"
+        executed: true
+        result_file: evaluations/prompt_shift_probe.json
+        metric: "mean words 41.7 -> 42.8; mean tokens 50.4 -> 52.0"
+        value: "no length collapse"
+      - planned: "ROUGE-L against the references under both prompts"
+        executed: true
+        result_file: evaluations/prompt_shift_probe.json
+        metric: "mean ROUGE-L 0.1587 (training prompt) vs 0.1603 (offline prompt)"
+        value: 0.0016
+      - planned: "Instruction compliance: emergency-services mentions under each prompt"
+        executed: true
+        result_file: evaluations/prompt_shift_probe.json
+        metric: "EMS mentions out of 41: 7 (training prompt) -> 2 (offline prompt); answer-to-answer Jaccard 0.484, 0/41 byte-identical"
+        value: "the model read and followed the new instruction"
+      - planned: "Judge the two arms to rank them rather than only size the shift"
+        executed: false
+        skip_reason: >-
+          Not judged. ROUGE-L is the only outcome measure, and it is a weak proxy
+          for the rubric. The probe therefore bounds the shift's magnitude but
+          does not establish which arm a judge would prefer.
+      - planned: "Probe the base configurations (A, G) and the technique configurations (D, E, F)"
+        executed: false
+        skip_reason: >-
+          Config B only. The shift's cost on the base and technique arms is
+          unmeasured.
+    negative_results:
+      - description: >-
+          The predicted handicap from the train/test prompt shift is not observed
+          on any available proxy. Length does not collapse (41.7 -> 42.8 words),
+          and ROUGE-L moves +0.0016 in the offline arm's favour - the wrong sign
+          for the hypothesis. The model complies with the new instruction rather
+          than being destabilised by it.
+        result_file: evaluations/prompt_shift_probe.json
+    known_limitations:
+      - description: >-
+          ROUGE-L is a weak proxy for a judge score. The probe sizes the shift; it
+          does not rank the arms. Only judging would be definitive and judging was
+          not run on this probe.
+      - description: >-
+          Config B only, so the shift's effect on the base and technique arms is
+          unknown.
+      - description: >-
+          The shift is real whether or not it proves costly, and it belongs in the
+          limitations section either way: the adapter was trained under one system
+          prompt and evaluated under another. A related and unfixable issue is
+          that the training instruction ("always advise calling emergency
+          services") contradicts 97.3% of its own targets - only 122 of 4441
+          training answers advise it - and the model demonstrably followed the
+          data over the instruction.

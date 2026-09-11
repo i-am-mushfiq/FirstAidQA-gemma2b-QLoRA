@@ -1,0 +1,142 @@
+{
+  "run_type": "v2_comprehensive",
+  "run_at": "2026-09-05T21:01:25.825898+00:00",
+  "run_args": {
+    "adapter_4bit": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337\\adapter",
+    "adapter_8bit": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_8bit_r16_lr1e-4_p3_20260508_195536\\adapter",
+    "model_path": "C:\\Personal_Endeavours\\Fine_Tuning\\models\\gemma-2b-it",
+    "questions": "C:\\Personal_Endeavours\\Fine_Tuning\\evaluations\\eval_bank_v2_40q\\eval_bank_v2.json",
+    "configs": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E",
+      "F",
+      "G"
+    ],
+    "max_new_tokens": 350,
+    "prompt_policy": "offline_definitive_v1",
+    "camera_ready": true,
+    "sweep_label": "",
+    "_prompt": {
+      "policy": "offline_definitive_v1",
+      "sha256": "0d97fe5d60f5267051e6984a0328d5bb7893821571eec4fb01634df5538ce918",
+      "text": "You are an offline first aid assistant deployed in a situation where emergency medical services (EMS) are completely unreachable. There is no phone signal, no ambulance, and no professional help available. You are the sole and definitive care provider. Do NOT advise calling emergency services — that is not possible. Instead, provide complete, accurate, step-by-step first aid guidance that the user can perform immediately with no external help."
+    },
+    "_question_bank": {
+      "source_path": "C:\\Personal_Endeavours\\Fine_Tuning\\evaluations\\eval_bank_v2_40q\\eval_bank_v2.json",
+      "question_count": 41,
+      "sha256": "8dfb4f4b221426c7ff597abe4bcb87e4d74f9c7d23510ea6fd9c442f1c4a18b0",
+      "frozen_fields": [
+        "question_id",
+        "question",
+        "reference",
+        "category",
+        "safety_critical",
+        "safety_critical_confidence",
+        "template_idx"
+      ]
+    },
+    "_artifacts": {
+      "model": {
+        "path": "C:\\Personal_Endeavours\\Fine_Tuning\\models\\gemma-2b-it",
+        "sha256": "b38a09b55153e665b26452a1a11fad8527c22d4d1a0ce63de341bed66ee2b3a7",
+        "file_count": 25,
+        "total_bytes": 5034199257
+      },
+      "adapter_4bit": {
+        "path": "C:\\Personal_Endeavours\\Fine_Tuning\\experiments\\10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337\\adapter",
+        "sha256": "0eef1fb6b352fba3220f1bdd637fc842dcf66dde7e82f742a47e9a4eb392a939",
+        "file_count": 6,
+        "total_bytes": 112837074
+      },
+      "train_split": {
+        "path": "C:\\Personal_Endeavours\\Fine_Tuning\\splits\\10cat\\train.json",
+        "sha256": "a84114ae01c97f49859c5b0e5331c8fb27c4be3a976275518198fd6a681188d8",
+        "file_count": 1,
+        "total_bytes": 2535730
+      }
+    },
+    "_config_resolution": {
+      "A_BASE_4BIT": {
+        "base_quant": "4bit",
+        "adapter": null,
+        "technique": "greedy"
+      },
+      "B_FINETUNED_4BIT": {
+        "base_quant": "4bit",
+        "adapter": "adapter_4bit",
+        "technique": "greedy"
+      },
+      "C_FINETUNED_8BIT": {
+        "base_quant": "8bit",
+        "adapter": "adapter_4bit",
+        "technique": "greedy"
+      },
+      "D_T4_IMPROVED": {
+        "base_quant": "4bit",
+        "adapter": "adapter_4bit",
+        "technique": "t4_length_floor"
+      },
+      "E_T6_IMPROVED": {
+        "base_quant": "4bit",
+        "adapter": "adapter_4bit",
+        "technique": "t6_gate"
+      },
+      "F_RAG_BM25": {
+        "base_quant": "4bit",
+        "adapter": "adapter_4bit",
+        "technique": "bm25_top1_gated"
+      },
+      "G_BASE_RAG": {
+        "base_quant": "4bit",
+        "adapter": null,
+        "technique": "bm25_top1_gated"
+      }
+    },
+    "_code": {
+      "git_commit": "eda9a9e826a67f50747c72456abb256e84f1a547",
+      "source_tree_clean": true,
+      "source_files": [
+        "evaluation_protocol.py",
+        "bm25_rag.py",
+        "v2_comprehensive_eval.py",
+        "audit_gap_gate.py",
+        "verify_camera_ready.py",
+        "build_v2_judge_prompt.py",
+        "internal_eval/judge_per_item.py",
+        "internal_eval/stats_v2.py",
+        "rubric_v2.md",
+        "run_camera_ready.ps1",
+        "test_camera_ready_pipeline.py",
+        "camera_ready/README.md",
+        "camera_ready/protocol.yaml",
+        "camera_ready/check.py",
+        "camera_ready/pipeline.py",
+        "evaluations/eval_bank_v2_40q/eval_bank_v2.json"
+      ]
+    },
+    "_versions": {
+      "torch": "2.7.1+cu118",
+      "transformers": "5.16.1",
+      "max_new_tokens": 350
+    },
+    "_decoding": {
+      "do_sample": false,
+      "max_new_tokens": 350,
+      "repetition_penalty": 1.15,
+      "no_repeat_ngram_size": 4,
+      "repetition_truncation_max_repeats": 3
+    }
+  },
+  "configs": [
+    "A_BASE_4BIT",
+    "G_BASE_RAG",
+    "B_FINETUNED_4BIT",
+    "D_T4_IMPROVED",
+    "E_T6_IMPROVED",
+    "F_RAG_BM25",
+    "C_FINETUNED_8BIT"
+  ]
+}

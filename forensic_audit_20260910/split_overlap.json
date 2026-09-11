@@ -1,0 +1,151 @@
+[
+  {
+    "family": "10cat",
+    "a": "train",
+    "b": "val",
+    "shared_questions": 12,
+    "b_question_hits": 12,
+    "shared_answers": 8,
+    "examples": [
+      "can you flush a flash burn to the eye with water",
+      "how can i tell if someone has a foreign body embedded in their eye",
+      "how should i treat a black eye if there is no ice pack available",
+      "what action should i take if someone gets a flash burn from welding and feels a gritty sensation in their eye",
+      "what are the best practices for handling an eye injury involving foreign bodies",
+      "what are the first signs of poisoning from inhaling carbon monoxide",
+      "what are the symptoms of a flash burn to the eye",
+      "what is the proper way to treat a foreign body in the eye that cannot be removed",
+      "what is the purpose of pinching the casualty s nose during mouth to mouth resuscitation",
+      "what is the recovery position and when should it be used",
+      "what should i avoid doing when treating a venomous snake bite",
+      "what should i do if a chemical splash causes pain and redness in the eye"
+    ]
+  },
+  {
+    "family": "10cat",
+    "a": "train",
+    "b": "test",
+    "shared_questions": 12,
+    "b_question_hits": 12,
+    "shared_answers": 9,
+    "examples": [
+      "can a chemical burn to the eye cause permanent damage",
+      "can i remove a foreign object from the eye if it s stuck in the cornea",
+      "how can i differentiate between a sprain and a fracture in the wrist",
+      "how do i manage an eye injury where the object is embedded in the eye",
+      "is it safe to rinse an eye injury caused by a flash burn with water",
+      "what is the first thing i should do if someone has suffered a chemical burn to their eye",
+      "what is the most important first step in treating a chemical burn to the eye",
+      "what should i do if a choking adult becomes unconscious",
+      "what should i do if a foreign body such as dust or an eyelash gets into someone s eye",
+      "what steps should i take if i suspect a foreign body is lodged in someone s eye",
+      "when should i call for medical help after an eye injury from a foreign body",
+      "when should i call for medical help during a choking incident"
+    ]
+  },
+  {
+    "family": "10cat",
+    "a": "val",
+    "b": "test",
+    "shared_questions": 3,
+    "b_question_hits": 3,
+    "shared_answers": 2,
+    "examples": [
+      "how do i treat a flash burn caused by an arc welder",
+      "how do i treat a sprained ankle",
+      "is it safe to use water to rinse an eye injury caused by a chemical splash"
+    ]
+  },
+  {
+    "family": "baseline",
+    "a": "train",
+    "b": "val",
+    "shared_questions": 7,
+    "b_question_hits": 7,
+    "shared_answers": 3,
+    "examples": [
+      "how can i treat a black eye caused by a blow to the face",
+      "how does blood loss contribute to shock",
+      "how should i protect the eye if there is an embedded foreign body and i cannot remove it",
+      "what are the dangers of rubbing an eye that has a foreign body in it",
+      "what is the purpose of pinching the casualty s nose during mouth to mouth resuscitation",
+      "what should i avoid doing when treating a venomous snake bite",
+      "what should i do if a choking adult becomes unconscious"
+    ]
+  },
+  {
+    "family": "baseline",
+    "a": "train",
+    "b": "test",
+    "shared_questions": 8,
+    "b_question_hits": 8,
+    "shared_answers": 5,
+    "examples": [
+      "can i remove a foreign object from the eye if it s stuck in the cornea",
+      "how can i differentiate between a sprain and a fracture in the wrist",
+      "what is the recovery position and when should it be used",
+      "what should i do if a chemical splash causes pain and redness in the eye",
+      "what should i do if someone has a chemical burn to the eye",
+      "what should i do if someone s eyelid is swollen and they can t open their eye after a blow to the face",
+      "when should i call for medical help after an eye injury from a foreign body",
+      "why is it important to stop cooling a heat stroke victim once their skin feels cool"
+    ]
+  },
+  {
+    "family": "baseline",
+    "a": "val",
+    "b": "test",
+    "shared_questions": 2,
+    "b_question_hits": 2,
+    "shared_answers": 1,
+    "examples": [
+      "what are the dangers of not seeking medical help after an eye injury",
+      "what are the potential complications of untreated shock"
+    ]
+  },
+  {
+    "family": "thresh020",
+    "a": "train",
+    "b": "val",
+    "shared_questions": 7,
+    "b_question_hits": 7,
+    "shared_answers": 4,
+    "examples": [
+      "can cramps be a sign of a more serious medical condition",
+      "how can i tell if someone has a foreign body embedded in their eye",
+      "how long does it take for a splinter wound to heal",
+      "is it safe to use water to rinse an eye injury caused by a chemical splash",
+      "what should i do if a choking adult becomes unconscious",
+      "what should i do if someone has a chemical burn to the eye",
+      "what signs should i look for to determine if an eye injury is serious"
+    ]
+  },
+  {
+    "family": "thresh020",
+    "a": "train",
+    "b": "test",
+    "shared_questions": 7,
+    "b_question_hits": 7,
+    "shared_answers": 6,
+    "examples": [
+      "can a person with epilepsy drive a car",
+      "how should i protect the eye if there is an embedded foreign body and i cannot remove it",
+      "what are the best practices for handling an eye injury involving foreign bodies",
+      "what do i do if a person experiences intense eye pain after being exposed to an acid splash",
+      "what is the most important first step in treating a chemical burn to the eye",
+      "what should i do if a chemical splash causes pain and redness in the eye",
+      "what should i do if someone s eyelid is swollen and they can t open their eye after a blow to the face"
+    ]
+  },
+  {
+    "family": "thresh020",
+    "a": "val",
+    "b": "test",
+    "shared_questions": 1,
+    "b_question_hits": 1,
+    "shared_answers": 1,
+    "examples": [
+      "how do i prevent infection after a foreign body injury in the eye"
+    ]
+  }
+]

@@ -1,0 +1,2551 @@
+[
+  {
+    "path": "ablation/build_oldbank_items.py",
+    "lines": 117,
+    "definitions": [
+      {
+        "name": "main",
+        "line": 47
+      }
+    ]
+  },
+  {
+    "path": "audit_gap_gate.py",
+    "lines": 329,
+    "definitions": [
+      {
+        "name": "check_topic_gate",
+        "line": 77
+      },
+      {
+        "name": "run_audit",
+        "line": 90
+      },
+      {
+        "name": "parse_args",
+        "line": 301
+      },
+      {
+        "name": "p",
+        "line": 96
+      }
+    ]
+  },
+  {
+    "path": "bm25_rag.py",
+    "lines": 565,
+    "definitions": [
+      {
+        "name": "BM25Retriever",
+        "line": 158
+      },
+      {
+        "name": "_parse_args",
+        "line": 455
+      },
+      {
+        "name": "__init__",
+        "line": 204
+      },
+      {
+        "name": "__len__",
+        "line": 244
+      },
+      {
+        "name": "n_docs",
+        "line": 249
+      },
+      {
+        "name": "_load_kb",
+        "line": 257
+      },
+      {
+        "name": "_build_index",
+        "line": 290
+      },
+      {
+        "name": "retrieve",
+        "line": 313
+      },
+      {
+        "name": "diagnose",
+        "line": 413
+      }
+    ]
+  },
+  {
+    "path": "build_llm_judge_prompt.py",
+    "lines": 386,
+    "definitions": [
+      {
+        "name": "latest_run",
+        "line": 29
+      },
+      {
+        "name": "make_tag",
+        "line": 38
+      },
+      {
+        "name": "merge_run_files",
+        "line": 157
+      },
+      {
+        "name": "build_prompt_from_data",
+        "line": 191
+      },
+      {
+        "name": "build_prompt",
+        "line": 325
+      },
+      {
+        "name": "main",
+        "line": 336
+      }
+    ]
+  },
+  {
+    "path": "build_t4_t6_judge_prompt.py",
+    "lines": 405,
+    "definitions": [
+      {
+        "name": "load_run",
+        "line": 133
+      },
+      {
+        "name": "build_prompt",
+        "line": 141
+      },
+      {
+        "name": "main",
+        "line": 385
+      }
+    ]
+  },
+  {
+    "path": "build_v2_judge_prompt.py",
+    "lines": 945,
+    "definitions": [
+      {
+        "name": "build_comparison_questions",
+        "line": 165
+      },
+      {
+        "name": "build_final_summary",
+        "line": 238
+      },
+      {
+        "name": "load_run",
+        "line": 494
+      },
+      {
+        "name": "load_metrics",
+        "line": 502
+      },
+      {
+        "name": "_meta_summary",
+        "line": 510
+      },
+      {
+        "name": "build_prompt",
+        "line": 542
+      },
+      {
+        "name": "_auto_groups",
+        "line": 814
+      },
+      {
+        "name": "main",
+        "line": 850
+      },
+      {
+        "name": "qsort",
+        "line": 585
+      }
+    ]
+  },
+  {
+    "path": "camera_ready/check.py",
+    "lines": 284,
+    "definitions": [
+      {
+        "name": "CheckResult",
+        "line": 32
+      },
+      {
+        "name": "load_protocol",
+        "line": 38
+      },
+      {
+        "name": "resolve_repo_path",
+        "line": 50
+      },
+      {
+        "name": "_result",
+        "line": 59
+      },
+      {
+        "name": "_importable",
+        "line": 65
+      },
+      {
+        "name": "_git_source_status",
+        "line": 73
+      },
+      {
+        "name": "collect_checks",
+        "line": 84
+      },
+      {
+        "name": "print_report",
+        "line": 251
+      },
+      {
+        "name": "main",
+        "line": 261
+      }
+    ]
+  },
+  {
+    "path": "camera_ready/pipeline.py",
+    "lines": 296,
+    "definitions": [
+      {
+        "name": "repo_path",
+        "line": 32
+      },
+      {
+        "name": "newest_run",
+        "line": 38
+      },
+      {
+        "name": "resolve_run",
+        "line": 48
+      },
+      {
+        "name": "generation_command",
+        "line": 57
+      },
+      {
+        "name": "run_command",
+        "line": 72
+      },
+      {
+        "name": "run_health_check",
+        "line": 77
+      },
+      {
+        "name": "command_generate",
+        "line": 83
+      },
+      {
+        "name": "command_verify",
+        "line": 131
+      },
+      {
+        "name": "command_judge",
+        "line": 140
+      },
+      {
+        "name": "command_analyze",
+        "line": 161
+      },
+      {
+        "name": "command_manual_prompt",
+        "line": 175
+      },
+      {
+        "name": "_completion_summary",
+        "line": 187
+      },
+      {
+        "name": "command_status",
+        "line": 200
+      },
+      {
+        "name": "build_parser",
+        "line": 229
+      },
+      {
+        "name": "main",
+        "line": 268
+      }
+    ]
+  },
+  {
+    "path": "data.py",
+    "lines": 749,
+    "definitions": [
+      {
+        "name": "_build_instruction",
+        "line": 182
+      },
+      {
+        "name": "_build_full_text",
+        "line": 210
+      },
+      {
+        "name": "extract_question_type",
+        "line": 219
+      },
+      {
+        "name": "classify_category",
+        "line": 237
+      },
+      {
+        "name": "classify_category_semantic",
+        "line": 249
+      },
+      {
+        "name": "classify_safety_critical_semantic",
+        "line": 283
+      },
+      {
+        "name": "enrich_dataset",
+        "line": 311
+      },
+      {
+        "name": "enrich_dataset_semantic",
+        "line": 345
+      },
+      {
+        "name": "stratified_split",
+        "line": 414
+      },
+      {
+        "name": "save_splits",
+        "line": 468
+      },
+      {
+        "name": "load_split",
+        "line": 491
+      },
+      {
+        "name": "build_hf_dataset",
+        "line": 507
+      },
+      {
+        "name": "tokenize_dataset",
+        "line": 530
+      },
+      {
+        "name": "load_qa_data",
+        "line": 639
+      },
+      {
+        "name": "tokenize_fn",
+        "line": 544
+      }
+    ]
+  },
+  {
+    "path": "data_v2.py",
+    "lines": 684,
+    "definitions": [
+      {
+        "name": "extract_question_type",
+        "line": 214
+      },
+      {
+        "name": "classify_category",
+        "line": 231
+      },
+      {
+        "name": "classify_category_semantic",
+        "line": 239
+      },
+      {
+        "name": "classify_safety_critical_semantic",
+        "line": 258
+      },
+      {
+        "name": "enrich_dataset",
+        "line": 275
+      },
+      {
+        "name": "enrich_dataset_semantic",
+        "line": 295
+      },
+      {
+        "name": "stratified_split",
+        "line": 337
+      },
+      {
+        "name": "save_splits",
+        "line": 373
+      },
+      {
+        "name": "load_split",
+        "line": 396
+      },
+      {
+        "name": "build_hf_dataset_v2",
+        "line": 413
+      },
+      {
+        "name": "tokenize_dataset_v2",
+        "line": 471
+      },
+      {
+        "name": "load_qa_data",
+        "line": 589
+      },
+      {
+        "name": "tokenize_fn",
+        "line": 492
+      }
+    ]
+  },
+  {
+    "path": "enhanced_inference.py",
+    "lines": 1221,
+    "definitions": [
+      {
+        "name": "compute_min_tokens_map",
+        "line": 188
+      },
+      {
+        "name": "TrainingRAG",
+        "line": 243
+      },
+      {
+        "name": "build_prompt",
+        "line": 413
+      },
+      {
+        "name": "build_rag_prompt",
+        "line": 422
+      },
+      {
+        "name": "build_critique_prompt",
+        "line": 439
+      },
+      {
+        "name": "resolve_model",
+        "line": 460
+      },
+      {
+        "name": "get_bnb_config",
+        "line": 467
+      },
+      {
+        "name": "_get_stop_token_ids",
+        "line": 480
+      },
+      {
+        "name": "infer_quant_from_path",
+        "line": 489
+      },
+      {
+        "name": "unload",
+        "line": 498
+      },
+      {
+        "name": "load_questions",
+        "line": 510
+      },
+      {
+        "name": "_run_generate",
+        "line": 536
+      },
+      {
+        "name": "EnhancedInferenceEngine",
+        "line": 607
+      },
+      {
+        "name": "save_results",
+        "line": 875
+      },
+      {
+        "name": "resolve_adapter_path",
+        "line": 895
+      },
+      {
+        "name": "_technique_tag",
+        "line": 906
+      },
+      {
+        "name": "build_variant_key",
+        "line": 915
+      },
+      {
+        "name": "build_variant_label",
+        "line": 924
+      },
+      {
+        "name": "parse_args",
+        "line": 944
+      },
+      {
+        "name": "__init__",
+        "line": 266
+      },
+      {
+        "name": "_init_retriever",
+        "line": 310
+      },
+      {
+        "name": "_init_dense",
+        "line": 318
+      },
+      {
+        "name": "_init_bm25",
+        "line": 362
+      },
+      {
+        "name": "retrieve",
+        "line": 377
+      },
+      {
+        "name": "__init__",
+        "line": 621
+      },
+      {
+        "name": "_resolve_gen_kwargs",
+        "line": 650
+      },
+      {
+        "name": "_resolve_min_tokens",
+        "line": 658
+      },
+      {
+        "name": "_resolve_rag_prompt",
+        "line": 669
+      },
+      {
+        "name": "generate",
+        "line": 740
+      },
+      {
+        "name": "batch_eval",
+        "line": 841
+      },
+      {
+        "name": "classify_category",
+        "line": 116
+      }
+    ]
+  },
+  {
+    "path": "eval_suite.py",
+    "lines": 503,
+    "definitions": [
+      {
+        "name": "infer_quant",
+        "line": 46
+      },
+      {
+        "name": "find_adapter_path",
+        "line": 55
+      },
+      {
+        "name": "make_variant_key",
+        "line": 82
+      },
+      {
+        "name": "make_variant_label",
+        "line": 92
+      },
+      {
+        "name": "discover_model_variants",
+        "line": 105
+      },
+      {
+        "name": "load_questions",
+        "line": 163
+      },
+      {
+        "name": "resolve_model",
+        "line": 201
+      },
+      {
+        "name": "unload",
+        "line": 210
+      },
+      {
+        "name": "get_bnb_config",
+        "line": 218
+      },
+      {
+        "name": "load_variant",
+        "line": 231
+      },
+      {
+        "name": "build_prompt",
+        "line": 255
+      },
+      {
+        "name": "_get_stop_token_ids",
+        "line": 263
+      },
+      {
+        "name": "generate",
+        "line": 276
+      },
+      {
+        "name": "run_model",
+        "line": 328
+      },
+      {
+        "name": "make_run_id",
+        "line": 390
+      },
+      {
+        "name": "save_results",
+        "line": 394
+      }
+    ]
+  },
+  {
+    "path": "evaluate.py",
+    "lines": 681,
+    "definitions": [
+      {
+        "name": "_check_deps",
+        "line": 43
+      },
+      {
+        "name": "compute_rouge",
+        "line": 73
+      },
+      {
+        "name": "compute_rouge_per_item",
+        "line": 98
+      },
+      {
+        "name": "_bert_num_layers",
+        "line": 121
+      },
+      {
+        "name": "compute_bertscore",
+        "line": 144
+      },
+      {
+        "name": "compute_bertscore_per_item",
+        "line": 177
+      },
+      {
+        "name": "_group_answers",
+        "line": 205
+      },
+      {
+        "name": "_sc_split",
+        "line": 214
+      },
+      {
+        "name": "_coerce_answer",
+        "line": 225
+      },
+      {
+        "name": "evaluate_variant",
+        "line": 260
+      },
+      {
+        "name": "evaluate_run",
+        "line": 377
+      },
+      {
+        "name": "print_summary",
+        "line": 415
+      },
+      {
+        "name": "save_metrics",
+        "line": 489
+      },
+      {
+        "name": "find_latest_run",
+        "line": 503
+      },
+      {
+        "name": "find_all_runs",
+        "line": 511
+      },
+      {
+        "name": "parse_args",
+        "line": 518
+      },
+      {
+        "name": "aggregate_runs",
+        "line": 563
+      },
+      {
+        "name": "print_aggregate",
+        "line": 614
+      },
+      {
+        "name": "main",
+        "line": 638
+      },
+      {
+        "name": "_mean",
+        "line": 87
+      },
+      {
+        "name": "_m",
+        "line": 166
+      },
+      {
+        "name": "_safe_mean",
+        "line": 328
+      },
+      {
+        "name": "_stats",
+        "line": 593
+      },
+      {
+        "name": "fmt",
+        "line": 622
+      }
+    ]
+  },
+  {
+    "path": "evaluation_protocol.py",
+    "lines": 286,
+    "definitions": [
+      {
+        "name": "prompt_metadata",
+        "line": 79
+      },
+      {
+        "name": "canonical_json_sha256",
+        "line": 88
+      },
+      {
+        "name": "freeze_questions",
+        "line": 96
+      },
+      {
+        "name": "question_bank_metadata",
+        "line": 104
+      },
+      {
+        "name": "artifact_fingerprint",
+        "line": 114
+      },
+      {
+        "name": "frozen_questions_from_run",
+        "line": 143
+      },
+      {
+        "name": "default_analysis_dir",
+        "line": 163
+      },
+      {
+        "name": "latest_run_dir",
+        "line": 169
+      },
+      {
+        "name": "validate_prompt_metadata",
+        "line": 192
+      },
+      {
+        "name": "validate_run_prompt_provenance",
+        "line": 210
+      },
+      {
+        "name": "validate_run_question_provenance",
+        "line": 231
+      },
+      {
+        "name": "validate_camera_config_resolution",
+        "line": 253
+      }
+    ]
+  },
+  {
+    "path": "garbage_audit.py",
+    "lines": 264,
+    "definitions": [
+      {
+        "name": "non_ascii_ratio",
+        "line": 33
+      },
+      {
+        "name": "non_ascii_count",
+        "line": 41
+      },
+      {
+        "name": "repetition_ratio",
+        "line": 45
+      },
+      {
+        "name": "has_template_artifact",
+        "line": 75
+      },
+      {
+        "name": "word_count",
+        "line": 79
+      },
+      {
+        "name": "has_digit_corrupted_words",
+        "line": 85
+      },
+      {
+        "name": "question_echoed",
+        "line": 89
+      },
+      {
+        "name": "garbage_score",
+        "line": 98
+      },
+      {
+        "name": "audit_run",
+        "line": 139
+      },
+      {
+        "name": "find_latest_run",
+        "line": 238
+      },
+      {
+        "name": "main",
+        "line": 245
+      }
+    ]
+  },
+  {
+    "path": "internal_eval/judge_per_item.py",
+    "lines": 1153,
+    "definitions": [
+      {
+        "name": "validate_response",
+        "line": 197
+      },
+      {
+        "name": "strip_code_fence",
+        "line": 211
+      },
+      {
+        "name": "extract_json",
+        "line": 221
+      },
+      {
+        "name": "is_retryable_api_error",
+        "line": 264
+      },
+      {
+        "name": "_rejects_json_mode",
+        "line": 281
+      },
+      {
+        "name": "_call_openai",
+        "line": 294
+      },
+      {
+        "name": "_call_anthropic",
+        "line": 308
+      },
+      {
+        "name": "_call_google",
+        "line": 321
+      },
+      {
+        "name": "_call_openai_compat",
+        "line": 336
+      },
+      {
+        "name": "call_judge",
+        "line": 373
+      },
+      {
+        "name": "cache_path",
+        "line": 392
+      },
+      {
+        "name": "load_cached",
+        "line": 396
+      },
+      {
+        "name": "save_cached",
+        "line": 406
+      },
+      {
+        "name": "load_manifest",
+        "line": 415
+      },
+      {
+        "name": "save_manifest",
+        "line": 423
+      },
+      {
+        "name": "score_input_sha256",
+        "line": 442
+      },
+      {
+        "name": "score_one",
+        "line": 456
+      },
+      {
+        "name": "run_scoring",
+        "line": 551
+      },
+      {
+        "name": "run_pairwise",
+        "line": 657
+      },
+      {
+        "name": "load_pairwise_cache",
+        "line": 787
+      },
+      {
+        "name": "_aggregate_pairwise",
+        "line": 811
+      },
+      {
+        "name": "run_correlation",
+        "line": 886
+      },
+      {
+        "name": "write_completion_matrix",
+        "line": 982
+      },
+      {
+        "name": "parse_args",
+        "line": 1026
+      },
+      {
+        "name": "main",
+        "line": 1055
+      }
+    ]
+  },
+  {
+    "path": "internal_eval/stats_v2.py",
+    "lines": 855,
+    "definitions": [
+      {
+        "name": "load_scores",
+        "line": 112
+      },
+      {
+        "name": "panel_means",
+        "line": 174
+      },
+      {
+        "name": "_percentile_indices",
+        "line": 194
+      },
+      {
+        "name": "bootstrap_mean_ci",
+        "line": 201
+      },
+      {
+        "name": "bootstrap_delta_ci",
+        "line": 225
+      },
+      {
+        "name": "binomial_exact_twosided",
+        "line": 249
+      },
+      {
+        "name": "_norm_sf",
+        "line": 269
+      },
+      {
+        "name": "_median",
+        "line": 274
+      },
+      {
+        "name": "sign_test",
+        "line": 286
+      },
+      {
+        "name": "kendalls_tau",
+        "line": 316
+      },
+      {
+        "name": "spearman_rho",
+        "line": 339
+      },
+      {
+        "name": "compute_judge_agreement",
+        "line": 368
+      },
+      {
+        "name": "exact_binomial_ci",
+        "line": 434
+      },
+      {
+        "name": "compute_flag_counts",
+        "line": 457
+      },
+      {
+        "name": "run_analysis",
+        "line": 489
+      },
+      {
+        "name": "_write_csv",
+        "line": 703
+      },
+      {
+        "name": "_fmt",
+        "line": 713
+      },
+      {
+        "name": "_write_latex",
+        "line": 721
+      },
+      {
+        "name": "_print_precommit_reminder",
+        "line": 789
+      },
+      {
+        "name": "parse_args",
+        "line": 804
+      },
+      {
+        "name": "main",
+        "line": 823
+      },
+      {
+        "name": "_ranks",
+        "line": 344
+      },
+      {
+        "name": "_aligned_vecs",
+        "line": 587
+      },
+      {
+        "name": "binom_pmf",
+        "line": 256
+      }
+    ]
+  },
+  {
+    "path": "judging/aggregate.py",
+    "lines": 975,
+    "definitions": [
+      {
+        "name": "init_model",
+        "line": 78
+      },
+      {
+        "name": "_model_tokens",
+        "line": 95
+      },
+      {
+        "name": "model_substituted",
+        "line": 100
+      },
+      {
+        "name": "load_bank",
+        "line": 113
+      },
+      {
+        "name": "load_blind_map",
+        "line": 118
+      },
+      {
+        "name": "load_judgments",
+        "line": 124
+      },
+      {
+        "name": "load_manifest",
+        "line": 130
+      },
+      {
+        "name": "bootstrap_ci",
+        "line": 140
+      },
+      {
+        "name": "sign_test",
+        "line": 155
+      },
+      {
+        "name": "build_scores_table",
+        "line": 177
+      },
+      {
+        "name": "build_config_summary",
+        "line": 267
+      },
+      {
+        "name": "build_stats",
+        "line": 310
+      },
+      {
+        "name": "build_controls_report",
+        "line": 379
+      },
+      {
+        "name": "build_reliability_report",
+        "line": 464
+      },
+      {
+        "name": "assert_panel_complete",
+        "line": 548
+      },
+      {
+        "name": "load_answer_lengths",
+        "line": 615
+      },
+      {
+        "name": "load_precommit_contrasts",
+        "line": 639
+      },
+      {
+        "name": "_num",
+        "line": 675
+      },
+      {
+        "name": "write_final_report",
+        "line": 682
+      },
+      {
+        "name": "main",
+        "line": 826
+      }
+    ]
+  },
+  {
+    "path": "judging/assemble_items.py",
+    "lines": 456,
+    "definitions": [
+      {
+        "name": "make_blind_id",
+        "line": 66
+      },
+      {
+        "name": "load_bank",
+        "line": 72
+      },
+      {
+        "name": "load_run",
+        "line": 79
+      },
+      {
+        "name": "check_prompt_provenance",
+        "line": 104
+      },
+      {
+        "name": "check_bank_alignment",
+        "line": 157
+      },
+      {
+        "name": "validate_items",
+        "line": 202
+      },
+      {
+        "name": "main",
+        "line": 256
+      }
+    ]
+  },
+  {
+    "path": "judging/check_controls.py",
+    "lines": 171,
+    "definitions": [
+      {
+        "name": "load_rows",
+        "line": 49
+      },
+      {
+        "name": "check",
+        "line": 60
+      },
+      {
+        "name": "main",
+        "line": 108
+      }
+    ]
+  },
+  {
+    "path": "judging/judge_deepseek.py",
+    "lines": 1251,
+    "definitions": [
+      {
+        "name": "init_model",
+        "line": 273
+      },
+      {
+        "name": "sha256_hex",
+        "line": 313
+      },
+      {
+        "name": "file_sha256",
+        "line": 317
+      },
+      {
+        "name": "git_commit",
+        "line": 321
+      },
+      {
+        "name": "bank_sha256_now",
+        "line": 332
+      },
+      {
+        "name": "_model_tokens",
+        "line": 338
+      },
+      {
+        "name": "model_substituted",
+        "line": 343
+      },
+      {
+        "name": "resume_incompatibilities",
+        "line": 361
+      },
+      {
+        "name": "check_items_freshness",
+        "line": 391
+      },
+      {
+        "name": "load_items",
+        "line": 430
+      },
+      {
+        "name": "load_blind_map",
+        "line": 453
+      },
+      {
+        "name": "build_quality_prompt",
+        "line": 458
+      },
+      {
+        "name": "build_safety_prompt",
+        "line": 469
+      },
+      {
+        "name": "decode_fingerprint",
+        "line": 478
+      },
+      {
+        "name": "cache_key",
+        "line": 493
+      },
+      {
+        "name": "cache_path",
+        "line": 520
+      },
+      {
+        "name": "load_cache",
+        "line": 524
+      },
+      {
+        "name": "save_cache",
+        "line": 532
+      },
+      {
+        "name": "validate_quality",
+        "line": 539
+      },
+      {
+        "name": "validate_safety",
+        "line": 553
+      },
+      {
+        "name": "_is_retryable",
+        "line": 576
+      },
+      {
+        "name": "call_api_sync",
+        "line": 611
+      },
+      {
+        "name": "judge_item_sync",
+        "line": 711
+      },
+      {
+        "name": "run_judging",
+        "line": 807
+      },
+      {
+        "name": "self_review",
+        "line": 1061
+      },
+      {
+        "name": "main",
+        "line": 1174
+      },
+      {
+        "name": "make_client",
+        "line": 913
+      },
+      {
+        "name": "get_client",
+        "line": 938
+      },
+      {
+        "name": "process_one",
+        "line": 943
+      }
+    ]
+  },
+  {
+    "path": "judging/make_controls.py",
+    "lines": 503,
+    "definitions": [
+      {
+        "name": "make_blind_id",
+        "line": 44
+      },
+      {
+        "name": "load_bank",
+        "line": 49
+      },
+      {
+        "name": "build_items",
+        "line": 290
+      },
+      {
+        "name": "main",
+        "line": 417
+      }
+    ]
+  },
+  {
+    "path": "judging/panel_verdict.py",
+    "lines": 610,
+    "definitions": [
+      {
+        "name": "_sha256_text",
+        "line": 139
+      },
+      {
+        "name": "load_stats",
+        "line": 144
+      },
+      {
+        "name": "load_manifest",
+        "line": 179
+      },
+      {
+        "name": "sign_of",
+        "line": 190
+      },
+      {
+        "name": "min_attainable_sign_p",
+        "line": 195
+      },
+      {
+        "name": "judge_is_powerless",
+        "line": 208
+      },
+      {
+        "name": "apply_rule",
+        "line": 215
+      },
+      {
+        "name": "check_instrument",
+        "line": 270
+      },
+      {
+        "name": "fmt",
+        "line": 352
+      },
+      {
+        "name": "render",
+        "line": 356
+      },
+      {
+        "name": "main",
+        "line": 511
+      },
+      {
+        "name": "body",
+        "line": 593
+      }
+    ]
+  },
+  {
+    "path": "judging/probe_agentrouter.py",
+    "lines": 96,
+    "definitions": [
+      {
+        "name": "main",
+        "line": 34
+      }
+    ]
+  },
+  {
+    "path": "judging/probe_reasoning.py",
+    "lines": 115,
+    "definitions": [
+      {
+        "name": "usage_detail",
+        "line": 54
+      },
+      {
+        "name": "main",
+        "line": 68
+      }
+    ]
+  },
+  {
+    "path": "judging/run_validation_tests.py",
+    "lines": 625,
+    "definitions": [
+      {
+        "name": "load_judgments",
+        "line": 52
+      },
+      {
+        "name": "run_judge",
+        "line": 60
+      },
+      {
+        "name": "test1_plumbing",
+        "line": 72
+      },
+      {
+        "name": "_check_control_pass",
+        "line": 105
+      },
+      {
+        "name": "test2_controls",
+        "line": 215
+      },
+      {
+        "name": "_log_iteration",
+        "line": 286
+      },
+      {
+        "name": "test3_stability",
+        "line": 318
+      },
+      {
+        "name": "test4_bridge",
+        "line": 405
+      },
+      {
+        "name": "_parse_june_scores",
+        "line": 521
+      },
+      {
+        "name": "_write_bridge_stub",
+        "line": 553
+      },
+      {
+        "name": "main",
+        "line": 576
+      }
+    ]
+  },
+  {
+    "path": "judging/test_api.py",
+    "lines": 67,
+    "definitions": [
+      {
+        "name": "test_one",
+        "line": 34
+      }
+    ]
+  },
+  {
+    "path": "judging/test_gemini.py",
+    "lines": 96,
+    "definitions": [
+      {
+        "name": "try_call",
+        "line": 31
+      },
+      {
+        "name": "main",
+        "line": 62
+      }
+    ]
+  },
+  {
+    "path": "judging/test_judging_harness.py",
+    "lines": 306,
+    "definitions": [
+      {
+        "name": "StatusError",
+        "line": 31
+      },
+      {
+        "name": "RetryClassificationTests",
+        "line": 39
+      },
+      {
+        "name": "RetryExhaustionTests",
+        "line": 65
+      },
+      {
+        "name": "_rows",
+        "line": 102
+      },
+      {
+        "name": "ContrastDirectionTests",
+        "line": 112
+      },
+      {
+        "name": "PanelCompletenessTests",
+        "line": 147
+      },
+      {
+        "name": "ScoresTableTests",
+        "line": 210
+      },
+      {
+        "name": "AssembleGateTests",
+        "line": 261
+      },
+      {
+        "name": "ControlsKeyTests",
+        "line": 278
+      },
+      {
+        "name": "__init__",
+        "line": 34
+      },
+      {
+        "name": "test_status_code_drives_the_decision",
+        "line": 40
+      },
+      {
+        "name": "test_sdk_message_form_is_classified_without_a_status_code",
+        "line": 47
+      },
+      {
+        "name": "test_incidental_digits_do_not_trigger_a_retry",
+        "line": 57
+      },
+      {
+        "name": "test_exhaustion_raises_instead_of_returning_none",
+        "line": 66
+      },
+      {
+        "name": "test_non_retryable_error_propagates_unchanged",
+        "line": 90
+      },
+      {
+        "name": "test_significant_result_in_the_wrong_direction_is_flagged",
+        "line": 113
+      },
+      {
+        "name": "test_significant_result_in_the_predicted_direction_matches",
+        "line": 123
+      },
+      {
+        "name": "test_exploratory_contrast_declares_no_direction",
+        "line": 131
+      },
+      {
+        "name": "test_precommitted_primaries_all_declare_a_direction",
+        "line": 139
+      },
+      {
+        "name": "setUp",
+        "line": 150
+      },
+      {
+        "name": "tearDown",
+        "line": 165
+      },
+      {
+        "name": "_rows",
+        "line": 169
+      },
+      {
+        "name": "test_complete_panel_passes_and_reports_an_item_set_hash",
+        "line": 172
+      },
+      {
+        "name": "test_controls_only_run_is_refused",
+        "line": 182
+      },
+      {
+        "name": "test_missing_config_is_refused",
+        "line": 188
+      },
+      {
+        "name": "test_allow_partial_downgrades_to_a_warning",
+        "line": 195
+      },
+      {
+        "name": "test_item_set_hash_is_stable_and_order_independent",
+        "line": 200
+      },
+      {
+        "name": "_judgment",
+        "line": 214
+      },
+      {
+        "name": "test_missing_safety_call_is_marked_unscreened_not_clean",
+        "line": 218
+      },
+      {
+        "name": "test_present_safety_call_is_counted",
+        "line": 229
+      },
+      {
+        "name": "test_unmapped_blind_id_is_refused_rather_than_published",
+        "line": 241
+      },
+      {
+        "name": "test_empty_stratum_reports_none_not_zero",
+        "line": 250
+      },
+      {
+        "name": "test_config_expected_but_absent_fails_the_gate",
+        "line": 262
+      },
+      {
+        "name": "test_empty_answer_fails_the_gate",
+        "line": 270
+      },
+      {
+        "name": "test_vague_floor_allows_zero",
+        "line": 281
+      },
+      {
+        "name": "AlwaysRateLimited",
+        "line": 70
+      },
+      {
+        "name": "Unauthorized",
+        "line": 91
+      },
+      {
+        "name": "chat",
+        "line": 71
+      },
+      {
+        "name": "chat",
+        "line": 92
+      },
+      {
+        "name": "completions",
+        "line": 72
+      },
+      {
+        "name": "completions",
+        "line": 93
+      },
+      {
+        "name": "create",
+        "line": 74
+      },
+      {
+        "name": "create",
+        "line": 95
+      }
+    ]
+  },
+  {
+    "path": "judging/test_openrouter.py",
+    "lines": 126,
+    "definitions": [
+      {
+        "name": "test_model",
+        "line": 31
+      },
+      {
+        "name": "main",
+        "line": 92
+      }
+    ]
+  },
+  {
+    "path": "prompt_shift_probe.py",
+    "lines": 174,
+    "definitions": [
+      {
+        "name": "prompt_with",
+        "line": 58
+      },
+      {
+        "name": "jaccard",
+        "line": 64
+      },
+      {
+        "name": "main",
+        "line": 69
+      },
+      {
+        "name": "summarise",
+        "line": 121
+      }
+    ]
+  },
+  {
+    "path": "rag_inference.py",
+    "lines": 590,
+    "definitions": [
+      {
+        "name": "_check_sentence_transformers",
+        "line": 79
+      },
+      {
+        "name": "_check_bm25",
+        "line": 87
+      },
+      {
+        "name": "KnowledgeBase",
+        "line": 99
+      },
+      {
+        "name": "DenseRetriever",
+        "line": 138
+      },
+      {
+        "name": "BM25Retriever",
+        "line": 191
+      },
+      {
+        "name": "resolve_model",
+        "line": 216
+      },
+      {
+        "name": "load_model_and_tokenizer",
+        "line": 225
+      },
+      {
+        "name": "RAGInferenceEngine",
+        "line": 275
+      },
+      {
+        "name": "run_single",
+        "line": 379
+      },
+      {
+        "name": "run_interactive",
+        "line": 390
+      },
+      {
+        "name": "run_batch",
+        "line": 411
+      },
+      {
+        "name": "parse_args",
+        "line": 467
+      },
+      {
+        "name": "main",
+        "line": 517
+      },
+      {
+        "name": "__init__",
+        "line": 105
+      },
+      {
+        "name": "__len__",
+        "line": 127
+      },
+      {
+        "name": "__getitem__",
+        "line": 130
+      },
+      {
+        "name": "__init__",
+        "line": 144
+      },
+      {
+        "name": "retrieve",
+        "line": 179
+      },
+      {
+        "name": "__init__",
+        "line": 197
+      },
+      {
+        "name": "retrieve",
+        "line": 205
+      },
+      {
+        "name": "__init__",
+        "line": 281
+      },
+      {
+        "name": "_build_context_block",
+        "line": 287
+      },
+      {
+        "name": "_build_prompt",
+        "line": 294
+      },
+      {
+        "name": "answer",
+        "line": 310
+      },
+      {
+        "name": "_patched_answer",
+        "line": 573
+      }
+    ]
+  },
+  {
+    "path": "recover_isolation_run.py",
+    "lines": 119,
+    "definitions": [
+      {
+        "name": "rouge_l_score",
+        "line": 18
+      },
+      {
+        "name": "compute_metrics",
+        "line": 38
+      },
+      {
+        "name": "main",
+        "line": 62
+      }
+    ]
+  },
+  {
+    "path": "t4_t6_isolation_eval.py",
+    "lines": 736,
+    "definitions": [
+      {
+        "name": "classify_category",
+        "line": 121
+      },
+      {
+        "name": "load_model_and_adapter",
+        "line": 131
+      },
+      {
+        "name": "get_stop_ids",
+        "line": 151
+      },
+      {
+        "name": "unload",
+        "line": 159
+      },
+      {
+        "name": "compute_floor_map",
+        "line": 169
+      },
+      {
+        "name": "build_prompt",
+        "line": 195
+      },
+      {
+        "name": "build_length_hint_prompt",
+        "line": 201
+      },
+      {
+        "name": "build_safety_gate_prompt",
+        "line": 211
+      },
+      {
+        "name": "generate",
+        "line": 236
+      },
+      {
+        "name": "run_baseline",
+        "line": 285
+      },
+      {
+        "name": "run_t4_original",
+        "line": 292
+      },
+      {
+        "name": "run_t4_improved",
+        "line": 303
+      },
+      {
+        "name": "run_t6_original",
+        "line": 342
+      },
+      {
+        "name": "run_t6_improved",
+        "line": 394
+      },
+      {
+        "name": "run_combined_best",
+        "line": 446
+      },
+      {
+        "name": "run_config",
+        "line": 514
+      },
+      {
+        "name": "save_run",
+        "line": 551
+      },
+      {
+        "name": "save_run_summary",
+        "line": 567
+      },
+      {
+        "name": "rouge_l_score",
+        "line": 595
+      },
+      {
+        "name": "compute_metrics",
+        "line": 617
+      },
+      {
+        "name": "print_metrics_table",
+        "line": 637
+      },
+      {
+        "name": "parse_args",
+        "line": 665
+      },
+      {
+        "name": "main",
+        "line": 677
+      }
+    ]
+  },
+  {
+    "path": "test_camera_ready_pipeline.py",
+    "lines": 340,
+    "definitions": [
+      {
+        "name": "make_run",
+        "line": 31
+      },
+      {
+        "name": "FakeIndex",
+        "line": 64
+      },
+      {
+        "name": "fake_retriever",
+        "line": 73
+      },
+      {
+        "name": "CameraReadyPipelineTests",
+        "line": 85
+      },
+      {
+        "name": "__init__",
+        "line": 65
+      },
+      {
+        "name": "get_scores",
+        "line": 68
+      },
+      {
+        "name": "test_facade_manifest_matches_canonical_contract",
+        "line": 86
+      },
+      {
+        "name": "test_facade_checker_is_usable_without_runtime_dependency_probe",
+        "line": 102
+      },
+      {
+        "name": "test_facade_exposes_all_stages",
+        "line": 111
+      },
+      {
+        "name": "test_frozen_question_hash_and_cross_config_consistency",
+        "line": 117
+      },
+      {
+        "name": "test_analysis_directory_is_a_sibling",
+        "line": 123
+      },
+      {
+        "name": "test_auto_detect_never_selects_an_analysis_sibling",
+        "line": 130
+      },
+      {
+        "name": "test_auto_detect_ignores_directories_without_a_run",
+        "line": 150
+      },
+      {
+        "name": "test_bm25_uses_raw_positive_score_and_skips_no_match",
+        "line": 157
+      },
+      {
+        "name": "test_builder_reads_current_rag_metadata",
+        "line": 166
+      },
+      {
+        "name": "test_builder_uses_frozen_run_without_live_bank",
+        "line": 179
+      },
+      {
+        "name": "test_json_extraction_survives_realistic_judge_replies",
+        "line": 188
+      },
+      {
+        "name": "test_json_extraction_returns_none_for_genuine_garbage",
+        "line": 209
+      },
+      {
+        "name": "test_completion_matrix_covers_the_whole_panel_after_a_scoped_run",
+        "line": 214
+      },
+      {
+        "name": "test_pairwise_summary_is_rebuilt_from_the_cache_not_the_invocation",
+        "line": 240
+      },
+      {
+        "name": "test_sign_test_flags_a_significant_result_in_the_wrong_direction",
+        "line": 262
+      },
+      {
+        "name": "test_median_is_the_mean_of_the_two_central_values_when_even",
+        "line": 273
+      },
+      {
+        "name": "test_judge_schema_is_strict",
+        "line": 279
+      },
+      {
+        "name": "test_cache_hash_changes_with_any_scoring_input",
+        "line": 291
+      },
+      {
+        "name": "test_spearman_handles_ties",
+        "line": 304
+      },
+      {
+        "name": "test_stats_require_complete_current_panel",
+        "line": 307
+      }
+    ]
+  },
+  {
+    "path": "test_gemini_full.py",
+    "lines": 83,
+    "definitions": []
+  },
+  {
+    "path": "test_gemini_raw.py",
+    "lines": 30,
+    "definitions": []
+  },
+  {
+    "path": "test_gemini_v2q01.py",
+    "lines": 72,
+    "definitions": []
+  },
+  {
+    "path": "train.py",
+    "lines": 475,
+    "definitions": [
+      {
+        "name": "resolve_model_id",
+        "line": 57
+      },
+      {
+        "name": "TrainConfig",
+        "line": 74
+      },
+      {
+        "name": "set_all_seeds",
+        "line": 114
+      },
+      {
+        "name": "get_bnb_config",
+        "line": 129
+      },
+      {
+        "name": "load_model_and_tokenizer",
+        "line": 146
+      },
+      {
+        "name": "train",
+        "line": 204
+      },
+      {
+        "name": "_write_run_log",
+        "line": 322
+      },
+      {
+        "name": "parse_args",
+        "line": 373
+      }
+    ]
+  },
+  {
+    "path": "train_v2.py",
+    "lines": 514,
+    "definitions": [
+      {
+        "name": "resolve_model_id",
+        "line": 93
+      },
+      {
+        "name": "TrainConfig",
+        "line": 106
+      },
+      {
+        "name": "set_all_seeds",
+        "line": 151
+      },
+      {
+        "name": "get_bnb_config",
+        "line": 165
+      },
+      {
+        "name": "load_model_and_tokenizer",
+        "line": 182
+      },
+      {
+        "name": "train",
+        "line": 243
+      },
+      {
+        "name": "_write_run_log",
+        "line": 368
+      },
+      {
+        "name": "parse_args",
+        "line": 420
+      }
+    ]
+  },
+  {
+    "path": "utils/classify_10cat.py",
+    "lines": 563,
+    "definitions": [
+      {
+        "name": "keyword_classify_10",
+        "line": 183
+      },
+      {
+        "name": "semantic_classify_category",
+        "line": 195
+      },
+      {
+        "name": "semantic_classify_safety_critical",
+        "line": 226
+      },
+      {
+        "name": "extract_question_type",
+        "line": 250
+      },
+      {
+        "name": "enrich_semantic",
+        "line": 262
+      },
+      {
+        "name": "enrich_keyword",
+        "line": 313
+      },
+      {
+        "name": "enrich_keyword_with_sc_scores",
+        "line": 330
+      },
+      {
+        "name": "stratified_split",
+        "line": 397
+      },
+      {
+        "name": "save_splits",
+        "line": 425
+      }
+    ]
+  },
+  {
+    "path": "utils/compare_models.py",
+    "lines": 257,
+    "definitions": [
+      {
+        "name": "resolve_model",
+        "line": 62
+      },
+      {
+        "name": "gpu_mem_mb",
+        "line": 71
+      },
+      {
+        "name": "unload",
+        "line": 77
+      },
+      {
+        "name": "build_prompt",
+        "line": 85
+      },
+      {
+        "name": "generate",
+        "line": 93
+      },
+      {
+        "name": "get_bnb_config",
+        "line": 119
+      },
+      {
+        "name": "load_variant",
+        "line": 132
+      },
+      {
+        "name": "run_comparison",
+        "line": 164
+      }
+    ]
+  },
+  {
+    "path": "utils/compare_quant.py",
+    "lines": 281,
+    "definitions": [
+      {
+        "name": "BenchResult",
+        "line": 41
+      },
+      {
+        "name": "resolve_model_source",
+        "line": 55
+      },
+      {
+        "name": "gpu_mem_mb",
+        "line": 65
+      },
+      {
+        "name": "reset_gpu_stats",
+        "line": 71
+      },
+      {
+        "name": "get_bnb_config",
+        "line": 78
+      },
+      {
+        "name": "load_model",
+        "line": 91
+      },
+      {
+        "name": "run_inference",
+        "line": 119
+      },
+      {
+        "name": "benchmark",
+        "line": 151
+      },
+      {
+        "name": "print_report",
+        "line": 217
+      },
+      {
+        "name": "parse_args",
+        "line": 251
+      }
+    ]
+  },
+  {
+    "path": "utils/download_model.py",
+    "lines": 302,
+    "definitions": [
+      {
+        "name": "sizeof_fmt",
+        "line": 61
+      },
+      {
+        "name": "get_disk_free_gb",
+        "line": 69
+      },
+      {
+        "name": "check_hf_login",
+        "line": 75
+      },
+      {
+        "name": "check_manual_files",
+        "line": 89
+      },
+      {
+        "name": "print_manifest",
+        "line": 120
+      },
+      {
+        "name": "download_model",
+        "line": 138
+      },
+      {
+        "name": "verify_local_load",
+        "line": 179
+      },
+      {
+        "name": "parse_args",
+        "line": 227
+      }
+    ]
+  },
+  {
+    "path": "utils/eval_suite_v1.py",
+    "lines": 624,
+    "definitions": [
+      {
+        "name": "resolve_model",
+        "line": 332
+      },
+      {
+        "name": "unload",
+        "line": 341
+      },
+      {
+        "name": "get_bnb_config",
+        "line": 349
+      },
+      {
+        "name": "load_variant",
+        "line": 362
+      },
+      {
+        "name": "build_prompt",
+        "line": 386
+      },
+      {
+        "name": "_get_stop_token_ids",
+        "line": 394
+      },
+      {
+        "name": "generate",
+        "line": 407
+      },
+      {
+        "name": "run_model",
+        "line": 459
+      },
+      {
+        "name": "make_run_id",
+        "line": 536
+      },
+      {
+        "name": "save_results",
+        "line": 540
+      }
+    ]
+  },
+  {
+    "path": "utils/infer_fp16.py",
+    "lines": 281,
+    "definitions": [
+      {
+        "name": "resolve_model",
+        "line": 52
+      },
+      {
+        "name": "load_model",
+        "line": 61
+      },
+      {
+        "name": "build_prompt",
+        "line": 107
+      },
+      {
+        "name": "generate",
+        "line": 115
+      },
+      {
+        "name": "run_interactive",
+        "line": 157
+      },
+      {
+        "name": "run_single",
+        "line": 177
+      },
+      {
+        "name": "run_batch",
+        "line": 184
+      },
+      {
+        "name": "parse_args",
+        "line": 236
+      }
+    ]
+  },
+  {
+    "path": "utils/inference.py",
+    "lines": 247,
+    "definitions": [
+      {
+        "name": "resolve_model_source",
+        "line": 47
+      },
+      {
+        "name": "load_base_model",
+        "line": 57
+      },
+      {
+        "name": "load_tokenizer",
+        "line": 84
+      },
+      {
+        "name": "load_adapter_model",
+        "line": 95
+      },
+      {
+        "name": "build_prompt",
+        "line": 107
+      },
+      {
+        "name": "generate",
+        "line": 118
+      },
+      {
+        "name": "run_comparison",
+        "line": 151
+      },
+      {
+        "name": "parse_args",
+        "line": 207
+      }
+    ]
+  },
+  {
+    "path": "utils/reload_adapter_example.py",
+    "lines": 85,
+    "definitions": [
+      {
+        "name": "reload_and_generate",
+        "line": 15
+      }
+    ]
+  },
+  {
+    "path": "v2_comprehensive_eval.py",
+    "lines": 1110,
+    "definitions": [
+      {
+        "name": "load_model",
+        "line": 158
+      },
+      {
+        "name": "unload",
+        "line": 218
+      },
+      {
+        "name": "get_stop_ids",
+        "line": 226
+      },
+      {
+        "name": "generate",
+        "line": 239
+      },
+      {
+        "name": "_truncate_repetition",
+        "line": 281
+      },
+      {
+        "name": "prompt_standard",
+        "line": 313
+      },
+      {
+        "name": "prompt_length_hint",
+        "line": 320
+      },
+      {
+        "name": "prompt_premise",
+        "line": 330
+      },
+      {
+        "name": "prompt_oneshot",
+        "line": 338
+      },
+      {
+        "name": "prompt_t6_gate",
+        "line": 348
+      },
+      {
+        "name": "prompt_rag",
+        "line": 363
+      },
+      {
+        "name": "compute_floor_map",
+        "line": 375
+      },
+      {
+        "name": "run_base_4bit",
+        "line": 399
+      },
+      {
+        "name": "run_finetuned_greedy",
+        "line": 406
+      },
+      {
+        "name": "run_t4_improved",
+        "line": 414
+      },
+      {
+        "name": "run_t6_improved",
+        "line": 445
+      },
+      {
+        "name": "run_premise",
+        "line": 472
+      },
+      {
+        "name": "run_oneshot",
+        "line": 485
+      },
+      {
+        "name": "run_rag_bm25",
+        "line": 501
+      },
+      {
+        "name": "run_questions",
+        "line": 557
+      },
+      {
+        "name": "rouge_l",
+        "line": 656
+      },
+      {
+        "name": "compute_metrics",
+        "line": 674
+      },
+      {
+        "name": "print_table",
+        "line": 692
+      },
+      {
+        "name": "save_config_json",
+        "line": 728
+      },
+      {
+        "name": "save_run_json",
+        "line": 739
+      },
+      {
+        "name": "parse_args",
+        "line": 834
+      },
+      {
+        "name": "main",
+        "line": 861
+      },
+      {
+        "name": "_run_pass",
+        "line": 952
+      }
+    ]
+  },
+  {
+    "path": "verify_camera_ready.py",
+    "lines": 328,
+    "definitions": [
+      {
+        "name": "_expected_n_from_manifest",
+        "line": 44
+      },
+      {
+        "name": "find_run_dir",
+        "line": 81
+      },
+      {
+        "name": "check",
+        "line": 87
+      },
+      {
+        "name": "verify",
+        "line": 95
+      },
+      {
+        "name": "parse_args",
+        "line": 312
+      }
+    ]
+  },
+  {
+    "path": "verify_masking.py",
+    "lines": 82,
+    "definitions": [
+      {
+        "name": "verify",
+        "line": 25
+      }
+    ]
+  },
+  {
+    "path": "verify_template_v1.py",
+    "lines": 368,
+    "definitions": [
+      {
+        "name": "resolve_model",
+        "line": 45
+      },
+      {
+        "name": "compare_tokenizations",
+        "line": 58
+      },
+      {
+        "name": "verify",
+        "line": 89
+      }
+    ]
+  }
+]

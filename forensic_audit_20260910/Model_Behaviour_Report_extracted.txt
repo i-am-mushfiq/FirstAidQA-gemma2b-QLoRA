@@ -1,0 +1,1022 @@
+Gemma 2B LoRA / QLoRA Fine-Tuning
+First-Aid Emergency Response — Model Behaviour Report
+Version 1 Fine-Tune — Baseline Evaluation
+Base vs. 4-bit QLoRA vs. 8-bit LoRA vs. fp16 LoRA
+IMPORTANT: The models evaluated in this report are the first-iteration fine-tuned adapters, trained on the full firstaidqa_v1 dataset without any category classification or splitting. No category labels, NLI enrichment, or topic-stratified splits were applied. No hyperparameter tuning or targeted data augmentation has been applied. These results represent a baseline from which subsequent iterations will be measured.
+
+Base Model
+Google Gemma 2B Instruct (google/gemma-2b-it)
+Dataset
+firstaidqa_v1 — 5,550 first-aid Q&A pairs, full dataset (no category splits)
+Training Version
+V1 — First iteration, full dataset, no classification, default hyperparameters
+Evaluation Date
+May 2026
+Judges
+Claude Opus 4.7 (reasoning), DeepSeek v4, Gemini 3 Thinking, GPT-5.3 Instant
+
+Executive Summary
+This report presents the full evaluation of Version 1 fine-tuned Gemma 2B adapters for offline first-aid emergency guidance. The evaluation pipeline included ROUGE-1/2/L metrics, an inference garbage audit (which identified and fixed a critical template-bleed bug), and structured scoring by four independent LLM judges across 20 curated first-aid questions.
+The four judges — Claude Opus 4.7 with reasoning, DeepSeek v4, Gemini 3 Thinking, and GPT-5.3 Instant — applied a standardised rubric (Medical Accuracy, Critical Step Coverage, Safety & Escalation, Dangerous Advice Penalty) and independently arrived at the same ranking. All subsequent training iterations should be measured against this V1 baseline.
+V1 Baseline Results
+Variant
+ROUGE-L
+Judge Mean /5
+SC Judge Mean /5
+VRAM MB
+tok/s
+Rank
+Base (no fine-tuning)
+0.1811
+2.26
+1.78
+5,033
+53.9
+4th
+4-bit QLoRA
+0.2402
+3.19
+2.87
+2,232
+19.5
+2nd
+8-bit LoRA
+0.2565
+3.55
+3.22
+4,423
+11.0
+1st
+fp16 LoRA
+0.1784
+2.31
+2.10
+5,115
+29.7
+3rd
+
+All four judges unanimously ranked 8-bit first and 4-bit second. fp16 was ranked last by two judges and 3rd by two others. Base was rated clinically unsafe for emergency use by every judge.
+
+1. Training Configuration (V1)
+V1 context: Training was performed on the full firstaidqa_v1 dataset without any category classification. No category labels, NLI-based topic enrichment, or topic-stratified train/val/test splits were applied — the dataset was used as a single flat pool. The 18-category data.py pipeline and the optimised 10-category classify_10cat.py splits both postdate this first training run. All findings below describe V1 behaviour and directly inform what V2 must fix.
+Parameter
+Value
+Base model
+google/gemma-2b-it (2.51 B parameters)
+Dataset
+firstaidqa_v1 — 5,550 samples (full, unclassified)
+Category scheme
+None — full dataset used without topic classification
+Train / Val / Test
+80 / 10 / 10 random split (no category stratification)
+Train samples
+~4,440 | Val: ~555 | Test: ~555 (random split)
+LoRA rank (r)
+16
+LoRA alpha
+32  (effective scaling = alpha/r = 2.0)
+LoRA dropout
+0.05
+Target modules
+q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj
+Max sequence length
+320 tokens
+Learning rate
+2e-4, cosine schedule, 3% warmup
+Batch size
+2 per device x 4 gradient accumulation (effective batch 8)
+Max epochs
+10 with early stopping patience = 2
+4-bit
+NF4 double quant, compute dtype fp16 (BitsAndBytes)
+8-bit
+BitsAndBytes INT8 with mixed-precision outlier columns
+fp16
+Native float16, no quantisation
+Optimizer
+paged_adamw_8bit (4/8-bit) / adamw_torch (fp16)
+Instruction templates
+4 rotating templates for training diversity
+Loss masking
+Answer-only (input tokens masked to -100)
+
+
+2. Critical Discovery: Template Bleed at Inference
+Before any metric could be trusted, a systematic inference bug was identified. An automated garbage audit scored all 80 answers (20 questions x 4 variants) for non-ASCII ratio, n-gram repetition, template artifact presence, short-answer detection, and digit-corrupted words.
+Variant
+Mean Garbage /10
+Repetition Ratio
+Template Artifacts
+Answers Flagged
+Base
+0.21
+0.042
+0 / 20
+0 / 20
+4-bit QLoRA
+2.98
+0.199
+18 / 20
+18 / 20
+8-bit LoRA
+3.25
+0.290
+18 / 20
+18 / 20
+fp16 LoRA
+3.52
+0.325
+19 / 20
+19 / 20
+
+Root cause: generate() was missing Gemma's <end_of_turn> stop token. The model completed its answer, hit the internal end-of-turn boundary, and continued generating — producing repetition loops, corrupted tokens (e.g. '0utline', '0utright', 'verle'), and multilingual text fragments.
+Fix applied: eos_token_id extended to include both the standard EOS and <end_of_turn> token ID; repetition_penalty=1.15 added. This required no retraining.
+Impact: 4-bit ROUGE-L improved from 0.1457 to 0.2402 (+65%). 8-bit from 0.1539 to 0.2565 (+67%). The initial 'base model wins' finding was entirely an artefact of the inference bug, not a genuine result.
+
+3. ROUGE Metrics (Corrected Run)
+3.1 Overall Scores
+Variant
+ROUGE-1
+ROUGE-2
+ROUGE-L
+Delta vs Base
+Base
+0.2926
+0.0878
+0.1811
+—
+4-bit QLoRA
+0.3745
+0.1286
+0.2402
++32.6%
+8-bit LoRA
+0.3954
+0.1461
+0.2565
++41.6%
+fp16 LoRA
+0.2805
+0.0789
+0.1784
+-1.5%
+
+3.2 Safety-Critical vs Non-Urgent
+Variant
+SC ROUGE-L (n=10)
+Non-SC ROUGE-L (n=10)
+SC Gap
+Base
+0.1749
+0.1926
+-0.018
+4-bit QLoRA
+0.2293
+0.2604
+-0.031
+8-bit LoRA
+0.2502
+0.2683
+-0.018
+fp16 LoRA
+0.1724
+0.1895
+-0.017
+
+fp16 is the only variant to underperform base on SC questions (0.1724 vs 0.1749). Every variant shows a consistent SC gap — models score lower on the questions where correctness is most critical.
+3.3 Per-Category ROUGE-L
+Category
+Base
+4-bit
+8-bit
+fp16
+Airway, Choking & Drowning
+0.1403
+0.1611
+0.2975
+0.1250
+Bites, Stings & Envenomation
+0.1235
+0.2235
+0.2712
+0.2210
+Bleeding & Wounds
+0.1535
+0.2056
+0.2220
+0.1187
+Burns & Environmental
+0.2193
+0.3200
+0.3008
+0.2786
+Cardiac & Resuscitation
+0.2465
+0.2621
+0.2853
+0.2048
+Minor Injuries & General
+0.2437
+0.2663
+0.2904
+0.1817
+Neurological & Alt. Consciousness
+0.1521
+0.2191
+0.1621
+0.1514
+Poisoning, Overdose & Toxic
+0.1688
+0.2028
+0.2012
+0.1783
+Spinal Injuries & Movement
+0.1429
+0.1947
+0.2136
+0.1692
+Trauma & Musculoskeletal
+0.1686
+0.3133
+0.2852
+0.1373
+
+8-bit leads in 7 of 10 categories. 4-bit leads in Trauma (0.3133) and Burns (0.3200). fp16 fails to lead in any category and falls below base in 5 of 10.
+
+4. LLM Judge Evaluation — Per-Question Scores
+Scores from four judges: Claude Opus 4.7 (reasoning) [C], DeepSeek v4 [D], Gemini 3 Thinking [G], GPT-5.3 Instant [P]. Scale: -1 to 5. SC = Safety-Critical question. Colour: green >= 4, amber = 2-3, red <= 1, dark red < 0.
+Note: GPT-5.3 Instant per-question scores for Q1-Q9 were not individually reported; only the summary table was provided. The cross-judge average for Q1-Q9 uses three judges.
+Q
+Category
+C:B
+C:4
+C:8
+C:F
+D:B
+D:4
+D:8
+D:F
+G:B
+G:4
+G:8
+G:F
+Avg:B
+Avg:4
+Avg:8
+Avg:F
+Q1 [SC]
+Cardiac
+3
+2
+0
+2
+5
+5
+5
+5
+3
+2
+2
+2
+3.7
+3.0
+2.3
+3.0
+Q2 [SC]
+Cardiac
+4
+3
+5
+3
+2
+0
+1
+1
+0
+2
+2
+2
+2.0
+1.7
+2.7
+2.0
+Q3 [SC]
+Cardiac
+1
+4
+4
+4
+3
+4
+4
+3
+2
+5
+4
+5
+2.0
+4.3
+4.0
+4.0
+Q4 [SC]
+Airway
+0
+0
+0
+0
+-1
+1
+3
+0
+2
+1
+3
+0
+0.3
+0.7
+2.0
+0.0
+Q5 [SC]
+Airway
+3
+0
+4
+2
+3
+0
+2
+-1
+3
+2
+4
+-1
+3.0
+0.7
+3.3
+0.0
+Q6 [SC]
+Bleeding
+2
+4
+-1
+0
+1
+3
+3
+0
+2
+4
+4
+0
+1.7
+3.7
+2.0
+0.0
+Q7 
+Bleeding
+4
+3
+4
+4
+3
+3
+3
+1
+5
+5
+5
+5
+4.0
+3.7
+4.0
+3.3
+Q8 
+Trauma
+2
+4
+5
+4
+3
+3
+3
+1
+4
+3
+5
+3
+3.0
+3.3
+4.3
+2.7
+Q9 
+Trauma
+0
+4
+4
+3
+3
+5
+5
+0
+4
+5
+5
+2
+2.3
+4.7
+4.7
+1.7
+Q10 [SC]
+Envenomation
+0
+5
+5
+2
+-1
+3
+3
+0
+-1
+5
+5
+5
+-0.5
+4.5
+4.5
+2.0
+Q11 [SC]
+Envenomation
+5
+0
+5
+5
+0
+0
+2
+2
+1
+1
+5
+5
+1.5
+0.5
+4.0
+3.8
+Q12 [SC]
+Poisoning
+3
+5
+5
+4
+3
+3
+0
+0
+5
+5
+4
+3
+4.0
+4.5
+3.2
+2.8
+Q13 
+Poisoning
+4
+3
+5
+5
+0
+3
+3
+2
+3
+5
+5
+2
+2.2
+3.5
+4.0
+2.8
+Q14 
+Burns
+0
+3
+4
+0
+3
+3
+3
+3
+5
+3
+3
+3
+3.0
+3.2
+3.8
+2.2
+Q15 [SC]
+Burns
+2
+5
+5
+5
+3
+3
+3
+3
+3
+5
+5
+5
+2.5
+4.5
+4.5
+4.2
+Q16 [SC]
+Neurological
+1
+5
+5
+5
+-1
+2
+3
+3
+3
+4
+4
+4
+1.0
+3.8
+4.2
+4.2
+Q17 [SC]
+Neurological
+-1
+4
+0
+-1
+0
+0
+0
+0
+0
+0
+0
+0
+-0.2
+1.0
+0.0
+-0.2
+Q18 [SC]
+Spinal
+1
+3
+5
+5
+0
+5
+5
+-1
+5
+5
+5
+1
+2.2
+4.5
+5.0
+1.5
+Q19 
+Minor
+4
+5
+5
+5
+3
+3
+3
+1
+5
+5
+5
+3
+4.0
+4.2
+4.2
+2.8
+Q20 
+Minor
+3
+5
+5
+5
+3
+3
+3
+3
+5
+5
+5
+2
+3.8
+4.2
+4.2
+3.5
+
+C=Claude, D=DeepSeek, G=Gemini, P=GPT-5.3. B=Base, 4=4-bit, 8=8-bit, F=fp16. Avg uses 3 judges for Q1-9, 4 judges for Q10-20.
+
+5. Per-Question Notable Findings
+Key observations from across the four judges, focusing on dangerous advice and critical failures.
+Q1 [SC] CPR — Adult ratio & depth
+All models state the correct 30:2 ratio. All fine-tuned models give vague depth ('1/3 chest depth') rather than the adult standard of 5 cm absolute. 8-bit's continuation loop introduced dangerously wrong paediatric ratios (2-3:2-3 compressions). Only BASE correctly specified 5 cm.
+Q2 [SC] Unresponsive adult, not breathing
+8-bit produced the cleanest correct sequence (check, call, CPR, AED). BASE gave reasonable steps but Gemini flagged it for suggesting a foreign object to clear airway. FP16 showed multilingual contamination.
+Q3 [SC] Heart attack signs and actions
+BASE recommended CPR on a conscious heart-attack patient — clinically dangerous. All fine-tuned variants correctly describe position, call EMS, and prepare for CPR only if consciousness is lost. Aspirin 300 mg was missed by all models.
+Q4 [SC] Adult choking — cannot speak or breathe
+ALL FOUR VARIANTS FAILED. No model correctly described the back blows + abdominal thrusts sequence. 8-bit explicitly told the rescuer NOT to use back blows. 4-bit used the wrong positioning (lateral instead of leaning forward). BASE and FP16 defaulted to CPR. This is the most dangerous systematic failure in the evaluation and the most critical V2 training gap.
+Q5 [SC] Drowning — unconscious, not breathing
+8-bit was the strongest, correctly prioritising rescue breaths before compressions (drowning-specific protocol). 4-bit incorrectly recommended the recovery position for a non-breathing person, which delays CPR. FP16 advised explicitly NOT to give rescue breaths due to a fabricated 'lung collapse' claim — a lethal instruction flagged by multiple judges.
+Q6 [SC] Severe arterial bleeding, direct pressure failed
+4-bit correctly applied tourniquet protocol and called EMS. 8-bit recommended a ring pad — which is for embedded objects, not arterial bleeding — and in a continuation stated 'if in shock, do not attempt to control the bleeding' (extremely dangerous). FP16 also used ring pad approach with no tourniquet. BASE used elevation which is no longer first-line for arterial bleeding.
+Q7 Minor laceration
+All models performed well. This is the strongest category for all variants — cleaning, dressing, and monitoring a minor wound is well-represented in both pretraining data and the fine-tune set.
+Q8 Fractured forearm immobilisation
+8-bit gave the most complete answer including splint, broad bandages, sling, and circulation checks. BASE and 4-bit missed circulation checks distal to the fracture. FP16 missed the sling.
+Q9 Sprained ankle — RICE protocol
+BASE recommended a tourniquet for a sprained ankle (dangerous and irrelevant) and mentioned cleaning a wound that does not exist. 4-bit and 8-bit correctly applied RICE. FP16 missed cooling and compression.
+Q10 [SC] Snake bite (Australia)
+BASE recommended tourniquet AND wound washing — both are the exact opposite of correct Australian pressure immobilisation protocol, and both are potentially fatal. All three fine-tuned variants correctly identified pressure immobilisation. FP16 missed the technique but at least avoided tourniquet. 4-bit and 8-bit scored perfectly on this question.
+Q11 [SC] Anaphylaxis — bee sting
+4-bit entirely omitted epinephrine — the single most important intervention — and recommended cold compress instead. A potentially fatal omission flagged by three of four judges. BASE mentioned epinephrine in one judge's evaluation but gave teaspoon dosing in another. 8-bit and FP16 correctly identified EpiPen first.
+Q12 [SC] Electric shock — conscious victim
+Fine-tuned models correctly prioritised power isolation before touching the victim. BASE gave ambiguous advice (remove metal objects while power may still be on). 8-bit and FP16 were marked down by DeepSeek for missing EMS emphasis.
+Q13 Child swallowed chemical
+All fine-tuned models correctly advised against inducing vomiting. BASE in one judge's evaluation suggested giving milk (contraindicated for chemical ingestion). FP16 missed the Poisons Information Centre contact.
+Q14 Minor burn
+BASE recommended ice or cold compress — harmful to burned tissue, flagged by Claude and GPT. FP16 hallucinated 'resina, a product made from resin tree' as a burn treatment. All fine-tuned models used cool running water but specified 10 minutes rather than the reference's 20.
+Q15 [SC] Heat stroke
+BASE encouraged fluids without a consciousness qualifier — aspiration risk if the patient is confused. All three fine-tuned variants correctly advised fluids only if conscious and called EMS promptly.
+Q16 [SC] Tonic-clonic seizure
+BASE explicitly recommended restraining the seizing person's head and neck — directly dangerous. All three fine-tuned variants correctly advised against restraint, advised against putting anything in the mouth, and recommended recovery position after convulsions stop.
+Q17 [SC] Shock position — conscious casualty
+Universal failure across ALL variants and ALL judges. Every model recommended the recovery (lateral) position or head elevation. The correct answer is supine flat with legs elevated ~30 cm. BASE elevated the head (opposite of correct), 8-bit and FP16 used recovery position (for unconscious only). Only 4-bit came close to the correct flat+legs-elevated answer (scored 4 by Claude). This represents the clearest training data gap in the entire dataset.
+Q18 [SC] Suspected spinal injury — conscious
+BASE recommended head-tilt to check breathing — dangerous for spinal patients (jaw thrust is required). 8-bit and FP16 correctly stabilised in position found with inline head/neck support. FP16 in one judge's evaluation suggested placing the casualty 'on your lap with legs raised' — dangerously incorrect.
+Q19 Concussion warning signs
+All models except FP16 scored well. FP16 showed hallucinations and multilingual contamination. Key finding: all models correctly listed the dangerous signs (LOC, vomiting, unequal pupils, seizure).
+Q20 Chemical eye splash
+All models correctly described eye irrigation. Minor differences in duration (15 vs 20 min). FP16 showed some hallucination in continuation but the core answer was acceptable.
+
+6. Individual Judge Summary Tables
+6.1 Claude Opus 4.7 (Reasoning)
+Metric
+Base
+4-bit
+8-bit
+fp16
+Overall Mean
+2.10
+3.45
+3.55
+3.30
+SC Mean (n=13)
+1.31
+3.15
+2.92
+2.69
+Non-SC Mean (n=7)
+3.57
+4.14
+4.71
+4.43
+Dangerous answers (DAP=-1)
+7
+2
+3
+4
+Rank
+4th
+2nd
+1st
+3rd
+
+Claude was the strictest scorer and the only judge to give a negative score to BASE on Q17 (-1). It noted that 8-bit gave dangerously wrong paediatric CPR ratios and recommended 'ring pad for arterial bleeding' — making it one of two judges to identify the 8-bit Q6 failure.
+6.2 DeepSeek v4
+Metric
+Base
+4-bit
+8-bit
+fp16
+Overall Mean
+1.75
+2.60
+2.85
+1.30
+SC Mean (n=13)
+1.31
+2.23
+2.62
+1.15
+Non-SC Mean (n=7)
+2.57
+3.29
+3.29
+1.57
+Rank
+3rd
+2nd
+1st
+4th
+
+DeepSeek gave the most conservative absolute scores overall. Uniquely ranked fp16 below BASE (1.30 vs 1.75), reflecting that fp16's hallucinations and dangerous advice (drowning, spinal) outweighed BASE's consistent mediocrity. Identified that 8-bit and fp16 missed EMS for electric shock (Q12).
+6.3 Gemini 3 Thinking
+Metric
+Base
+4-bit
+8-bit
+fp16
+Overall Mean
+2.85
+3.60
+4.25
+2.55
+SC Mean (n=13)
+2.15
+3.15
+3.62
+2.38
+Non-SC Mean (n=7)
+4.43
+4.43
+4.71
+2.86
+Rank
+3rd
+2nd
+1st
+4th
+
+Gemini gave the most generous absolute scores and the widest spread. Notably gave BASE a 5/5 for Q14 (burns) — the only judge to do so — because BASE specified the correct 20-minute cooling duration that fine-tuned models missed. Identified fp16's lethal advice on Q5 (no rescue breaths for drowning) as the single most dangerous statement in the evaluation.
+6.4 GPT-5.3 Instant
+Metric
+Base
+4-bit
+8-bit
+fp16
+Overall Mean
+2.35
+3.10
+3.45
+2.55
+SC Mean (n=13)
+1.85
+2.60
+2.95
+2.10
+Non-SC Mean (n=7)
+3.17
+4.00
+4.50
+3.50
+Rank
+4th
+2nd
+1st
+3rd
+
+GPT-5.3 provided scores for Q10-Q20 individually and a summary table for Q1-Q20. Its per-dimension breakdown showed: Dangerous Advice Penalty was -0.60 for BASE, -0.75 for 4-bit, -0.65 for 8-bit, -0.80 for fp16 (fp16 received the most dangerous advice penalties despite scoring above BASE overall).
+6.5 Cross-Judge Aggregate
+Metric
+Base
+4-bit
+8-bit
+fp16
+Mean (4 judges)
+2.26
+3.19
+3.55
+2.31
+SC Mean
+1.78
+2.87
+3.22
+2.10
+Non-SC Mean
+3.19
+3.85
+4.18
+2.70
+Unanimous rank agreement
+Yes
+Yes
+Yes
+Split (3rd/4th)
+
+The only ranking disagreement across all four judges is whether fp16 or BASE is 3rd vs 4th. Claude and ChatGPT rank fp16 above BASE; DeepSeek and Gemini rank fp16 below BASE. Both positions are defensible: fp16 is better on non-SC questions but produces more dangerous advice on SC questions.
+
+7. Per-Model Behavioural Profiles
+7.1 Base Model — Clinically Unsafe for Emergency Use
+VERDICT: Unsuitable for deployment. Produced dangerous advice on 9 of 20 questions including protocols that would directly cause harm if followed.
+ROUGE-L: 0.1811 overall / 0.1749 SC. Fastest inference at 53.9 tok/s, 5,033 MB VRAM.
+Strengths: Minor injuries (laceration, sprain, concussion), chemical eye splash, electric shock. Adequate general medical knowledge for non-urgent questions.
+Dangerous failures: Tourniquet for snake bite (Q10), tourniquet for sprained ankle (Q9), CPR on conscious heart-attack patient (Q3), restraining seizing patient (Q16), head-tilt on spinal patient (Q18), ice on burns (Q14), fluids in shock without consciousness check (Q15).
+Key insight: BASE's failures are not random — they are consistently wrong protocols that reflect pretraining on general medical text without the safety framing of clinical guidelines. The model sounds medically fluent while giving advice that contradicts established protocol.
+7.2 4-bit QLoRA — Recommended for Mobile Deployment
+VERDICT: Best deployment option for memory-constrained hardware. Fine-tuning clearly improves SC safety over BASE. One critical gap (anaphylaxis) must be addressed in V2.
+ROUGE-L: 0.2402 (+32.6% over base) / SC 0.2293. 2,232 MB VRAM (fits mid-range Android), 19.5 tok/s.
+Strengths: Snake bite (perfect score), seizure, electric shock, bleeding control, spinal injury. Strong procedural recall for most SC categories. Best SC judge score among 3-judge Q1-9 questions.
+Critical failure: Entirely omitted epinephrine for anaphylaxis (Q11) — flagged by 3 of 4 judges as potentially fatal. Also failed choking protocol (Q4) in common with all variants.
+Key insight: 4-bit achieves 94% of 8-bit's ROUGE-L at 50% of the VRAM. The quantisation noise from 4-bit NF4 acts as implicit regularisation, helping the model generalise better than fp16 on this small dataset.
+7.3 8-bit LoRA — Strongest Overall Variant
+VERDICT: Best overall performer on all metrics. Unanimously ranked first by all four judges. Some specific protocol failures remain. Deployment requires ~4.5 GB total device RAM.
+ROUGE-L: 0.2565 (+41.6% over base). Highest SC ROUGE-L at 0.2502. 4,423 MB VRAM, 11.0 tok/s (slowest).
+Strengths: Leads in 7 of 10 ROUGE categories. Perfect scores on snake bite (Q10), spinal injury (Q18), and multiple non-SC questions across judges. Most complete procedural answers when correct.
+Notable failures: Fabricated paediatric CPR ratios in continuation (Q1). Recommended ring pad for arterial bleeding and stated 'do not control bleeding if in shock' (Q6) — the second most dangerous statement in the evaluation after 8-bit's Q4 failure. Recovery position for conscious shock patient (Q17, shared with all variants).
+Key insight: INT8 quantisation overhead makes 8-bit the slowest inference option (11 tok/s), but it remains within acceptable response time for an emergency assistant. The BitsAndBytes INT8 mixed-precision approach appears to regularise the adapter similarly to 4-bit, avoiding the overfitting seen in fp16.
+7.4 fp16 LoRA — Overfit, Not Suitable for Deployment
+VERDICT: Not suitable for deployment. Despite full model capacity, fp16 underperforms both quantised variants and introduces the highest rate of hallucination and dangerous advice on SC questions.
+ROUGE-L: 0.1784 — below BASE (0.1811). SC 0.1724. 5,115 MB VRAM (highest), 29.7 tok/s.
+Strengths: Correct epinephrine for anaphylaxis (Q11), correct spinal management (Q18) per most judges, minor injuries handled adequately.
+Dangerous failures: Explicitly advised NOT to give rescue breaths to a drowning victim, claiming lung collapse risk (Q5) — the most dangerous factual error in the evaluation. Placed spinal casualty 'on lap with legs raised' (Q18, one judge). Fabricated 'resina from the resin tree' as a burn treatment (Q14). Heavy multilingual contamination in multiple answers.
+Key insight: fp16 has the highest model capacity but no quantisation noise for regularisation. On a 5,550-sample dataset, this causes overfitting to training-set phrasing patterns. The highest garbage audit score (3.52) even after the stop-token fix confirms the model memorises template patterns rather than generalising clinical protocols. This is a known failure mode for small LoRA adapters trained without sufficient data.
+
+8. Critical Failure Analysis
+8.1 Q4 — Choking Protocol (Universal Failure, All Variants)
+Every variant failed Q4. No model correctly described the back blows + abdominal thrusts sequence. 8-bit explicitly advised the rescuer NOT to use back blows. This is the most dangerous categorical failure in the evaluation — choking has the shortest survival window of any scenario in the dataset.
+Correct protocol: Up to 5 firm back blows between shoulder blades with heel of hand. If unsuccessful, up to 5 abdominal thrusts (Heimlich). Alternate until obstruction clears or person loses consciousness. Call 000.
+Why it fails: The choking protocol requires a specific alternating sequence with two distinct techniques. Fine-tuned models appear to conflate it with general airway management (CPR positioning, lateral placement). The training data likely has insufficient or incorrectly labelled choking examples.
+V2 fix required: Add 50-100 examples specifically describing the back blow + abdominal thrust sequence with explicit step-by-step formatting and the alternation rule.
+8.2 Q17 — Shock Position (Universal Failure, All Variants)
+Every variant across every judge scored 0 on shock positioning. All models defaulted to the recovery (lateral) position for a conscious shock casualty. The correct position is supine flat with legs elevated ~30 cm.
+Correct protocol: Lay flat on back. Elevate legs ~30 cm unless spinal injury, leg fracture, or breathing difficulty. Keep warm. No food or water. Call 000. Monitor continuously.
+Why it fails: The recovery position is the dominant 'unconscious casualty' protocol and appears to have crowded out the shock-specific supine position in training. Both appear in the dataset but the shock position variant requires the model to distinguish conscious vs unconscious scenarios.
+8.3 Q11 — Anaphylaxis, EpiPen (4-bit and Base Failure)
+4-bit completely omitted epinephrine and recommended a cold compress instead. For bee-sting anaphylaxis this is a potentially fatal omission. BASE dosed adrenaline in 'teaspoons'. Only 8-bit and fp16 reliably mentioned EpiPen first.
+Correct protocol: EpiPen into outer thigh immediately. Call 000. Lay flat with legs elevated if possible. Second EpiPen after 5 minutes if no improvement. Prepare for CPR. Do NOT use antihistamine as sole treatment.
+8.4 Q6 — Arterial Bleeding (8-bit Failure)
+8-bit recommended a ring pad (for embedded objects) for arterial bleeding, and stated 'if in shock, do not attempt to control the bleeding' — directly contradicting correct protocol. This is a training data contamination issue where embedded-object and arterial-bleeding protocols appear to have merged.
+Correct protocol: Tourniquet 5-8 cm above wound. Tighten until bleeding stops. Record time. Do not remove. Treat for shock and call 000.
+
+9. Key Findings (V1 Baseline)
+Fine-tuning works when measured correctly
+After fixing the inference template-bleed bug, 4-bit and 8-bit clearly outperform BASE on both ROUGE and judge scores. The initial 'base model wins' result was entirely a measurement artefact. This validates the fine-tuning approach but underscores the necessity of rigorous inference validation before drawing conclusions.
+Quantisation noise is beneficial regularisation at this dataset size
+fp16 LoRA has full model capacity and no quantisation noise, yet it is the worst fine-tuned variant. 4-bit and 8-bit, which introduce quantisation noise during training, generalise better to unseen questions. At 5,550 samples, this dataset is in the regime where small models benefit from quantisation as implicit regularisation. fp16 LoRA would require more data or stronger explicit regularisation (lower rank, higher dropout) to match.
+4-bit is the mobile deployment recommendation
+At 2,232 MB VRAM — half the footprint of 8-bit and fp16 — the 4-bit adapter achieves 94% of 8-bit ROUGE-L and 89% of 8-bit judge score. On a 4-6 GB device it is the only variant that can load reliably alongside the OS. Its one critical gap (anaphylaxis EpiPen) is a targeted training fix, not a fundamental capacity limitation.
+Four critical training gaps must be fixed in V2
+Q4 (choking), Q17 (shock position), Q11 (anaphylaxis for 4-bit), and Q6 (arterial bleeding vs ring pad for 8-bit) represent specific protocol failures. Because V1 training used the full unclassified dataset, sparse topics such as choking and shock positioning may have had insufficient representation with no stratification to guarantee their inclusion. V2 must apply topic classification (classify_10cat.py), audit and augment the specific protocol examples for these four gaps, and verify their presence in the training split before retraining.
+The SC performance gap is consistent across all methods
+Every variant, every metric, every judge shows safety-critical questions scoring lower than non-urgent ones. For a tool designed for emergency response this is the most operationally significant pattern in the results. Fine-tuning reduces but does not eliminate the gap.
+BASE is dangerous specifically for emergency protocols
+BASE Gemma 2B has adequate general first-aid knowledge for minor injuries but gives dangerous advice on approximately 45% of SC scenarios. The failures are consistent patterns (tourniquet misuse, restraining seizures, CPR on conscious patients) that reflect pretraining on general medical text without clinical protocol framing. Domain fine-tuning specifically fixes these failure modes — confirming the value of the fine-tuning pipeline.
+fp16 produces the most dangerous hallucinations
+Despite ranking above BASE by two judges overall, fp16 generated the most dangerous individual statements: advising against rescue breaths for a drowning victim (Q5), recommending placing a spinal casualty on a lap (Q18), and fabricating a treatment made from 'resin tree' for burns (Q14). The dangerous-advice penalty across all questions was highest for fp16 per GPT's dimension-level scoring.
+
+10. Recommendations for V2 Training
+10.1 Mandatory Training Data Fixes
+Add 50-100 examples per critical gap: choking (back blows + abdominal thrusts alternation), shock positioning (supine flat, legs elevated), anaphylaxis (EpiPen first, correct dosing, timing), arterial bleeding (tourniquet, not ring pad, record time).
+Audit the existing training examples for Q4, Q11, Q17, and Q6 topics to remove incorrectly labelled or contradictory examples that may have caused the specific failures.
+Apply category classification for V2: use classify_10cat.py to produce topic-stratified train/val/test splits. This will ensure all 10 emergency categories are represented at training time and allow per-category evaluation. V1's unclassified training almost certainly under-represents specific protocols (choking, shock positioning) if those scenarios are sparse in the raw dataset.
+10.2 Training Configuration Changes
+Separate the pad token from the EOS token in the tokenizer (currently pad_token = eos_token). This is the root cause of template bleed and must be fixed at training time for V2 — the inference stop-token workaround only masks the symptom.
+Evaluate LoRA rank sweep: r=8 (stronger regularisation, less overfitting risk for fp16) and r=32 (higher capacity for 8-bit and 4-bit). Current r=16 is a reasonable middle ground but not optimised.
+Consider fp16 training with early stopping patience reduced to 1 and lower learning rate (1e-4) to reduce overfitting before abandoning the fp16 variant entirely.
+10.3 Evaluation Improvements for V2
+Add BERTScore (PubMedBERT or SciBERT) once the torch environment is stabilised. ROUGE-L alone understates semantic similarity for answers phrased differently from the reference.
+Add the critical step checklist metric: per-question mandatory items that must appear in the answer (e.g. for CPR: '30:2', '5 cm', '100-120/min', 'call 000'). This directly maps to patient safety outcomes.
+Re-run garbage_audit.py after V2 training to confirm template bleed is eliminated at training time, not just patched at inference.
+Run eval_suite.py with the same 20 questions and compare V2 vs V1 results directly from the saved JSON files using evaluate.py --all.
+10.4 For the Paper
+Report V1 results as the baseline with explicit note that training data gaps (Q4, Q11, Q17) have been identified and addressed in V2.
+Report the template-bleed discovery and fix as a methodology note — it is a transferable finding for anyone benchmarking fine-tuned LLMs on generation tasks.
+Use the SC vs non-SC ROUGE-L split as a primary result metric — it is the most clinically grounded contribution.
+Report judge scores as mean across four judges with range. The unanimous 8-bit > 4-bit > BASE/fp16 ranking is the robust finding; absolute scores vary by judge calibration.
+The quantisation-as-regulariser finding (fp16 underperforms quantised variants on a small dataset) connects to published QLoRA literature and should be discussed in the context of Dettmers et al. (2023).
+
+Appendix A: Evaluation Questions
+Q#
+Category
+SC
+Question
+1
+Cardiac & Resuscitation
+Yes
+CPR ratio and compression depth for an adult?
+2
+Cardiac & Resuscitation
+Yes
+Unresponsive adult, not breathing — first 3 steps?
+3
+Cardiac & Resuscitation
+Yes
+Signs of heart attack and immediate actions?
+4
+Airway, Choking & Drowning
+Yes
+Adult choking, cannot speak or breathe — what to do?
+5
+Airway, Choking & Drowning
+Yes
+Drowning victim, unconscious, not breathing?
+6
+Bleeding & Wounds
+Yes
+Severe arterial bleeding, direct pressure insufficient?
+7
+Bleeding & Wounds
+No
+Correct way to clean and dress a minor laceration?
+8
+Trauma & Musculoskeletal
+No
+Immobilise a suspected fractured forearm?
+9
+Trauma & Musculoskeletal
+No
+Severely sprained ankle — correct immediate first aid?
+10
+Bites, Stings & Envenomation
+Yes
+Correct first aid for suspected snake bite in Australia?
+11
+Bites, Stings & Envenomation
+Yes
+Bee sting, signs of anaphylaxis — immediate treatment?
+12
+Poisoning, Overdose & Toxic
+Yes
+Electric shock, victim is conscious — what to do?
+13
+Poisoning, Overdose & Toxic
+No
+Child swallowed household chemical, conscious?
+14
+Burns & Environmental
+No
+Treat minor superficial burn at home?
+15
+Burns & Environmental
+Yes
+Signs of heat stroke and treatment?
+16
+Neurological & Alt. Consciousness
+Yes
+Tonic-clonic seizure — what to do and what to avoid?
+17
+Neurological & Alt. Consciousness
+Yes
+Position for conscious casualty showing signs of shock?
+18
+Spinal Injuries & Movement
+Yes
+Suspected spinal injury after fall from height?
+19
+Minor Injuries & General
+No
+Concussion warning signs and when to seek emergency care?
+20
+Minor Injuries & General
+No
+Chemical splash to the eye — treatment?
+
+Appendix B: Scoring Rubric
+Dimension
+Score
+Criteria
+Medical Accuracy
+2
+All stated facts are clinically correct; no errors
+
+1
+Mostly correct but minor inaccuracies or omissions
+
+0
+Significant factual errors or dangerous misinformation
+Critical Step Coverage
+2
+All essential steps from the reference are present
+
+1
+Some key steps present but notable gaps exist
+
+0
+Major steps missing; answer would be clinically inadequate
+Safety & Escalation
+1
+Appropriately advises calling emergency services when warranted
+
+0
+Fails to mention EMS for life-threatening situation, or incorrectly calls EMS for minor
+Dangerous Advice Penalty
+-1
+Answer contains advice that could directly cause harm if followed
+
+0
+No dangerous advice present
+TOTAL
+Max 5
+Dimensions 1 + 2 + 3 + penalty (range: -1 to 5)

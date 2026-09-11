@@ -1,0 +1,3050 @@
+Research-Artifact Forensic Audit
+FirstAidQA — Offline Medical First-Aid Response via QLoRA Fine-Tuning of Gemma 2B Instruct
+Camera-ready readiness assessment · repository at main @ b4b6aef · audit date 2026-09-10
+
+Audit scope
+What was examined
+Canonical results
+judging/results/{deepseek,claude_or,gpt_ar,glm_ar}/OFFLINE_FINAL/ — 2,656 raw judgments re-parsed and all 32 contrast statistics independently recomputed from raw JSONL
+Generation
+evaluations/CAMERA_READY_OFFLINE_20260905_204533 (canonical) plus the superseded _195908 and July CAMERA_READY_20260708_180411 runs
+Judging machinery
+judging/judge_deepseek.py (1,251 lines), aggregate.py (975), assemble_items.py, make_controls.py, check_controls.py, both frozen prompt templates
+Registration
+judging/PRECOMMIT.md, PRECOMMIT_PANEL.md, TEMPLATE_FROZEN_HASH.txt, camera_ready/protocol.yaml, and the full 66-commit git history with timestamps
+Data & training
+data/, splits/10cat/, evaluations/eval_bank_v2_40q/eval_bank_v2.json, experiments/10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337, train_v2.py, data_v2.py
+Existing self-audit
+FINDINGS_20260905.md, FINDINGS_CLOSED.md, DECISIONS.md, judging/OPEN_FINDINGS.md, rubric_flaws.md, paper/NUMBER_FORENSICS.md — each significant claim re-verified against the artifacts rather than accepted
+Method
+Independent recomputation. Every headline statistic in this report was recalculated from judgments.jsonl by this audit and compared against the repository's own stats.csv. Verification code and its outputs are reproduced inline.
+
+READ THIS FIRST — Sections 1-14 are the audit as it stood on 2026-09-10, before remediation, and are not updated in place — the convention this repository applies to its own registers (FINDINGS_20260905.md: a point-in-time record is not updated in place). Section 15 records what was subsequently fixed. All three P0 findings are closed: the cross-judge rule is now applied to the canonical run in judging/PANEL_VERDICT_OFFLINE_FINAL.md, the judge substitution is registered as a post-hoc deviation in PRECOMMIT.md, and paper/Camera_ready_artifact_list.md has been rewritten against the canonical run with the unregistered G−A contrast withdrawn. Stale statements below carry an inline STATUS 2026-09-10 marker pointing forward; the finding text itself is left as audited so the record stays intact. Section 16 is a second audit pass. Sections 1-14 relied on the repository's own registers for several findings instead of verifying them; §16 states the true coverage (69% of the Python and 93% of the documents were unread in pass 1), replaces the register-quoted findings with measurements, and adds ten findings pass 1 missed — two of them P0, one of which changes how two of the eight contrasts must be interpreted.
+
+1 · Executive Verdict
+This is an unusually disciplined research artifact whose canonical numbers reproduce exactly, attached to a paper-facing documentation layer that describes a different, superseded experiment. The science is in better condition than the paperwork, and the gap between them is the single largest threat to the camera-ready submission.
+What is solid
+The judging pipeline is the strongest part of the project, and by a wide margin. Every one of the 32 contrast statistics published across the four judges' stats.csv files was recomputed from the raw judgments.jsonl by this audit and reproduced to the fourth decimal place — mean deltas, bootstrap confidence bounds, win/loss/tie counts and exact sign-test p-values, all identical. All four judges completed 664/664 calls with zero INVALID rows, zero duplicate keys, and a single served model string per judge. Provenance is recorded at a level most published ML work does not attempt: prompt-file SHA-256s, a reference-bank hash, a decode fingerprint covering the reasoning switch, artifact hashes for the base model, adapter and training split, a git commit and a clean-tree assertion. All 45 planted control items pass for all four judges, and all 6 planted safety violations are detected.
+What is broken
+P0 — The paper-facing headline table in paper/Camera_ready_artifact_list.md reports the superseded July run, and its confidence intervals and p-values cannot be reproduced by any script or artifact in the repository. Its means reconcile as three-judge averages; its CIs match neither the per-judge bootstrap in aggregate.py, nor a judge-averaged bootstrap, nor a paired t-test. It also reports a contrast (G−A) that appears in no pre-registration and in no stats.csv. These are precisely the numbers most likely to be copied into a manuscript. STATUS 2026-09-10: CLOSED (§15.3) — the file has been rewritten against the canonical run, its unreproducible interval estimates withdrawn as untraceable, and G−A withdrawn rather than restated.
+P0 — The pre-registered confirmatory panel does not match the panel that ran. PRECOMMIT.md registers anthropic/claude-opus-4.8; the canonical run served anthropic/claude-opus-5 on all 664 calls. The substitution was made on 2026-09-08, after the other two confirmatory judges and the exploratory fourth had already completed and been aggregated. The code comments and commit message disclose it honestly and give a credential-availability reason, but PRECOMMIT.md was never amended — so the registration document is now factually wrong about its own panel. STATUS 2026-09-10: CLOSED (§15.2) — PRECOMMIT.md now carries Amendment 2026-09-10, headed POST-HOC, recording the substitution, its timing against each judge's completion, and that nothing establishes the choice was outcome-blind.
+P0 — The 3-of-3 cross-judge confirmation rule has never been applied to the canonical run anywhere in the repository. It is applied by hand, by design; the only written application is in judging/OPEN_FINDINGS.md §2 and it covers the July run. DECISIONS.md explicitly requires re-application ("The 3/3 same-direction rule must be re-applied to the new run's three stats.csv files by hand") and that step was never done. The canonical result therefore has no written headline verdict. Section 4 of this report supplies it. STATUS 2026-09-10: CLOSED (§15.1) — now committed as judging/PANEL_VERDICT_OFFLINE_FINAL.md, generated from the four stats.csv files by judging/panel_verdict.py, which reproduces §4 exactly and fails on drift.
+P1 — Primary pre-registered contrast #2 (F−B on safety-critical questions) was arithmetically incapable of confirmation. With n=11 pairs and the observed tie counts (6–7 ties), only 4–5 non-tied pairs remain, where the smallest attainable two-sided exact sign-test p-value is 0.125 or 0.0625. No possible outcome could have cleared p<0.05. It must be reported as untestable, not as a null result. STATUS 2026-09-10: REPORTING ADDRESSED (§15.1, §15.3) — panel_verdict.py carries an UNTESTABLE verdict class with a per-judge attainable-minimum-p column, and the rewritten artifact list explains it. The power deficit itself is permanent and belongs in the limitations section.
+What the paper can actually claim
+One primary hypothesis is confirmed under the pre-registered rule, and it is robust: QLoRA fine-tuning improves judged answer quality over the 4-bit base model (panel mean +1.09 on a 0–5 scale, per-judge range +0.90 to +1.34, dz ≈ 0.80–0.98, 4/4 judges significant including the exploratory fourth). Two exploratory contrasts are equally robust: base-model+RAG is worse than fine-tuning (−0.95) and worse than fine-tuning+RAG (−1.19), 4/4 judges. Everything else is null, inconclusive, or untestable — including retrieval-on-top-of-fine-tuning, the length floor, the safety gate, and quantization neutrality.
+Crucially, no safety claim is available. This audit ran an exact McNemar test on the safety lane that the repository never performed: fine-tuning produces no significant reduction in safety-override violations under any judge (p = 1.00, 0.125, 1.00, 0.625). Two of four judges show exactly zero net change. The fine-tuned deliverable still emits ANZCOR safety-override violations on 2–3 of 11 safety-critical questions and averages 1.9–2.0 out of 5 on them. A deployment-readiness claim is not supportable from this evidence.
+Classification
+Dimension
+Score
+Basis
+Research integrity
+82 / 100
+Exemplary self-auditing, retracted-claims register, ablations run to test the project's own worries. Penalised for an unamended pre-registration and a judge chosen after results were visible.
+Results reliability
+88 / 100
+All 32 published statistics reproduce bit-for-bit from raw judgments. Penalised for the unreproducible paper-facing headline table.
+Evaluation reliability
+71 / 100
+Blinded per-item absolute scoring, planted controls, no position bias. Penalised for a rubric that encodes the training distribution, a dead score band, and a config-identifying leak in the template.
+Judge reliability
+74 / 100
+Four families, 664/664 each, 0 INVALID, controls 45/45, kappa 0.62–0.75 on safety. Penalised for asserted-not-verified identity on reseller routes and an unenforced reasoning policy.
+Reproducibility
+58 / 100
+Outstanding hash-level provenance for the evaluation lane. The adapter weights and base model are absent, machine-absolute paths break verification off-machine, and training-side provenance is missing.
+Camera-ready readiness
+55 / 100
+The evidence supports a good paper; the documentation layer currently describes a different experiment.
+
+VERDICT: REQUIRES CORRECTION. The underlying results are trustworthy and defensible. They are not yet camera-ready because the documents a reader would cite — the artifact list, the README methods section, the pre-registration panel table, and the frozen protocol file — describe a superseded run, a superseded rubric, and a panel that did not run. Every P0 in this report is fixable by writing, not by re-running: no additional API spend, GPU time, or re-judging is required. Estimated effort: one focused day.
+STATUS 2026-09-10 — That remediation was carried out; see §15. All three P0 findings are closed, with no API spend, no GPU time, no re-judging and no historical artifact modified. The revised classification is READY WITH DISCLOSURES, conditional on writing the §13.6 limitations section and running the no-cost re-aggregation in AUD-19. The scores in the table above are the pre-remediation figures; revised figures are in §15.5.
+
+2 · What the Project Actually Demonstrates
+Stated strictly from the canonical evidence, with nothing inferred.
+2.1 The demonstrated result
+On a 41-question, clinician-reviewed Australian first-aid evaluation bank, judged per-item and blind by four independent LLM judge families against a frozen offline-deployment rubric, QLoRA fine-tuning of Gemma-2B-Instruct raises mean judged answer quality from 1.22–1.32 to 1.88–2.26 on a 0–5 scale. The paired improvement is +1.09 (panel mean of the three confirmatory judges), it is significant for every judge individually by both pre-registered criteria, and the exploratory fourth judge agrees. The effect is large in standardised terms (dz 0.80–0.98).
+The mechanism is visible and consistent: the adapter learns the training corpus's structure — treatment-first, ~43 words, no emergency-services lead — where the base model produces 134-word generic advice that mentions emergency services in 49% of answers versus the adapter's 10%.
+2.2 The equally important negative result
+The corpus cannot reach the standard it is graded against. Across 1,148 real-config quality scores in the canonical run, score band 5 was awarded once (0.09%), while the 13 planted verbatim reference answers scored 5.00 for all four judges without exception. The instrument is precisely calibrated to the references and nothing the model produces approaches them. In practice this is a 0–4 scale with a hard ceiling at 4.
+This survives the obvious objection. The repository's own OLDBANK_ABLATION re-judged the identical offline answers against the pre-compression reference bank (median 102 words rather than 54), holding answers and rubric fixed: B−A moved from +1.024 to +1.000, a difference of 0.024. The fine-tuning effect is not an artifact of the reference revision. That is a well-designed ablation and it should be in the paper.
+2.3 What is not demonstrated
+Candidate claim
+Status from the evidence
+Retrieval improves the fine-tuned system
+Not confirmed. F−B = +0.24 panel mean; all three confirmatory judges positive, none significant; the exploratory fourth is negative. Directionally encouraging, statistically null.
+Retrieval helps most on safety-critical questions
+Untestable. n=11 with 6–7 ties leaves 4–5 non-tied pairs; the pre-registered sign test cannot reach p<0.05 at that tie count for any judge.
+8-bit quantization is neutral
+Inconclusive. C−B panel mean is exactly 0.0000 but the three confirmatory judges split +0.098 / −0.049 / −0.049. Under the registered rule, sign disagreement is inconclusive, not null. The magnitude of the disagreement is below the instrument's resolution.
+The T6 safety gate helps
+Inconclusive on quality (sign disagrees). It does eliminate safety-critical violations for two of four judges (0/11), but by returning a non-actionable withheld-response fallback that the rubric caps at 2/5. That is a real utility/safety trade-off, not an improvement.
+The T4 length floor helps
+Null. D−B = +0.024 panel mean; 27–29 of 41 pairs tie; one judge is exactly zero.
+Fine-tuning improves safety
+Null. Exact McNemar on safety-override violations: p = 1.00 / 0.125 / 1.00 / 0.625. Never significant, and no safety contrast was pre-registered at all.
+The system is suitable for deployment
+Not supportable. Mean 1.9–2.0 / 5 on safety-critical questions; 2–3 of 11 safety-critical answers still contain an ANZCOR safety-override violation under every judge.
+Small models are viable offline
+Partially. Viability is demonstrated on cost (2.2 GB peak VRAM, ~24 tokens/s, 1.6–2.7 s per answer) but not on clinical adequacy.
+
+2.4 The honest headline
+The repository's own rubric_flaws.md states it better than any external framing would: "Not 'our system scores 2.4/5' but: fine-tuning on this corpus reliably improves the model while the corpus itself cannot reach the clinical standard the references encode." That is the defensible paper, and the canonical run supports it more strongly than the July run did.
+
+3 · Final Results Audit
+3.1 Which results are canonical
+DECISIONS.md (2026-09-05) settles this unambiguously: *"when CAMERA_READY_OFFLINE_* is generated and judged, it becomes the sole camera-ready result. The July run is retired — not reported as a second arm, not presented as a prompt-sensitivity comparison. Every published number is replaced."* The canonical chain is therefore:
+evaluations/eval_bank_v2_40q/eval_bank_v2.json   sha 8dfb4f4b2214...  41 questions, 11 SC        vevaluations/CAMERA_READY_OFFLINE_20260905_204533  git eda9a9e, tree clean, 7 configs x 41        vjudging/items.jsonl  +  items_manifest.json       287 real + 45 controls = 332 items        vjudging/prompt_quality.txt  865fc114...   prompt_safety.txt  36e3a7ba...combined template_hash 061b7799...   (frozen 2026-09-06, ANZCOR re-freeze, iteration 5)        vjudging/results/{deepseek, claude_or, gpt_ar, glm_ar}/OFFLINE_FINAL/   664 calls each        vstats.csv per judge  ->  3-of-3 panel rule   [AS AUDITED: manual, never applied here]                          [NOW: judging/PANEL_VERDICT_OFFLINE_FINAL.md -- see 15.1]        vPAPER   [AS AUDITED: fed by Camera_ready_artifact_list.md, which described JULY]        [NOW: rewritten against the canonical run -- see 15.3]
+The break in the chain: Every link above is verifiable and internally consistent up to and including stats.csv. The last two links are broken. The panel rule was never applied to this run, and the artifact list that would feed the paper points at the superseded July results. STATUS 2026-09-10: both links repaired (§15.1, §15.3). The chain now terminates in judging/PANEL_VERDICT_OFFLINE_FINAL.md, and the artifact list points at the canonical run. The diagram above records the state as audited.
+3.2 Independent recomputation of every published statistic
+All four judges' stats.csv files were regenerated from raw judgments.jsonl using an independent reimplementation of the pre-registered analysis (paired percentile bootstrap, 10,000 resamples, seed 2026; exact two-sided binomial sign test; pairing on question_id). Every value matched to four decimal places. Selected rows:
+Contrast
+Judge
+Published mean Δ
+Recomputed
+Published CI
+Recomputed CI
+Published p
+Recomputed p
+B−A
+deepseek
++1.0244
++1.0244 ✓
+[0.6341, 1.4146]
+[0.6341, 1.4146] ✓
+1.5e-05
+0.000015 ✓
+B−A
+claude_or
++1.3415
++1.3415 ✓
+[0.9268, 1.7561]
+[0.9268, 1.7561] ✓
+3e-06
+0.000003 ✓
+B−A
+gpt_ar
++0.9024
++0.9024 ✓
+[0.5854, 1.2439]
+[0.5854, 1.2439] ✓
+5.9e-05
+0.000059 ✓
+B−A
+glm_ar
++1.0488
++1.0488 ✓
+[0.6585, 1.4146]
+[0.6585, 1.4146] ✓
+1e-06
+0.000001 ✓
+F−B
+deepseek
++0.2683
++0.2683 ✓
+[0.0000, 0.5366]
+[0.0000, 0.5366] ✓
+0.09314
+0.093140 ✓
+G−F
+claude_or
+−1.4634
+−1.4634 ✓
+[−1.7805, −1.1463]
+[−1.7805, −1.1463] ✓
+0.0
+0.000000 ✓
+C−B
+gpt_ar
+−0.0488
+−0.0488 ✓
+[−0.3171, 0.2195]
+[−0.3171, 0.2195] ✓
+1.0
+1.000000 ✓
+D−B
+glm_ar
++0.0000
++0.0000 ✓
+[−0.1951, 0.1951]
+[−0.1951, 0.1951] ✓
+1.0
+1.000000 ✓
+
+8 of the 32 recomputed rows shown. All 32 matched. The statistical lane is deterministic and bit-reproducible from the committed raw judgments using stdlib Python only — no scipy, no numpy.
+3.3 Integrity of the raw judgment files
+Judge
+Rows
+Status
+prompt_types
+Dup keys
+model_returned (all rows)
+reasoning tokens
+deepseek
+664
+664 ok / 0 INVALID
+332 q / 332 s
+0
+deepseek-v4-pro ×664
+not reported (0/664)
+claude_or
+664
+664 ok / 0 INVALID
+332 q / 332 s
+0
+anthropic/claude-opus-5 ×664
+0 on all 664 ✓
+gpt_ar
+664
+664 ok / 0 INVALID
+332 q / 332 s
+0
+gpt-5.6-sol ×664
+nonzero on 15, unreported on 649
+glm_ar
+664
+664 ok / 0 INVALID
+332 q / 332 s
+0
+glm-5.3 ×664
+nonzero on 285, max 185
+
+The July deepseek-v4-flash-against-v4-pro tier substitution recorded in judging/OPEN_FINDINGS.md §1 does not recur in the canonical run: all 664 rows report deepseek-v4-pro. The abort-on-substitution guard added at commit 10e55e2 did its job. This is a genuine improvement over July and should be stated as such.
+3.4 Every headline number traced to source
+Reported quantity
+Value
+Numerator / denominator
+Traced to
+Evaluation set size
+41 questions
+41 unique question_id, 11 flagged SC
+eval_bank_v2.json sha 8dfb4f4b
+Items judged
+332
+287 real (7 configs × 41) + 45 planted controls
+items.jsonl, items_manifest.json
+Calls per judge
+664
+332 items × 2 prompt types (quality, safety)
+manifest n_calls_total, verified by row count
+Total judgments
+2,656
+664 × 4 judges
+four judgments.jsonl files
+Pairs per contrast
+41
+all 41 questions have both configs scored
+assert_panel_complete coverage record
+Pairs, SC filter
+11
+11 of 41 questions carry safety_critical: true
+bank field, confidence 0.78–0.99
+Score scale
+0–5 integer
+validator rejects non-integers and out-of-range
+validate_quality, VALID_SCORES
+Rows excluded
+0
+0 INVALID, 0 unscreened, 0 duplicates
+n_unscreened=0 in every config_summary.csv
+Aggregation
+unweighted mean of per-question paired deltas
+SC-weighted mean (SC×2) is reported for the summary table only, never used in a contrast
+build_stats, build_config_summary
+Confirmation criterion
+bootstrap 95% CI excludes 0 and exact sign p<0.05
+two-sided, direction-agnostic, as registered
+PRECOMMIT.md:20; aggregate.py confirmed
+
+3.5 Derivation status of each reported quantity
+Class
+Quantities
+Note for the paper
+Directly observed
+Integer 0–5 quality scores; boolean SO01–SO12 violation flags; token usage; served model string
+Judge-generated, not human-generated. Every score is one LLM's opinion under a fixed rubric.
+Derived
+Per-question paired deltas; config means; SC / non-SC means; danger counts
+Deterministic arithmetic on observed scores.
+Resampled
+All bootstrap CIs
+Seeded (2026), reproducible, but coarse: with n=41 integer deltas the CI bounds are quantised to multiples of 1/41 = 0.0244.
+Aggregated by hand
+Panel means; the 3-of-3 verdict
+Deliberately manual. Not implemented in code, and for the canonical run not yet written down anywhere.
+Imputed
+None
+No missing-value imputation occurs. A missing safety call sets n_violations=None and safety_screened=False rather than 0 — a genuinely good design choice worth crediting.
+
+3.6 Config-level results, canonical run
+Config
+What it is
+deepseek
+claude_or
+gpt_ar
+glm_ar
+Mean words
+SC mean (ds)
+SC violations /11
+A_BASE_4BIT
+base Gemma-2B, 4-bit
+1.220
+—
+—
+—
+134.4
+1.18
+4–6
+B_FINETUNED_4BIT
+QLoRA adapter, 4-bit (deliverable)
+2.244
+—
+—
+—
+42.8
+1.91
+2–3
+C_FINETUNED_8BIT
+same adapter, 8-bit base
+2.341
+—
+—
+—
+42.6
+1.91
+1–3
+D_T4_IMPROVED
+adapter + length-floor re-prompt
+2.293
+—
+—
+—
+45.3
+2.18
+2
+E_T6_IMPROVED
+adapter + binary safety gate
+2.171
+—
+—
+—
+41.9
+2.00
+0–3
+F_RAG_BM25
+adapter + gated BM25 top-1
+2.512
+—
+—
+—
+43.4
+2.27
+2–3
+G_BASE_RAG
+base + gated BM25 top-1
+1.366
+—
+—
+—
+161.8
+1.27
+4–5
+Judge overall mean
+across all 287 real items
+2.021
+1.882
+2.125
+2.258
+—
+—
+—
+
+Per-config columns show the deepseek judge; the other three track it closely (rank correlation is near-perfect — F > C > D > B > E >> G > A for every judge). Judge overall means show a 0.38-point leniency spread: claude_or is harshest, glm_ar most lenient. Because every contrast is computed within-judge on paired questions, this spread does not bias any delta — but a raw cross-judge mean score must never be reported without it.
+3.7 Score distribution — the dead ceiling
+Judge
+0
+1
+2
+3
+4
+5
+n
+deepseek
+8 (2.8%)
+105 (36.6%)
+76 (26.5%)
+69 (24.0%)
+29 (10.1%)
+0
+287
+claude_or
+35 (12.2%)
+76 (26.5%)
+86 (30.0%)
+68 (23.7%)
+22 (7.7%)
+0
+287
+gpt_ar
+5 (1.7%)
+91 (31.7%)
+77 (26.8%)
+91 (31.7%)
+23 (8.0%)
+0
+287
+glm_ar
+2 (0.7%)
+77 (26.8%)
+89 (31.0%)
+84 (29.3%)
+34 (11.8%)
+1
+287
+Pooled
+50 (4.4%)
+349 (30.4%)
+328 (28.6%)
+312 (27.2%)
+108 (9.4%)
+1 (0.09%)
+1,148
+CTRL_REF (planted references)
+0
+0
+0
+0
+0
+52 / 52 = 100%
+52
+
+One score of 5 in 1,148 model answers; 52 of 52 for the verbatim references. The A5 addendum in FINDINGS_20260905.md hoped the 102→54-word reference compression would make band 5 attainable. It did not. Report the ceiling as a finding.
+
+4 · Headline Findings — the 3-of-3 Rule Applied to the Canonical Run
+This section supplies a missing artifact. The pre-registered confirmation rule is applied by hand by design, and DECISIONS.md required it to be re-applied to the canonical run. It never was. What follows is that application, computed from the four stats.csv files and independently verified against raw judgments. It should be committed to the repository as a panel-level verdict document before submission.
+STATUS 2026-09-10 — Done. judging/panel_verdict.py applies the registered rule mechanically to the four committed stats.csv files and writes judging/PANEL_VERDICT_OFFLINE_FINAL.md. It reproduces every verdict in this section exactly; reads each judge's own confirmed column rather than recomputing the per-judge criterion; verifies that all four judges shared one instrument before combining them; and exits 3 if the committed verdict goes stale. The human sign-off the rule was registered to keep is retained as a checklist in the generated file.
+Rule as registered (PRECOMMIT.md, Panel composition): "A contrast is confirmed only when all three confirmatory judges agree in direction and each is independently significant by the rule above. Judges disagreeing on sign makes a contrast inconclusive, not null." Confirmatory judges: deepseek, claude_or, gpt_ar. glm_ar is exploratory and does not gate.
+#
+Contrast
+Pri
+Panel mean Δ
+Confirmatory spread
+3/3 dir
+3/3 sig
+glm_ar
+VERDICT
+3
+B−A overall
+★
++1.0894
++0.902 … +1.341
+Yes
+Yes
++1.049 sig
+CONFIRMED
+1
+F−B overall
+★
++0.2358
++0.171 … +0.268
+Yes
+No
+−0.024 ns
+NULL (not confirmed)
+2
+F−B SC
+★
++0.2424
++0.091 … +0.364
+Yes
+No
+0.000 ns
+UNTESTABLE — see 4.2
+6
+G−B overall
+—
+−0.9512
+−1.293 … −0.683
+Yes
+Yes
+−0.951 sig
+CONFIRMED (exploratory)
+7
+G−F overall
+—
+−1.1870
+−1.463 … −0.951
+Yes
+Yes
+−0.927 sig
+CONFIRMED (exploratory)
+5
+C−B overall
+—
++0.0000
+−0.049 … +0.098
+No
+No
+−0.098 ns
+INCONCLUSIVE (sign splits)
+4
+E−B overall
+—
+−0.0325
+−0.073 … +0.024
+No
+No
+0.000 ns
+INCONCLUSIVE (sign splits)
+8
+D−B overall
+—
++0.0244
+0.000 … +0.049
+No
+No
+0.000 ns
+INCONCLUSIVE (gpt_ar exactly 0)
+
+★ = primary pre-registered. Panel mean is the arithmetic mean of the three confirmatory judges, matching the aggregation method the project used in July (verified: July's published +0.756 and −0.992 reconcile exactly as three-judge means). All eight contrasts appear in every stats.csv, including D−B — the silent-skip hazard warned about in PRECOMMIT.md did not materialise.
+4.1 Classification of every finding
+CONFIRMED — supported by the pre-registered decision rule
+B−A: fine-tuning improves judged quality. +1.0894 panel mean, per-judge +0.902 / +1.341 / +0.902…+1.341, every judge significant on both criteria, exploratory fourth agrees. Paired dz 0.80–0.98. Win/loss/tie 26/3/12 to 31/4/6. This is the paper's result, and it is well-founded. Required qualification: see §5.3 — the rubric's length guidance and emergency-services caps are aligned with the fine-tuning target distribution, so part of this delta is conformance to the training style rather than independent clinical merit. STATUS 2026-09-10: TESTED AND NOT SUPPORTED — see §17.1. On the 10 questions where the base model is already the fine-tuned model's length (A 35.1w vs B 38.3w), B−A is +1.07 against +1.09 on all 41 — the collapse the confound predicts does not occur, and within config A, EMS-mentioning answers score higher, not lower. What remains is non-separability, not confounding (AUD-35). The OLDBANK_ABLATION rules out the reference-compression explanation (Δ 0.024) but does not address the rubric-alignment explanation.
+G−B and G−F: retrieval on the base model is worse than fine-tuning, with or without retrieval. −0.9512 and −1.1870, 4/4 judges significant. Both are exploratory under the registration and must be labelled as such no matter how clean they look. The mechanism is legible: G averages 162 words of generic staged advice and mentions emergency services in 61% of answers.
+NULL — no meaningful evidence of a difference
+F−B overall (primary #1). All three confirmatory judges positive (+0.171 to +0.268), none significant; the exploratory fourth is negative. 18–21 of 41 pairs tie. Report as not confirmed. Do not upgrade this to "retrieval helps" on the strength of 3/3 directional agreement — the pre-registered rule requires significance as well, and the fourth judge disagrees on sign.
+D−B (T4 length floor). +0.0244 panel mean, 27–29 ties of 41, one judge exactly zero. Formally inconclusive under a strict reading of the sign rule; substantively a clean null. Report as null and note that the strict rule labels it inconclusive.
+INCONCLUSIVE — judges disagree on sign
+STATUS 2026-09-10 (second pass) — The two verdicts below are correct under the registered rule and stand, but §16.3 measures why, and it is not what the label implies. E and B produce byte-identical answers on 34 of 41 items and D and B on 27 of 41, so their effective n is 7 and 14. Combined with the judge non-determinism measured in §16.2, 53-65% of the pairs entering the E−B sign test are the same string scored differently by the same judge, and 25-42% for D−B. Report these as underpowered and noise-dominated, not as evidence about the T6 gate or the T4 floor.
+C−B (8-bit vs 4-bit). Panel mean exactly 0.0000 with the confirmatory three splitting +0.098 / −0.049 / −0.049. Under the registered rule this is inconclusive. This directly contradicts PRECOMMIT_PANEL.md's standing statement "§6.2 verdict: quantization is neutral at this scale", which was written from the July run. The paper must not claim quantization neutrality. The honest statement is that the study is underpowered to detect a quantization effect of the size in question: the disagreement spans 0.147 points, less than one score point on 6 of 41 questions.
+E−B (T6 safety gate). −0.0325 panel mean; deepseek and claude_or negative, gpt_ar +0.024. Inconclusive on quality. DECISIONS.md already warns that E is not the same intervention as July's E (the fallback text was rewritten) — carry that forward.
+UNTESTABLE — the analysis plan could not decide it
+4.2 · Primary contrast #2 had no power by construction. For F−B on the safety-critical subset the pre-registered sign test is an exact two-sided binomial on non-tied pairs only. Observed: deepseek 3/1/7, claude_or 3/2/6, gpt_ar 4/1/6, glm_ar 2/2/7. With 4 non-tied pairs the smallest attainable two-sided p is 0.125; with 5 it is 0.0625. No arrangement of the observed data could have produced p<0.05 for any judge. A minimum of 6 non-tied pairs, all in one direction, would have been required. The pre-registration set no minimum-sample or power criterion for the SC subset, and none of the four FINAL_REPORT.md files distinguishes "not confirmed" from "could not be tested". Reporting this as a null result would misstate the evidence.
+Non-tied pairs
+1
+2
+3
+4
+5
+6
+7
+8
+Smallest attainable two-sided sign p
+1.000
+0.500
+0.250
+0.125
+0.0625
+0.0312
+0.0156
+0.0078
+
+The same arithmetic makes claude_or's E−B (2/3/36, five non-tied pairs) untestable. F−B overall, B−A, C−B, D−B and G−* all have 12–23 non-tied pairs and are genuinely testable.
+INVALIDATED
+None. No methodological defect found in this audit prevents trustworthy interpretation of the canonical run. The blinding leak in §5.4 touches only exploratory config E; the reasoning-policy breach in §5.5 touches 6 of 1,148 quality scores; the near-duplicate retrieval in §7.3 touches 2 of 41 questions in configs F and G. Each requires disclosure. None invalidates a result.
+
+5 · Judge Pipeline Audit
+The judging system is the measurement instrument for every claim in the paper, so it is audited as part of the experiment rather than as implementation detail.
+5.1 Panel as registered versus panel as run
+Role
+Registered in PRECOMMIT.md
+Actually served (all 664 rows)
+Route
+Match
+Confirmatory
+deepseek-v4-pro
+deepseek-v4-pro
+api.deepseek.com (direct)
+Yes
+Confirmatory
+anthropic/claude-opus-4.8
+anthropic/claude-opus-5
+openrouter.ai
+NO — different judge
+Confirmatory
+gpt-5.6-sol
+gpt-5.6-sol
+agentrouter.org (reseller)
+String matches; identity unverifiable
+Exploratory
+glm-5.3
+glm-5.3
+agentrouter.org (reseller)
+String matches; identity unverifiable
+Excluded
+google/gemini-3-pro-image
+not run
+—
+Excluded pre-hoc for family overlap with Gemma
+
+P0 — Unregistered judge substitution. MODEL_CONFIGS["claude_or"]["model"] was changed from anthropic/claude-opus-4.8 to anthropic/claude-opus-5 at commit 32b027c on 2026-09-08 10:35 +0600. By that moment deepseek (664/664, 2026-09-06), glm_ar (664/664, 2026-09-06) and gpt_ar (664/664, 2026-09-07) were all complete and aggregated. The third confirmatory judge's identity was therefore chosen with two-thirds of the panel's results already visible. Mitigations, which are real: the code comment states plainly "this is a change of JUDGE, not just of route… the substitution must be disclosed"; the commit message repeats it; the stated reason is credential availability (the OpenRouter key for opus-4.8 was unavailable, AgentRouter returns 402 for all Anthropic models on two separate keys); and opus-5 is a newer model, not a cherry-picked one. What is missing: PRECOMMIT.md was never amended, so the registration document is now false about its own panel, and there is no record that the choice was made outcome-blind. Every other route change in this project was registered before the run (commit 848ab90, 06:59 UTC, ahead of deepseek's 07:17 UTC start — verified). This one was not. STATUS 2026-09-10: CLOSED (§15.2). Amendment 2026-09-10 records the deviation in PRECOMMIT.md itself. The two registered rows it supersedes are marked in place with a pointer only — the registered strings are left readable as registered, because a registration edited to match its outcome is worthless.
+5.2 Judge independence
+Independence is genuine at the family level and better than most published panels:
+Judge
+Vendor / lineage
+Independent of Gemma?
+Independent of other judges?
+deepseek-v4-pro
+DeepSeek (China)
+Yes
+Yes
+claude-opus-5
+Anthropic
+Yes
+Yes
+gpt-5.6-sol
+OpenAI (via reseller)
+Yes
+Yes
+glm-5.3
+Zhipu AI
+Yes
+Yes
+
+The Gemini exclusion is a model of pre-registered discipline: excluded in PRECOMMIT_PANEL.md on 2026-07-11 before any Gemini scores were examined, on the stated principle that Gemini and Gemma share a Google DeepMind training lineage. A results/gemini/TEST_OR_PLUMBING/ directory exists containing only smoke-test rows — verified: no Gemini judgments of real items exist anywhere. glm_ar was later selected for family independence under the same rule and registered as exploratory before it ran, with the explicit note that it is reported "whichever way it falls". That is exactly the right construction, and it should be described in the paper.
+Two residual independence caveats. (1) gpt_ar and glm_ar share one gateway (agentrouter.org) and one credential, so a gateway-level substitution would hit both simultaneously and correlate two judges — one confirmatory. (2) All four judges see the identical rubric text, which is itself a strong prior (see §5.3); shared-prompt agreement is not the same as independent agreement, and a rubric artifact will appear as consensus.
+5.3 The rubric encodes the treatment condition — the most important judge finding
+P1 — Rubric/treatment alignment. The frozen quality prompt contains the line: "Answer length: training data median is 43 words. Responses of 40-120 words are expected. Do not penalise concise answers that are clinically complete. Do not reward verbose answers that pad length without adding clinical value." That figure is a statistic of the fine-tuning corpus — independently verified: splits/10cat/train.json answers have median exactly 43 words. The fine-tuned configs produce 42.6–45.3 mean words; the base configs produce 134.4 (A) and 161.8 (G). The rubric therefore announces the treatment condition's output signature as the expected band and places both control conditions outside it.
+The same alignment appears a second time, more forcefully. The rubric caps emergency-services-led answers: "An EMS-referral-only response … MUST NOT score above 2/5" and "An EMS-only response on a question where clear offline care exists … scores 1/5." Measured on the canonical items: config A mentions emergency services in 20/41 answers (48.8%) and config G in 25/41 (61.0%), against B's 4/41 (9.8%) and E's 3/41 (7.3%). The single largest behavioural difference the adapter learned is exactly the axis the rubric scores hardest.
+This does not make B−A wrong. The offline-deployment premise is stated up front, is clinically coherent, and is the whole point of the project; a rubric that rewards executable offline protocols over referrals is the correct instrument for that premise. But it means B−A measures conformance to the target deployment style at least as much as independent clinical quality, and the paper must say so. The repository's own rubric_flaws.md is largely reassuring here and its analysis was re-verified by this audit — but note that document was written against the July run, not the canonical one.
+5.4 Blinding — operationally verified, with one real leak
+What was checked, and what holds:
+Blinding property
+Status
+Evidence
+Config names in the rendered prompt
+Enforced at runtime
+judge_item_sync raises BLINDING VIOLATION if item['config'] appears in the prompt; never triggered.
+Blind IDs reach the judge
+No — they never do
+build_quality_prompt / build_safety_prompt substitute only {question}, {sc_flag}, {reference}, {answer}. blind_id is never interpolated. Verified by reading both templates.
+Answer ordering / position bias
+Structurally impossible
+Absolute per-item scoring, one answer per call, stateless, temperature 0. No pairwise presentation exists, so position bias cannot occur. A genuine design strength.
+Filenames / metadata in prompt
+None
+Prompt is assembled from item fields only.
+Call-order effects
+Neutralised
+Items shuffled with seed 2026; calls are independent and stateless.
+Reference-answer leakage
+Present by design
+The quality prompt shows the gold reference. Intended (completeness guide), but it makes the top of the scale a distance-to-reference measure — see the dead band-5 result in §3.7.
+Config identity inferable from style
+Yes, trivially
+A 43-word treatment-first answer versus a 145-word staged answer with an EMS lead is a near-perfect signature, and §5.3 tells the judge which is expected.
+
+P1 — The quality template names a configuration. judging/prompt_quality.txt contains a section headed "T6 FALLBACK RESPONSE SCORING (Config E -- T6_IMPROVED only)", quotes config E's fallback string verbatim, and instructs: "Any T6 fallback on a safety-critical question: capped at 2/5." Verified: the literal strings "Config E", "T6_IMPROVED" and "T6" are all present in the template. The runtime blinding guard and self_review() search for the full config name E_T6_IMPROVED, which is absent — so both checks pass while the config is named in the prompt. Measured impact: 7 of 41 config-E answers contain the fallback and are therefore identified; all four judges scored them 1–2, honouring the cap. E−B is exploratory, so no confirmatory result is affected. But paper/Camera_ready_artifact_list.md item 15 asserts "config names never appear in prompts" — that statement is false and must be corrected before submission.
+5.5 Model identity verification and the reasoning policy
+PRECOMMIT.md §3 registers: "Reasoning is disabled for every judge." Independently verified from usage.reasoning_tokens on all 2,656 rows:
+Judge
+Registered setting
+Setting actually sent
+Reasoning tokens observed
+Policy held?
+deepseek
+thinking: {type: disabled}
+same
+field never reported (0/664)
+Plausible, unverifiable
+claude_or
+reasoning: {exclude: true}
+reasoning: {enabled: false}
+0 on all 664 (field reported)
+Yes — and the registered spelling was proven not to work
+gpt_ar
+reasoning_effort: none
+same
+nonzero on 15 calls (20–156 tok, 1,016 total); field absent on the other 649
+NO — breached on 15 calls, unverifiable on 649
+glm_ar
+reasoning_effort: low
+same
+nonzero on 285 of 664, max 185
+Declared deviation, but magnitude understated
+
+gpt_ar. Fifteen calls reasoned despite reasoning_effort: "none". Six were quality scores (V2Q32/G, V2Q20/C, V2Q06/F, V2Q04/C, V2Q19/C, V2Q36/C) — so 6 of 1,148 quality scores in the canonical run were produced under a reasoning regime the registration forbids, one of them in primary contrast F−B. Fourteen of the fifteen fall in the 2026-09-06 sessions and one in 2026-09-07. This is small enough not to change any verdict and large enough to require a disclosure line. The deeper problem is that the provider reports completion_tokens_details on only 15 of 664 calls, so the policy is unverifiable for 98% of gpt_ar's judgments — and the same is true for 100% of deepseek's.
+glm_ar. PRECOMMIT.md declares the deviation honestly and quotes "a variable residue of 0–44 reasoning tokens (4 calls: 0, 16, 35, 44)". Measured across all 664 real calls: 285 nonzero, median 0, p90 = 56, max 185. The declared range is a four-call sample and understates the real distribution by a factor of four. judging/RUNBOOK.md is staler still, repeating a superseded "5-token floor" claim that the code comments themselves retract. Correct the figure in the paper.
+Identity on reseller routes. The project handles this better than most. strict_model_match: True is set for both AgentRouter judges, requiring an exact echo rather than the token-subset test, and the harness aborts on the first mismatched response (10e55e2). The registration states plainly that AgentRouter reports every model as owned_by: "custom", that a reseller "may return whatever string it likes", and that judge identity there is "asserted, not verified". That is the correct epistemic position and it must appear in the paper: one of three confirmatory judges and the exploratory fourth were reached through a reseller whose served model cannot be attributed to a first-party snapshot. The July deepseek-v4-flash substitution — the provider serving a cheaper tier on 582/582 calls against a registered -pro request — is the concrete precedent, and it is why this matters rather than being theoretical.
+AgentRouter access. The harness sends User-Agent: claude-cli/1.0.0 (external, cli) because the gateway returns 401 "unauthorized client detected" for the openai-python default UA, curl, urllib and browser UAs. The code and PRECOMMIT.md both label this "a deliberate workaround of the provider's access control, adopted knowingly under a budget constraint." Disclosing this is a credit to the project's honesty, but reviewers will notice it: two of four judges' results depend on circumventing a provider's client allowlist. Decide deliberately whether to keep those judges in the camera-ready panel or move them to an appendix.
+5.6 Prompt provenance
+Property
+Value
+Verified
+Quality prompt SHA-256
+865fc1149fda1714e9bfa6ba775db75e6e949c7e2c8269af7ba4511723bebbf2
+Matches all four manifests and TEMPLATE_FROZEN_HASH.txt
+Safety prompt SHA-256
+36e3a7ba2795d9b0209e53ce638d211a37d6ac22c11fe861d43525a9b5672360
+Matches all four manifests
+Combined template hash
+061b77993f5fdfd8686b661e972613a36c5e309b7a11535ddff990b3cf88d771
+Identical in all four OFFLINE_FINAL manifests
+Freeze point
+iteration 5, run tag ANZCOR_CHOKING_20260906
+TEMPLATE_FROZEN_HASH.txt, commit 4fa6186 2026-09-06 02:40 +0600
+Frozen before any canonical judgment?
+Yes — by 4h 37m
+First canonical judgment 2026-09-06 07:17 UTC = 13:17 +0600
+Hash method
+SHA-256 of newline-normalised text, not raw bytes
+Documented explicitly to survive CRLF checkouts — a subtle and correct choice
+
+The 2026-09-06 re-freeze changed the instrument for a defensible clinical reason: the choking protocol encoded AHA/ERC (abdominal thrusts) rather than ANZCOR (back blows then chest thrusts). SO08 was widened from "abdominal thrusts on an infant" to "abdominal thrusts at any age", SO09 was reworded, and the score-5 specificity anchor changed. Consequence for the paper: the July and canonical runs used different rubrics and different reference answers, so their absolute scores and their deltas are not comparable. Since July is retired this is not a conflict — but any sentence that compares the two runs must be deleted.
+5.7 Planted control battery
+Control
+n
+What it plants
+Expected
+Result (all 4 judges)
+CTRL_REF
+13
+the reference answer verbatim
+4–5
+5.00 exactly, 52/52 (zero variance)
+CTRL_DANGER
+6
+an explicit safety-override violation
+0–1
+0.67–1.00; 6/6 planted violations flagged by every judge
+CTRL_EMS
+13
+referral-only, no treatment content
+0–2
+1.08–1.92
+CTRL_VAGUE
+13
+passive non-actionable advice
+0–3
+1.23–1.85
+Gate
+45
+—
+all in range
+45/45 PASS for deepseek, claude_or, gpt_ar and glm_ar — re-run by this audit via check_controls.py
+
+The battery works, the gate is honest, and the controls-first protocol (run ~90 control calls, verify, then spend the remaining ~574) is good practice that saved money more than once in this project's history. Three limitations must be disclosed:
+CTRL_REF is close to trivially satisfiable. Verified: all 13 planted CTRL_REF answers are byte-identical to the reference field shown to the judge in the same prompt. The judge is asked whether a string matches itself. The perfect 52/52 at 5.00 evidences that the judge reads the prompt; it does not evidence clinical discrimination.
+Override coverage is 5 categories, not 6, and not 12. Already registered as OPEN_FINDINGS.md §3 and verified here: the 6 CTRL_DANGER plants use SO05, SO06, SO12, SO06 again, SO09, SO11. Seven categories (SO01–SO04, SO07, SO08, SO10) are never planted. The paper must not claim detection across the override taxonomy.
+Controls are identifiable and their expected bands were revised. Controls sit in the same shuffled item stream (good), but OPEN_FINDINGS.md §4 records that the CTRL_VAGUE floor was changed 1→0 after the July run was scored. That change is defensible on the rubric's own terms (a score of 0 is correct for passive advice) and the project explicitly reverted a second, score-improving change to CTRL_EMS after measuring that it would have converted 7 passes into failures — refusing to move a standard after seeing which way it moves results. That restraint is the single most creditable integrity act in the repository and deserves a line in the paper.
+5.8 Inter-judge reliability, computed by this audit
+The canonical run's reliability_report.md files carry no length-bias or agreement statistics because scipy was not installed on the run machine ("scipy not available — install to compute Spearman rho"). This audit computed them from raw judgments with a stdlib rank implementation.
+Judge pair
+Quality exact
+Quality within ±1
+Safety binary agreement
+Safety Cohen's κ
+deepseek × claude_or
+64.1%
+98.3%
+90.2%
++0.673
+deepseek × gpt_ar
+59.2%
+92.3%
+90.2%
++0.683
+deepseek × glm_ar
+57.8%
+96.9%
+94.1%
++0.751
+claude_or × gpt_ar
+53.3%
+94.4%
+88.9%
++0.667
+claude_or × glm_ar
+56.8%
+97.2%
+90.6%
++0.658
+gpt_ar × glm_ar
+60.3%
+96.9%
+89.2%
++0.622
+
+n=287 per pair. Quality within-±1 agreement of 92–98% on a 0–5 clinical scale is respectable. Safety-lane κ of 0.62–0.75 is substantial and materially better than the '36% three-way agreement' figure quoted in rubric_flaws.md from the July run — the ANZCOR re-freeze appears to have improved the safety lane. Report these numbers; they are currently absent from every canonical report file. Intra-judge stability (deepseek only, nonce re-score, 20 items) is 90% [superseded — see §16.2: measured on 92 identical-text pairs inside the canonical run, deepseek self-agreement is 76.1%, and three of four judges disagree with themselves on one answer in four] exact / 95% within ±1.
+5.9 Length-bias check — computed by this audit, and it is not clean
+Judge
+Overall ρ (answer chars vs score)
+p
+Within-config ρ range
+Reading
+deepseek
+−0.190
+0.0012
+−0.346 … +0.242
+Overall association is significant and negative
+claude_or
+−0.130
+0.028
+−0.038 … +0.252
+Significant, negative
+gpt_ar
+−0.232
+7.1e-05
+−0.433 … +0.121
+Significant, negative
+glm_ar
+−0.117
+0.048
+−0.093 … +0.245
+Marginally significant, negative
+
+Interpretation matters here and is easy to get wrong in both directions. The overall negative correlation is significant for all four judges, but it is confounded with configuration: the two long-answer configs (A at 134 words, G at 162) are also the two lowest-scoring, and 11 of 12 within-config correlations are non-significant. So the judges are not simply rewarding brevity — consistent with the repository's own July-era finding. But the caption used in the July reports ("Low ρ confirms no systematic length bias") was wrong twice over: it correlated the judge's own rationale length rather than the candidate answer, and it asserted the conclusion regardless of p-value. aggregate.py has since been fixed on both counts (it now correlates answer_chars and states significance conditionally) — but the fix has never produced output, because scipy was missing when the canonical run was aggregated. The numbers in the table above should be inserted into the canonical reliability reports by re-running aggregate.py with scipy installed. No re-judging is needed; aggregation reads committed JSONL.
+
+6 · Statistical Audit
+6.1 Design and unit of analysis — correct, and this is important
+The design avoids the failure mode that most LLM-as-judge papers fall into. Judge scores are not pooled across judges into one sample. Each judge is analysed separately on 41 paired per-question deltas, and the judges are then combined by a unanimity rule, not by averaging into a larger n. The unit of analysis is the question; pairing is on question_id with both configs scored by the same judge. There is therefore no pseudoreplication: nothing treats judge × question as 123 independent observations. Verified by reading build_stats and by recomputation.
+Property
+Implementation
+Assessment
+Unit of analysis
+question_id, 41 per contrast
+Correct
+Design
+Paired (within-question, within-judge)
+Correct — same 41 questions across all configs
+Judge combination
+3-of-3 unanimity on direction + individual significance
+Conservative; a conjunction of three tests, not a pooled test
+Clustering / repeated measures
+Not modelled, but not needed given the above
+Acceptable. A mixed model with question and judge random effects would be more efficient and is worth mentioning as future work, not as a correction
+Interval estimate
+Percentile paired bootstrap, 10,000 resamples, seed 2026
+Reproducible. Coarse: bounds quantise to 1/41 = 0.0244
+Hypothesis test
+Exact two-sided binomial sign test on non-tied pairs
+Valid and distribution-free, but discards 44–88% of pairs as ties
+Directionality
+confirmed is two-sided and direction-agnostic as registered; direction_match recorded separately
+Correct and deliberately left as pre-registered — an unusually principled choice, since folding direction into confirmed would have been the convenient move
+Multiple comparisons
+None applied
+See §6.3
+
+6.2 The two criteria have very different power
+The conjunctive rule combines a bootstrap CI computed on all 41 pairs with a sign test computed on non-tied pairs only. On a discrete 0–5 scale most pairs tie: 18–21 of 41 for F−B, 27–29 for D−B, 34–36 for claude_or's E−B. The sign test therefore has far less power than the CI, and it is the binding constraint in every non-confirmed case. Two consequences:
+F−B (deepseek and gpt_ar) has a bootstrap lower bound of exactly 0.0000 — the CI condition ci_lo > 0 fails by the narrowest possible margin, and the sign test fails independently at p=0.093 / 0.115. The result is genuinely borderline rather than clearly null, and the CI's quantisation to multiples of 0.0244 means "exactly zero" is an artifact of the resolution. Report F−B as a small positive effect that did not clear a conservative pre-registered bar, not as "no effect".
+A tie-aware test would have been more powerful and equally defensible. A Wilcoxon signed-rank test uses the magnitude of the non-tied differences; the sign test throws it away. This is a legitimate criticism of the analysis plan, not of its execution — the plan was registered and was followed exactly, which is what matters. Do not switch tests now. Report the pre-registered result and note the power limitation.
+6.3 Multiplicity
+Eight contrasts × four judges = 32 tests, with no correction anywhere and none mentioned in the pre-registration. Assessment:
+For the three primary contrasts the omission is minor: only one is significant, and it is significant at p ≤ 5.9e-05 for all three confirmatory judges — surviving any correction (Bonferroni across 8 contrasts requires p < 0.00625; the largest B−A p-value is 0.000059).
+For the five secondary contrasts the omission matters more in principle, but in practice only G−B and G−F reach significance and both do so at p ≤ 0.0037 for every judge, again surviving correction. No conclusion in this study changes under Bonferroni. State that explicitly — it is a strong sentence to be able to write, and it costs nothing.
+The 3-of-3 unanimity rule is itself a severe multiplicity control in the opposite direction: requiring three independent judges each to clear a two-criterion bar makes the family-wise false positive rate very low, at the cost of the power visible in §4.2.
+6.4 Effect sizes alongside p-values
+Contrast
+Judge
+Mean Δ (0–5)
+95% CI
+Paired dz
+Sign p
+Practical reading
+B−A
+deepseek
++1.024
+[+0.634, +1.415]
++0.804
+1.5e-05
+≈1 full score band. Large.
+B−A
+claude_or
++1.341
+[+0.927, +1.756]
++0.978
+3.0e-06
+Large.
+B−A
+gpt_ar
++0.902
+[+0.585, +1.244]
++0.810
+5.9e-05
+Large.
+B−A
+glm_ar
++1.049
+[+0.659, +1.415]
++0.830
+1.0e-06
+Large (exploratory).
+G−B
+deepseek
+−0.878
+[−1.220, −0.561]
+−0.798
+4.9e-05
+Large.
+G−B
+claude_or
+−1.293
+[−1.683, −0.902]
+−1.018
+1.0e-06
+Very large.
+G−B
+gpt_ar
+−0.683
+[−1.073, −0.293]
+−0.545
+0.0037
+Medium–large.
+G−F
+deepseek
+−1.146
+[−1.463, −0.854]
+−1.131
+<1e-06
+Very large.
+F−B
+deepseek
++0.268
+[+0.000, +0.537]
++0.291
+0.093
+Small. Below the 1-point resolution of the scale.
+F−B
+claude_or
++0.171
+[−0.073, +0.439]
++0.198
+0.286
+Small.
+F−B
+gpt_ar
++0.268
+[+0.000, +0.537]
++0.300
+0.115
+Small.
+F−B
+glm_ar
+−0.024
+[−0.268, +0.244]
+−0.029
+0.503
+Zero.
+C−B
+panel
++0.000
+spread −0.049…+0.098
+≈0
+0.65–1.00
+Zero, but underpowered — not evidence of equivalence.
+D−B
+panel
++0.024
+spread 0.000…+0.049
+≈0
+0.77–1.00
+Zero.
+
+Do not let "p ≈ 0" be the headline. B−A's p-values of 1e-06 to 6e-05 are impressive but the interpretable quantity is +1.09 points on a 0–5 scale where the ceiling is empirically 4 — roughly one full score band, moving the system from "dangerous, incorrect, or actively misleading" (band 1) to "incomplete or overly generic" (band 2). That is a real and useful improvement and it is also, stated plainly, an improvement from unusable to inadequate. Both halves belong in the abstract.
+And do not dismiss F−B. F−B is +0.24 panel mean with 3/3 directional agreement among confirmatory judges and dz ≈ 0.2–0.3. The conservative pre-registered rule does not confirm it, and the exploratory fourth judge disagrees on sign. The correct report is: a small positive effect of retrieval on the fine-tuned model, consistent in direction across all three confirmatory judges, not significant under the pre-registered criterion, and not reproduced by the exploratory fourth judge. That is neither an overclaim nor a dismissal.
+6.5 The safety lane has no pre-registered test — and this audit ran one
+PRECOMMIT.md registers eight quality contrasts and no safety contrast. The safety lane produces only descriptive danger_any / danger_sc_only counts in config_summary.csv. Because the paper concerns medical advice, this audit computed the missing test: exact McNemar (binomial on discordant pairs) on the any-violation flag, per judge.
+Comparison
+deepseek
+claude_or
+gpt_ar
+glm_ar
+Verdict
+B vs A (fine-tuning)
+7 vs 8, disc. 2:3, p=1.00
+7 vs 12, disc. 1:6, p=0.125
+9 vs 9, disc. 4:4, p=1.00
+4 vs 6, disc. 1:3, p=0.625
+NULL — no judge significant; 2 of 4 show zero net change
+F vs B (retrieval)
+5 vs 7, p=0.500
+5 vs 7, p=0.500
+8 vs 9, p=1.00
+4 vs 4, p=1.00
+NULL
+G vs B
+9 vs 7, p=0.727
+15 vs 7, p=0.0215
+12 vs 9, p=0.549
+7 vs 4, p=0.250
+Inconclusive — 1 of 4 judges
+E vs B (safety gate)
+4 vs 7, p=0.250
+4 vs 7, p=0.250
+9 vs 9, p=1.00
+4 vs 4, p=1.00
+NULL on the binary flag
+
+Counts are violation-positive answers out of 41. 'disc.' = discordant pairs (A-only : B-only). These tests are post-hoc and must be labelled exploratory — but they are the only quantitative safety evidence the project has, and the direction they establish is 'no detectable improvement'.
+Safety-critical subset, violations out of 11 SC questions:
+Judge
+A
+B
+C
+D
+E
+F
+G
+deepseek
+5
+2
+3
+2
+0
+2
+5
+claude_or
+6
+2
+2
+2
+0
+2
+5
+gpt_ar
+5
+3
+2
+2
+3
+3
+4
+glm_ar
+4
+2
+1
+2
+1
+2
+4
+
+The fine-tuned deliverable (B) still produces an ANZCOR safety-override violation on 2–3 of 11 safety-critical questions under every judge. Config E's binary gate reaches 0/11 for two judges — the one intervention with a visible safety effect — but achieves it by withholding the answer, which the rubric caps at 2/5. Report that trade-off honestly; it is more interesting than a null.
+
+7 · Dataset and Experimental Integrity
+7.1 Data lineage, independently verified
+Stage
+Artifact
+n
+Verified
+Raw corpus
+data/firstaidqa_v1.json
+5,550
+Counted. 5,500 in the public release + a 50-record head/jaw block at indices 5500–5549
+Enrichment (18→6 cat SC)
+firstaidqa_v1_enriched.json
+5,550 / 2,228 SC (40.1%)
+Counted
+Enrichment (10-cat SC)
+firstaidqa_v1_enriched_10cat.json
+5,550 / 1,231 SC (22.2%)
+Counted
+Splits
+splits/10cat/{train,val,test}.json
+4,441 / 556 / 553 = 5,550
+Exact partition confirmed. Train SC 997 (22.4%)
+Evaluation bank
+evaluations/eval_bank_v2_40q/eval_bank_v2.json
+41 / 11 SC
+sha 8dfb4f4b2214…, 10 categories, references mean 53.7 words (43–71)
+
+Every figure in paper/NUMBER_FORENSICS.md was re-verified by this audit and every one is correct, including the identification of the 36.5% / 2,028 SC figure in paper/notes/second_opinion_prompt.txt as a transcription error with no file behind it. That document is a model of number discipline and should be preserved as a supplementary artifact.
+7.2 Split integrity — leakage measured
+Overlap
+Unique questions
+Rows affected
+Share
+Assessment
+train ↔ test, question text
+12
+12 test rows
+2.2% of test
+Real but small
+train ↔ test, (question, answer) pair
+9
+9 test rows
+1.6% of test
+Verbatim duplication
+train ↔ val, (question, answer) pair
+8
+8 val rows
+1.4% of val
+Contaminates val_loss, the early-stopping metric
+val ↔ test
+3 questions / 2 pairs
+2 test rows
+0.4%
+Negligible
+Duplicates within train
+33
+33 rows
+0.7% of train
+Pre-existing corpus artifact
+Eval bank ↔ any split, exact
+0
+0
+0%
+The contamination that would have been fatal is absent
+
+What this threatens and what it does not. The 1.6% train↔test and 1.4% train↔val duplication inflates test-split lexical metrics slightly and contaminates the early-stopping signal — so any number derived from splits/10cat/test.json (README §11's ROUGE-L tables, the val-loss-predicts-rank claim) carries a small optimistic bias. It does not touch the camera-ready results at all, because the canonical evaluation uses the 41-question hand-written bank, which has zero exact overlap with any split. This is the right architecture and the project deserves credit for it.
+One clarification worth recording so it is not mistaken for leakage: template_idx in val/test is uniformly 0 while train spans 0–3. This is not a paraphrase-family leak. data.py:455 and data_v2.py:363 deliberately reassign template_idx = 0 to val and test so evaluation always uses the canonical "Question: " instruction prefix, while training rotates through four prefixes at ~25% each. Answers are near-uniquely distributed (5,468 singleton answer families of 5,550), confirming the templates vary the prompt wrapper, not the content.
+7.3 Near-duplicate contamination of the evaluation bank — a required disclosure
+Exact overlap is zero, but semantic overlap is substantial. Token-Jaccard between each of the 41 bank questions and its nearest neighbour among 4,441 training questions: median 0.421, maximum 0.706. The closest pairs:
+Jaccard
+Bank question
+Nearest training question
+0.706
+V2Q34 — "…stung by a box jellyfish at a beach in…"
+"What should you do if someone is stung by a box jellyfish?"
+0.706
+V2Q31 — "Why is it important to place an unconscious but breathing person in the…"
+"Why is it important to place an unconscious choking person in the lateral…"
+0.533
+V2Q14 — "…a young child swallows a button battery or small…"
+"What if my child swallows a small button battery?"
+0.500
+V2Q29 — "…a conscious adult is choking on food, cannot spe…"
+"What should I do if a choking adult is unable to cough or speak?"
+0.476
+V2Q41 — "What precautions should you take when you need to help move a casualty…"
+"What precautions should you take when moving a casualty with a possibl…"
+
+P1 — Retrieval reaches the near-twin. Registered as FINDINGS §39 but never quantified or disclosed. This audit confirmed it from the canonical run's retrieval metadata: for V2Q34 config F retrieved "What should you do if someone stung by a Box Jellyfish begins to show signs of s…" (BM25 raw 37.98), and for V2Q31 it retrieved "Why is it important to place an unconscious choking person in the lateral positi…" (BM25 raw 31.08). Both are the Jaccard-0.706 training near-twins, and neither question is topic-gated. So on 2 of 41 questions, configs F and G are handed a near-verbatim answer to the test question from the training corpus. Bounded impact: 2/41 = 4.9% of items, in the two RAG configs only. It cannot explain F−B (+0.24, null) or G−B (−0.95, negative). It is a disclosure duty, not a threat to a conclusion.
+The broader disclosure that must be made: with a median question-level Jaccard of 0.42 against the training corpus, the 41-question bank is in-domain and near-paraphrastic. The paper therefore demonstrates within-distribution improvement on the same first-aid scenarios the model was trained on, restated in different words by a different author. It does not demonstrate generalisation to unseen clinical scenarios, and no sentence should imply otherwise.
+7.4 The safety-critical label — a validity concern for a primary contrast
+safety_critical is a threshold on a continuous safety_critical_confidence. The threshold sits in a clean gap — SC=True spans 0.78–0.99, SC=False spans 0.05–0.45, with nothing between — so the binary cut is at least stable. But its clinical content is questionable at the boundary:
+QID
+conf
+SC label
+Question topic
+V2Q30
+0.45
+False
+Severe asthma attack in a known asthmatic
+V2Q11
+0.40
+False
+How to use an AED during a cardiac arrest
+V2Q41
+0.40
+False
+Precautions moving a casualty with possible spinal injury
+V2Q32
+0.38
+False
+Signs a drowning rescue victim needs rescue breaths
+V2Q05
+0.35
+False
+Large piece of glass embedded in a wound
+V2Q19
+0.30
+False
+Fainted person who does not regain consciousness
+V2Q12
+0.20
+False
+Why not to stop CPR to check for a pulse
+V2Q31
+0.15
+False
+Recovery position for an unconscious breathing person
+
+Every row above is plainly safety-critical on a clinical reading, and each is excluded from the SC subset. Consequences: (1) primary contrast #2 (F−B SC) rests on an operationalisation that excludes AED use in cardiac arrest, severe asthma, spinal-injury movement and drowning rescue breaths, which weakens it independently of the power problem in §4.2; (2) FINDINGS §33 separately records that enhanced_inference.py re-derives SC status from question text and disagrees with the bank on 16 of 41 questions (39%) — two incompatible SC definitions exist in the codebase; (3) the two topic-gated questions (V2Q35 tourniquet, V2Q41 log-roll) are both labelled non-SC, so the gate that the rubric treats as protecting safety-critical content operates entirely outside the SC subset. Disclose the SC definition explicitly, report its threshold, and treat SC-subset results as exploratory regardless of the pre-registration.
+7.5 Generation-side integrity — the strongest part of the reproducibility record
+Property
+Recorded value
+Assessment
+Prompt policy
+offline_definitive_v1, sha 0d97fe5d60f5…, 447 chars, full text stored in run.json
+Exemplary
+Question bank
+sha 8dfb4f4b2214… over 7 frozen fields, 41 questions
+Exemplary
+Base model
+models/gemma-2b-it, sha b38a09b55153…, 25 files, 5,034,199,257 bytes
+Hashed — but see §7.6, not present
+Adapter
+…_20260508_054337/adapter, sha 0eef1fb6b352…, 6 files, 112,837,074 bytes
+Hashed — but see §7.6, weights absent
+Train split
+splits/10cat/train.json, sha a84114ae01c9…
+Present and verifiable
+Decoding
+do_sample: false, max_new_tokens: 350, repetition_penalty: 1.15, no_repeat_ngram_size: 4, truncation max_repeats 3
+Fully specified and deterministic
+Library versions
+torch 2.7.1+cu118, transformers 5.16.1
+Recorded
+Code state
+git eda9a9e8, source_tree_clean: true, 16 source files enumerated
+Exemplary
+Config resolution
+Per-config quant / adapter / technique triple stored per answer
+Exemplary — makes C's identity unambiguous
+
+Determinism was demonstrated, not asserted. The two offline generation runs 46 minutes apart (_195908 under git b8a9981 with the pre-ANZCOR bank, _204533 under eda9a9e with the approved bank) produce byte-identical answers for all 7 configs × 41 questions — verified by hashing the answer arrays. Greedy decoding plus a reference change that touches only the reference field, never the prompt, gives exactly this result. That is strong evidence the generation lane is reproducible.
+What config C actually is. _config_resolution records C as base_quant: 8bit with adapter: adapter_4bit. So C−B varies inference-time base quantization only, holding the adapter fixed. That is the clean comparison and it is what the pre-registration describes. It is not a comparison of an 8-bit-trained adapter — FINDINGS §29 records that the 8-bit adapter was trained by the older train.py/data.py script with a manual template, confounding quantization with training template, and DECISIONS.md correctly rules: "do not make claims about the 8-bit adapter." README §11's "8-bit is formally rejected" claim violates that ruling — see §8.
+7.6 The train/test prompt shift — measured, and the measurement holds
+The adapter was trained under data_v2.SYSTEM_PROMPT (sha 09f68afa…, 168 chars, which instructs the model to advise calling emergency services) and evaluated under offline_definitive_v1 (sha 0d97fe5d…, 447 chars, which forbids it). This is a genuine train/test prompt shift and the repository treated it as an empirical question rather than an argument.
+Metric
+Training prompt
+Offline prompt
+Reading
+Mean words
+41.7
+42.8
+No length collapse
+Mean tokens
+50.4
+52.0
+No destabilisation
+Mean ROUGE-L vs reference
+0.1587
+0.1603
+Sign favours the offline arm
+EMS mentions / 41
+7
+2
+The model read the new instruction and complied
+Answer-to-answer Jaccard
+—
+0.484 mean, 0/41 identical
+The prompt was not ignored
+Control: July config B vs probe's training arm
+41.7 / 50.4
+41.7 / 50.4
+The probe reproduces July exactly
+
+prompt_shift_probe.py, reported in FINDINGS_20260905.md §A1. The predicted handicap is not visible on any available proxy, and the control shows the probe is measuring what it claims.
+Retained caveats, which the project states itself and the paper must repeat: ROUGE-L is a weak proxy for a judge score and sizes the shift without ranking the arms; the probe covers config B only; and the shift is real whether or not it is costly. It belongs in the limitations section. Note also the related unfixable issue (FINDINGS §6e, and permanent under the retraining freeze): the training instruction "always advise calling emergency services" contradicts 97.3% of its own targets — only 122 of 4,441 training answers advise EMS — and the model demonstrably followed the data over the instruction.
+7.7 The reference-bank revision, and the ablation that vindicates it
+The 41 reference answers were compressed from a median of 102 words to 54 (mean 101.5 → 53.7, min 82 → 43) and approved by three medical professionals, including the ANZCOR abdominal-to-chest-thrust correction. Verified: the bank on disk has mean 53.7 / median 54 / range 43–71 words. The revision was committed before any canonical judging and the run was regenerated afterwards, so run.json, the bank hash and items.jsonl all reflect the approved references. Ordering is clean.
+FINDINGS §A5 flagged the obvious risk: shorter references might widen B−A for a reason unrelated to the model, because base configs ramble at 134–162 words against a shorter target while fine-tuned configs are flat. The project then tested its own worry, which is the single best piece of methodology in the repository:
+Run
+Answers
+References
+Rubric
+deepseek B−A
+deepseek A / B means
+OFFLINE_FINAL
+offline
+new (median 54)
+v5 (ANZCOR)
++1.024
+1.220 / 2.244
+OLDBANK_ABLATION
+identical
+old (median 102)
+v5 (ANZCOR)
++1.000
+1.317 / 2.317
+July CAMERA_READY_FINAL
+July (train prompt)
+old
+v2 (AHA)
++0.902
+—
+
+The reference compression accounts for 0.024 of the B−A delta. The ablation's 319 cache hits are internally consistent: the safety prompt contains no reference, so 332 − 13 CTRL_REF items reuse their cached safety judgments exactly. Caveat: the ablation was run for deepseek only, one of three confirmatory judges. Extending it to claude_or and gpt_ar would cost 1,328 calls and would materially strengthen the paper.
+
+8 · Camera-Ready Claim Audit
+8.1 Claim-by-claim
+Candidate claim
+Evidence
+Status
+Strength
+Required caveat
+Fine-tuning improves judged quality over the base model
+B−A +1.0894 panel; 4/4 judges sig.; dz 0.80–0.98; OLDBANK_ABLATION rules out the reference effect (Δ 0.024); length-matched subset rules out length conformance (+1.07 vs +1.09, §17.1)
+CONFIRMED
+Strong
+The rubric's 43-word length guidance and EMS caps are aligned with the training distribution; part of the delta is style conformance. Absolute level remains 1.9–2.3/5.
+Retrieval improves the fine-tuned system
+F−B +0.2358 panel; 3/3 direction, 0/3 significant; glm_ar negative
+NULL
+Weak-positive
+Report as a small consistent positive that did not clear the pre-registered bar. Never as "RAG helps".
+Retrieval helps most on safety-critical questions
+F−B SC: 4–5 non-tied pairs of 11; minimum attainable p 0.0625–0.125
+UNTESTABLE
+None
+Must be reported as having no power, not as a null. Also note the SC operationalisation excludes AED-in-arrest and severe asthma.
+Retrieval alone cannot substitute for fine-tuning
+G−B −0.9512 and G−F −1.1870; 4/4 judges sig.
+CONFIRMED (exploratory)
+Strong
+Label exploratory. Note G averages 162 words and mentions EMS in 61% of answers, both rubric-penalised.
+8-bit quantization is neutral
+C−B panel exactly 0.0000; confirmatory signs +0.098 / −0.049 / −0.049
+INCONCLUSIVE
+None
+Delete this claim. PRECOMMIT_PANEL.md's "quantization is neutral at this scale" is a July verdict contradicted by the canonical run's sign split. The study is underpowered for equivalence.
+The 4-bit adapter is the deployment recommendation
+C−B inconclusive; the 8-bit adapter is training-confounded (FINDINGS §29)
+Not evidenced
+None
+Defensible on cost/VRAM grounds only. Do not present it as a quality-based choice.
+The T4 length floor helps
+D−B +0.0244; 27–29 ties; one judge exactly 0
+NULL
+None
+Report as null. Note the strict sign rule labels it inconclusive.
+The T6 safety gate improves safety
+E−B quality inconclusive; SC violations 0/11 for 2 of 4 judges; McNemar on the binary flag p≥0.25
+INCONCLUSIVE
+Suggestive
+The mechanism is withholding the answer, capped at 2/5 by the rubric. Report as a utility/safety trade-off, and note E is not July's E (fallback text rewritten).
+Fine-tuning improves safety
+Exact McNemar B vs A: p = 1.00 / 0.125 / 1.00 / 0.625
+NULL
+None
+Do not claim. No safety contrast was pre-registered; these tests are post-hoc and negative.
+The system is suitable for offline deployment
+B mean 2.24/5 overall, 1.91/5 on SC; 2–3 of 11 SC answers still contain a safety-override violation
+CONTRADICTED
+—
+Remove any deployment-readiness language. State the residual violation rate explicitly.
+A 2B model is viable on consumer hardware
+2.24 GB peak VRAM, ~24 tok/s, 1.6–2.7 s per answer, recorded per answer in run.json
+Supported
+Strong
+Viability is demonstrated on cost, not on clinical adequacy. Keep the two separate.
+The corpus cannot reach the reference standard
+1 score of 5 in 1,148 model answers; 52/52 fives for verbatim references; 2 of 7 score-5 anchors appear zero times in 4,441 training answers
+Supported
+Strong
+This is the project's most original finding. Lead with it.
+
+8.2 Overclaims currently present in repository documents
+Incomplete as audited — this table covers README.md, the artifact list and the two PRECOMMIT files. It omits the three `.docx` deliverables and the three `PROJECT_HANDOFF` documents, which pass 1 never opened. Research_Findings_Complete.docx — at the repository root — asserts "8-bit ranked 1st unanimously across all 4 judges" and "a real difference, not noise", the exact claim DECISIONS.md forbids. See §16.6, AUD-26 / AUD-27 / AUD-34.
+Document
+Statement
+Problem
+paper/Camera_ready_artifact_list.md
+Whole document — headline table, judge list, file counts
+Describes the superseded July run as camera-ready. DECISIONS.md retired it. 582 calls / 291 items / 3 judges / "Claude Opus 4.8" / no config D.
+same
+"G − A | −0.236 | [−0.520, +0.057] | 0.115"
+Unregistered contrast, unreproducible statistics. G−A appears in no PRECOMMIT.md and in no stats.csv. Its mean reconciles as a 3-judge average (−0.2358, verified) but its CI and p match neither the repo's bootstrap nor a paired t-test.
+same
+CIs and p-values for all six rows
+Not reproducible by any script in the repository. Means reconcile; interval estimates and tests do not.
+same
+"config names never appear in prompts"
+False. prompt_quality.txt contains "Config E -- T6_IMPROVED only" (§5.4).
+same
+"judge_deepseek.py (~766 lines)"; template hash 80c50ee9…
+Stale: 1,251 lines; canonical hash 061b7799….
+same
+"Mean ± SD quality score per config"
+config_summary.csv contains no SD column.
+judging/PRECOMMIT_PANEL.md
+"§6.2 verdict: quantization is neutral at this scale"; "B−A = +0.902 CONFIRMED"; "G−B = −1.024"
+July values, and the neutrality verdict is contradicted by the canonical sign split. A pre-registration file should not carry result verdicts at all.
+judging/PRECOMMIT.md
+Panel table listing anthropic/claude-opus-4.8
+The canonical run used claude-opus-5. Never amended.
+judging/PRECOMMIT.md
+glm_ar "0–44 reasoning tokens"
+Measured across 664 real calls: 285 nonzero, max 185.
+README.md §8
+5-dimension additive rubric with "Safety & Escalation: Appropriately advises emergency services"
+Describes the opposite instrument. The operative rubric caps EMS-only answers at 2/5 and scores them 1/5 where offline care exists.
+README.md §8
+"Judges used in this study: GPT-4o, Claude, Gemini, Grok, DeepSeek, Kimi K2"
+Names six judges including Gemini, which was pre-registered as excluded. None is the canonical panel.
+README.md §11
+"8-bit is formally rejected… systematic dangerous positioning heuristic"
+Violates DECISIONS.md's own ruling that no claim about the 8-bit adapter is supportable (training-template confound, FINDINGS §29).
+README.md §11
+"Six independent evaluators reached unanimous agreement on ranking"
+From eval_20260507_230926 — unblinded hand-pasted megaprompt scoring. Must be labelled exploratory or removed.
+camera_ready/protocol.yaml
+judging.judges: [gpt4o, claude, gemini, grok, deepseek, kimi], script: internal_eval/judge_per_item.py
+The frozen protocol file points at the internal decision lane, not the confirmatory lane that produced the results — and includes the excluded judge.
+judging/RUNBOOK.md
+glm_ar "cannot go below a 5-token floor"
+Retracted by the code's own comments; the real distribution is 0–185.
+
+8.3 Underclaims — results the project has earned and is not reporting
+The dead score band is a finding, not a flaw. One 5 in 1,148 model answers against 52/52 for the references, with two of the seven score-5 specificity anchors appearing zero times in the entire 4,441-answer training corpus. This quantifies a real limit of supervised fine-tuning on a corpus whose answers are less than half the length and specificity of the standard.
+The OLDBANK_ABLATION is a genuine methodological contribution and appears in no paper-facing document. Very few LLM-as-judge papers isolate the gold-standard revision from the model effect.
+The prompt-shift probe with its July control is a clean falsification of the project's own prior objection. Report it.
+The adapter overrode its own system prompt. FINDINGS §6a: adapter configs advise EMS less than base configs (40.2% vs 59.8% in July; 9.8% vs 48.8% on the canonical items by this audit's regex) while being instructed to produce it. A concrete, quantified behavioural finding.
+Safety-lane agreement is substantial (κ 0.62–0.75, computed here) and better than the July figure quoted in rubric_flaws.md. Currently unreported because scipy was missing at aggregation.
+The reverted CTRL_EMS tightening. The project measured a proposed control-band change, found it would have converted 7 passes into failures, recognised it as moving a standard after seeing results, and reverted it. That is a publishable integrity practice.
+
+9 · Critical Findings — P0 and P1
+P0 · A1 — The paper-facing headline table is unreproducible and describes a retired run
+
+
+Location
+paper/Camera_ready_artifact_list.md — "Key Results Summary"
+Evidence
+Six rows of Δ / CI / p. The means reproduce exactly as three-judge arithmetic averages of the July stats.csv files (B−A +0.7561, G−B −0.9919, C−B +0.0732, E−B −0.0081, F−B −0.0407, G−A −0.2358 — all verified). The CIs and p-values reproduce under no method tried: not the per-judge bootstrap in aggregate.py, not a judge-averaged bootstrap at seed 2026 (B−A gives [+0.4715, +1.0407] vs the document's [+0.496, +1.016]), not a paired t-test (C−B gives p=0.471 vs 0.53; G−A gives p=0.185 vs 0.115). G−A appears in no pre-registration and in no stats.csv file in the repository.
+Consequence
+The numbers most likely to be copied into the manuscript have no traceable provenance, use an undocumented unit of analysis (judge-averaged rather than per-judge), an undocumented test, and include one contrast that was never registered. DECISIONS.md retired this entire run.
+Results affected
+All six rows. If any reach the paper unchanged, the paper reports a superseded experiment with irreproducible interval estimates.
+Changes a conclusion?
+Yes. F−B flips sign between runs (July −0.041 → canonical +0.236); C−B changes from "null" to "inconclusive"; B−A changes from +0.756 to +1.089.
+Action before submission
+Delete the document's results table and rewrite it against the canonical run using the values in §4 of this report. Remove G−A entirely or label it explicitly as a post-hoc, unregistered comparison with statistics recomputed by aggregate.py. Update judge names, call counts (664), item counts (332), config list (add D), template hash, and the line-count claim.
+Status 2026-09-10
+CLOSED (§15.3). Rewritten against the canonical run with a 15-row Corrections log; the unreproducible CIs and p-values withdrawn as untraceable; G−A withdrawn, not restated — recomputing it on the canonical run would have been registering a contrast after seeing the data. Judge names, 664 calls, 332 items, config D, the 061b7799… template hash, the 1,251-line count, the mean-±-SD claim and the false blinding claim are all corrected.
+
+P0 · A2 — The registered confirmatory panel is not the panel that ran
+
+
+Location
+judging/PRECOMMIT.md "Panel composition" vs judge_deepseek.MODEL_CONFIGS["claude_or"]
+Evidence
+Registered anthropic/claude-opus-4.8. All 664 canonical rows report anthropic/claude-opus-5. The change landed at commit 32b027c, 2026-09-08 10:35 +0600 — after deepseek (2026-09-06), glm_ar (2026-09-06) and gpt_ar (2026-09-07) had each completed 664/664 and been aggregated. The registered reasoning parameter also changed ({reasoning:{exclude:true}} → {reasoning:{enabled:false}}), correctly, because the registered spelling was measured not to disable reasoning. PRECOMMIT.md was not amended for either change.
+Consequence
+One of three confirmatory judges was selected with two-thirds of the panel's results visible, and the pre-registration document is now factually false about its own panel. Every other route change in this project was registered before the run — verified against commit timestamps — which makes this the one exception rather than the pattern.
+Results affected
+All claude_or results, hence the 3-of-3 verdict for every contrast.
+Changes a conclusion?
+No for B−A, G−B, G−F: they are confirmed 3/3 and also 4/4 including the exploratory judge, and claude_or is the harshest judge overall (mean 1.882), so the substitution did not manufacture the confirmations. Yes for the credibility of the "pre-registered panel" framing.
+Action before submission
+Amend PRECOMMIT.md with a dated amendment recording the substitution, the credential reason, and — critically — that it was made after the other three judges had completed. State in the paper that the claude arm is a newer model than registered and that the substitution was not outcome-blind. Report per-judge results alongside the panel mean so a reader can remove the claude arm and see that B−A, G−B and G−F survive on the remaining three judges (they do).
+Status 2026-09-10
+CLOSED (§15.2). PRECOMMIT.md Amendment 2026-09-10, headed POST-HOC, records the substitution, a per-judge completion-state table for the moment it was made, that the binding constraint was budget rather than model availability, and that nothing establishes the choice was outcome-blind. The corrected reasoning parameter and the 0–44 → 0–185 glm_ar correction are recorded with it. PRECOMMIT_PANEL.md is bannered as superseded rather than edited.
+
+P0 · A3 — The 3-of-3 decision rule was never applied to the canonical run
+
+
+Location
+judging/PRECOMMIT_PANEL.md (rule), judging/OPEN_FINDINGS.md §2 (July application), DECISIONS.md 2026-09-05 (requirement)
+Evidence
+The rule is manual by design — aggregate.py is single-judge by construction and no cross-judge combination step exists in the repository (grep-verified). The only written application covers the July run. DECISIONS.md explicitly requires re-application: *"The 3/3 same-direction rule must be re-applied to the new run's three stats.csv files by hand… The July run's verdicts do not carry over."* No such document exists for OFFLINE_FINAL.
+Consequence
+The canonical experiment has no written headline verdict. Each judge's FINAL_REPORT.md correctly states that cross-judge confirmation "is applied manually… and is not computed here", so the four reports individually confirm B−A and collectively assert nothing.
+Results affected
+Every contrast. The paper's entire results section depends on a step that has not been performed.
+Changes a conclusion?
+No — the correct application (§4) confirms B−A, G−B and G−F, matching what the individual reports imply. But two contrasts (C−B, E−B) must be reported as inconclusive rather than null, and D−B is inconclusive under a strict reading.
+Action before submission
+Commit a judging/PANEL_VERDICT_OFFLINE_FINAL.md containing the §4 table, dated, with the per-judge signs and significance shown. Consider adding a small script that computes it from the four stats.csv files so it cannot drift — while keeping the human sign-off, which is the reason it was made manual.
+Status 2026-09-10
+CLOSED (§15.1). judging/PANEL_VERDICT_OFFLINE_FINAL.md, generated by judging/panel_verdict.py (610 lines, stdlib only). It reads each judge's own confirmed column rather than recomputing it, verifies one shared instrument across judges before combining anything, adds an UNTESTABLE class for the §4.2 power floor, keeps the human sign-off as a checklist, and exits 3 on drift.
+
+P1 · B1 — Primary contrast #2 was arithmetically incapable of confirmation
+
+
+Location
+judging/PRECOMMIT.md contrast 2 (F−B SC); aggregate.sign_test
+Evidence
+The pre-registered sign test is exact two-sided binomial on non-tied pairs. Observed F−B SC: deepseek 3/1/7, claude_or 3/2/6, gpt_ar 4/1/6, glm_ar 2/2/7. With 4 non-tied pairs the minimum attainable two-sided p is 0.125; with 5 it is 0.0625. Six non-tied pairs, all one direction, would have been the minimum for p<0.05. Verified exhaustively.
+Consequence
+A primary hypothesis was registered with an analysis plan that could not decide it at the achieved tie rate. No power or minimum-sample criterion was registered for the SC subset. The same arithmetic makes claude_or's E−B untestable (5 non-tied pairs of 41).
+Results affected
+F−B SC across all four judges; claude_or's E−B.
+Changes a conclusion?
+Yes, in reporting. "Not confirmed at the pre-specified threshold" — the wording in all four FINAL_REPORT.md files — reads as evidence of no effect. The truth is that the test had no power.
+Action before submission
+Report F−B SC as untestable / no power, with the tie counts and the minimum attainable p-value shown. Add a power note to the limitations. Any future SC-subset hypothesis needs ≥25–30 SC questions, or a tie-aware test (Wilcoxon signed-rank) registered in advance.
+Status 2026-09-10
+REPORTING ADDRESSED (§15.1, §15.3); the limitation is permanent. panel_verdict.py carries an UNTESTABLE verdict class and a per-judge attainable-minimum-p column, and the rewritten artifact list shows the tie counts and the 0.125 / 0.0625 floors. The power deficit cannot be fixed without more SC questions and still belongs in the limitations section.
+
+P1 · B2 — The frozen judge template names a configuration, defeating the blinding claim
+
+
+Location
+judging/prompt_quality.txt, section "T6 FALLBACK RESPONSE SCORING (Config E -- T6_IMPROVED only)"
+Evidence
+The literal strings "Config E", "T6_IMPROVED" and "T6" are present in the template (verified). The runtime guard in judge_item_sync and the self_review() check both search for the full config name E_T6_IMPROVED, which is absent — so both pass. 7 of 41 config-E answers contain the quoted fallback string and are therefore identifiable to the judge, which is also instructed to cap them at 2/5 on SC questions. All four judges scored those 7 items 1–2.
+Consequence
+Blinding is not complete, and paper/Camera_ready_artifact_list.md item 15 asserts that it is.
+Results affected
+Config E only, hence exploratory contrast E−B. No confirmatory result touched.
+Changes a conclusion?
+No for any confirmed result. Yes for the blinding claim as currently written.
+Action before submission
+Correct the blinding statement to: "configuration names do not appear in the prompt except for one rubric clause that identifies config E's fallback response; config E is exploratory." Strengthen self_review() to search for config-name substrings and technique labels, not just exact full names. Do not re-freeze the template for this run — that would invalidate the existing judgments for no scientific gain.
+Status 2026-09-10
+CLAIM CORRECTED (§15.3); code hardening still OPEN. The false blinding statement is corrected in the rewritten artifact list and listed among the required disclosures. self_review() was deliberately not changed and the template deliberately not re-frozen: re-freezing would invalidate all 2,656 judgments for no scientific gain. Harden the check before any future run.
+
+P1 · B3 — The registered no-reasoning policy was breached and is largely unverifiable
+
+
+Location
+judging/PRECOMMIT.md §3; usage.reasoning_tokens across all 2,656 canonical rows
+Evidence
+gpt_ar with reasoning_effort: "none": 15 calls report nonzero reasoning tokens (20–156, total 1,016), of which 6 are quality scores — V2Q32/G, V2Q20/C, V2Q06/F, V2Q04/C, V2Q19/C, V2Q36/C. The remaining 649 calls report no completion_tokens_details at all. deepseek never reports the field (0/664), so its policy compliance is unverifiable for the entire run. glm_ar's declared 0–44 range understates the measured distribution (285 nonzero, p90 = 56, max 185). claude_or is clean: 0 on all 664, field reported.
+Consequence
+The decode_fingerprint recorded in every manifest attests to what was requested, not to what the provider did. For two of four judges the policy cannot be verified from the saved output.
+Results affected
+6 of 1,148 quality scores, one of them in primary contrast F−B (V2Q06). Two exploratory contrasts touched (C−B, G−B).
+Changes a conclusion?
+No. Six scores cannot move a delta computed over 41 pairs by more than ~0.15, and F−B is already null.
+Action before submission
+Disclose: the no-reasoning policy held verifiably for one judge, was breached on 15 of 664 calls for a second, is unverifiable for a third, and was declared as deviating for the fourth with the correct measured range (0–185, not 0–44). Fix the figure in PRECOMMIT.md and RUNBOOK.md.
+Status 2026-09-10
+RECORDED (§15.2); `RUNBOOK.md` still OPEN. PRECOMMIT.md Amendment 2026-09-10 §4 corrects the glm_ar range to 0–185 and retracts the 5-token-floor claim, and §5 adds the full four-judge reasoning-policy table including the 15 gpt_ar breaches and the two unverifiable rows. judging/RUNBOOK.md still repeats the retracted floor and should be corrected.
+
+P1 · B4 — The model, adapter weights and an off-machine verification path are all absent
+
+
+Location
+.gitignore (*.safetensors, models/); verify_camera_ready.py; experiments/…_054337/adapter/
+Evidence
+The canonical adapter directory contains adapter_config.json, chat_template.jinja, tokenizer_config.json and README.md — no weights. run.json records the real artifact as 6 files / 112,837,074 bytes / sha 0eef1fb6b352…; 4 files are present. models/gemma-2b-it (5,034,199,257 bytes, sha b38a09b55153…) does not exist in the checkout. verify_camera_ready.py resolves the machine-absolute paths recorded in run.json (C:\Personal_Endeavours\Fine_Tuning\…), so it reports 3 failures and exits 3 on this checkout — including for splits/10cat/train.json, which is present at the repo-relative path.
+Consequence
+The deliverable model cannot be obtained from the artifact, and the project's own verification tool cannot run anywhere except the original machine. The .gitignore comment says weights are "reproducible from training", but retraining is frozen (DECISIONS.md), training-side provenance is absent (FINDINGS §32: no data hash, no git commit, no library versions in training_curve.json), and no determinism flags are set (torch.use_deterministic_algorithms is never called), so bit-exact retraining is not achievable even with seed=42.
+Results affected
+No result is wrong. Independent reproduction of the generation stage is impossible.
+Changes a conclusion?
+No conclusion changes. Reproducibility is materially limited.
+Action before submission
+Publish the ~110 MB adapter as a release asset or on a model hub and cite it by hash in the paper. Make verify_camera_ready.py resolve recorded paths relative to the repository root when the absolute path is absent, falling back to the hash comparison. Add the artifact-fingerprint call to _write_run_log so a future retrain records split hashes and a commit. State plainly in the limitations that the published adapter is a binary artifact, not a reproducible recipe.
+Status 2026-09-10
+OPEN. Not addressed by the 2026-09-10 remediation; see §15.5.
+
+P1 · B5 — A live-format API key remains recoverable from git history
+
+
+Location
+commit 77e19b7, files judging/test_gemini.py and judging/test_openrouter.py
+Evidence
+Commit 7ae79bf ("Remove hardcoded OpenRouter API key from test files") removed the literal from the working tree but not from history. git show 77e19b7 still yields a key with the sk-or-v1-… OpenRouter format. Confirmed via git log -S. The working-tree .env is correctly untracked and .gitignore covers it.
+Consequence
+Publishing this repository as a camera-ready artifact publishes a credential.
+Results affected
+None scientifically.
+Changes a conclusion?
+No.
+Action before submission
+Revoke and rotate the key now, regardless of publication plans. If the repository is to be made public, either rewrite history for those two blobs or publish a squashed release branch — but note that history rewriting destroys the commit-timestamp evidence that establishes the pre-registration ordering, which is itself valuable. A squashed release branch alongside a preserved private history is the better trade.
+Status 2026-09-10
+OPEN. Not addressed by the 2026-09-10 remediation; see §15.5.
+
+
+10 · Complete Findings Register
+New findings from this audit are numbered AUD-nn. Findings already in the repository's own registers are cross-referenced and given a verification verdict in §10.2.
+10.1 Findings raised by this audit
+ID
+Area
+Finding
+Evidence
+Impact
+Pri
+Required action
+AUD-01
+Results / paper
+Headline table describes the retired July run; CIs and p-values unreproducible; unregistered G−A contrast
+Camera_ready_artifact_list.md; means reconcile as 3-judge averages, intervals match no method; G−A in no stats.csv
+Paper would report a superseded experiment with untraceable statistics
+P0CLOSED
+Rewrite against §4 of this report; delete or explicitly label G−A — DONE 2026-09-10 (§15.3): rewritten with a Corrections log; G−A withdrawn, not restated
+AUD-02
+Registration
+Confirmatory judge substituted opus-4.8 → opus-5 after 3 of 4 judges completed; PRECOMMIT.md never amended
+Commit 32b027c 2026-09-08 vs judge completion 2026-09-06/07; 664/664 rows report opus-5
+Pre-registration false about its own panel; judge choice not outcome-blind
+P0CLOSED
+Dated amendment; disclose in paper; show per-judge results — DONE 2026-09-10 (§15.2): PRECOMMIT.md Amendment 2026-09-10, headed POST-HOC, with the per-judge completion-state table
+AUD-03
+Analysis
+3-of-3 panel rule never applied to OFFLINE_FINAL
+No panel-level document exists; DECISIONS.md required it
+Canonical run has no written verdict
+P0CLOSED
+Commit a dated panel verdict document — DONE 2026-09-10 (§15.1): PANEL_VERDICT_OFFLINE_FINAL.md + panel_verdict.py, with a drift guard and the human sign-off retained
+AUD-04
+Statistics
+Primary contrast F−B SC could not reach p<0.05 for any judge at the observed tie rate
+4–5 non-tied pairs of 11; min attainable p 0.125 / 0.0625
+"Not confirmed" misreads as a null
+P1
+Report as untestable; add a power note
+AUD-05
+Blinding
+Quality template contains "Config E -- T6_IMPROVED only"; both blinding checks miss it
+Template text; guards search only for E_T6_IMPROVED; 7 of 41 E items identifiable
+Blinding claim false as written
+P1
+Correct the claim; harden self_review()
+AUD-06
+Judges
+No-reasoning policy breached on 15 gpt_ar calls; unverifiable on 649 gpt_ar and 664 deepseek calls; glm_ar range understated 4×
+usage.reasoning_tokens on all 2,656 rows
+6 of 1,148 quality scores off-policy; policy unverifiable for 2 of 4 judges
+P1part
+Disclose; correct the glm_ar figure — DONE 2026-09-10 (§15.2): Amendment §4 corrects 0–44 → 0–185 and §5 adds the four-judge policy table. RUNBOOK.md still repeats the retracted 5-token floor
+AUD-07
+Reproducibility
+Adapter weights and base model absent; verify_camera_ready.py bound to machine-absolute paths
+4 of 6 adapter files present; models/ absent; verify exits 3 on this checkout including for a file that is present
+Generation stage cannot be reproduced or verified off-machine
+P1
+Publish the adapter by hash; make verification path-relative
+AUD-08
+Security
+Live-format OpenRouter key recoverable from commit 77e19b7
+git show 77e19b7 yields sk-or-v1-…
+Publishing the artifact publishes a credential
+P1
+Rotate now; squashed release branch
+AUD-09
+Safety
+No safety contrast was pre-registered; this audit's exact McNemar finds no significant safety improvement from fine-tuning (p = 1.00 / 0.125 / 1.00 / 0.625)
+Computed from the safety lane across 4 judges
+No safety claim is available; residual 2–3 of 11 SC violations in the deliverable
+P1
+State the null explicitly; remove deployment-readiness language
+AUD-10
+Rubric
+Rubric embeds the training corpus's median answer length (43 words, verified) and caps the base model's dominant behaviour (EMS lead, 48.8% vs 9.8%)
+Template text; train.json median = 43; per-config word counts and EMS rates
+B−A partly measures conformance to the target style
+P1
+Disclose; frame B−A as improvement toward the deployment target
+AUD-11
+Evaluation
+Score band 5 is empirically unreachable: 1 of 1,148 model answers, 52/52 for verbatim references
+Full score distribution across 4 judges
+The instrument is a 0–4 scale; absolute scores are ceiling-compressed
+P2
+Report as a finding; state the effective range
+AUD-12
+Controls
+CTRL_REF answers are byte-identical to the reference shown in the same prompt (13/13)
+Item-level comparison
+The positive control is close to trivially satisfiable; 5.00 evidences prompt-reading, not clinical discrimination
+P2
+Describe the control's actual strength
+AUD-13
+Data
+Eval bank is near-paraphrastic to training (median Jaccard 0.421, max 0.706); F retrieves the Jaccard-0.706 near-twin for V2Q34 and V2Q31, neither of which is gated
+Nearest-neighbour computation; canonical retrieval metadata
+No generalisation claim available; 2 of 41 RAG items see a near-verbatim training answer
+P2
+Disclose both; scope claims to within-distribution improvement
+AUD-14
+Data
+SC labelling excludes AED-in-cardiac-arrest, severe asthma, spinal-injury movement and drowning rescue breaths; two SC definitions coexist in the codebase
+Bank confidences 0.05–0.45 for SC=False; FINDINGS §33 (39% disagreement)
+Primary contrast #2's operationalisation is clinically questionable; the two gated questions are both non-SC
+P2
+Publish the definition and threshold; treat SC results as exploratory
+AUD-15
+Configuration
+camera_ready/protocol.yaml — the frozen protocol — names the internal decision lane and 6 judges including the excluded Gemini
+File contents vs canonical results
+The immutable configuration does not describe the confirmatory experiment
+P2
+Add a judging_confirmatory block naming the real lane, panel and run tag
+AUD-16
+Documentation
+README §8 documents a 5-dimension additive rubric that rewards EMS advice, and names 6 judges including Gemini
+README vs prompt_quality.txt
+The repository's front door describes the opposite instrument
+P2
+Replace with the operative rubric; move the 6-evaluator work to a clearly-labelled exploratory section
+AUD-17
+Documentation
+README §11 claims "8-bit is formally rejected", contradicting DECISIONS.md's own ruling
+README vs DECISIONS.md standing constraints and FINDINGS §29
+An unsupportable claim in the most-read document
+P2
+Delete or rewrite as a training-confounded observation
+AUD-18
+Provenance
+A resumed run's manifest.json describes only its last session: n_calls_new, n_cache_hits, run_at and git_commit are last-session values
+claude_or manifest: n_calls_new 96, n_cache_hits 0, vs 664 rows and 4 cache-hit rows
+Manifest under-describes the run; a reader would conclude 96 calls were made
+P2
+Record per-session provenance, or a sessions[] array
+AUD-19
+Reliability
+Canonical reliability_report.md files carry no length-bias or agreement statistics because scipy was absent at aggregation
+"scipy not available" in all four reports; requirements.txt now pins scipy≥1.11
+The fixed length-bias check has never produced output; agreement statistics unreported
+P2
+Install scipy and re-run aggregate.py for all four judges (no re-judging, no cost)
+AUD-20
+Statistics
+No multiplicity control across 32 tests, and none registered
+8 contrasts × 4 judges
+Principled gap; no conclusion changes under Bonferroni (largest confirmed p = 5.9e-05 vs 0.00625 threshold)
+P3
+State that all confirmed results survive Bonferroni
+AUD-21
+Statistics
+Bootstrap percentile indices use int(0.025n) / int(0.975n) rather than an interpolated quantile
+aggregate.bootstrap_ci
+Sub-resolution bias; CI bounds already quantise to 1/41 = 0.0244
+P3
+Note it; do not change it for this run
+AUD-22
+Ablation
+OLDBANK_ABLATION was run for deepseek only
+One of four result directories
+The reference-compression control covers 1 of 3 confirmatory judges
+P3
+Extend to claude_or and gpt_ar (1,328 calls) — the highest-value optional spend available
+AUD-23
+Docs
+RUNBOOK.md repeats a retracted "5-token floor" for glm_ar
+File vs code comments
+Stale operational doc
+P3
+Correct to the measured 0–185
+
+10.2 Verification of the repository's own findings register
+Each significant entry in FINDINGS_20260905.md, FINDINGS_CLOSED.md and judging/OPEN_FINDINGS.md was checked against the artifacts rather than accepted.
+Repo finding
+Claim
+Audit verdict
+Note
+OPEN §1
+Provider served deepseek-v4-flash against a -pro request on 582/582 July calls
+Verified, and resolved for the canonical run
+All 664 canonical rows report deepseek-v4-pro. The 10e55e2 abort guard worked. Still disclose the July precedent as the reason reseller identity is treated as unverified.
+OPEN §2
+The 3/3 rule is applied by hand; the July application changes no confirmed result but makes F−B SC and E−B inconclusive
+Verified for July; not carried forward
+Becomes AUD-03. The canonical run has no application at all.
+OPEN §3
+Planted override coverage is 5 distinct categories, not 6 (SO06 planted twice)
+Verified
+SO05, SO06, SO12, SO06, SO09, SO11. Seven categories never planted.
+OPEN §4/§5
+Control key corrected; ambiguous plants rewritten; CTRL_EMS tightening reverted after measurement
+Verified and adopted
+Canonical controls are 45/45 for all four judges. The revert is a credit.
+OPEN §6
+Published length-bias number measured the judge's own rationale length and asserted its conclusion regardless of p
+Verified; fix present but never executed
+aggregate.py now uses answer_chars and states significance conditionally, but scipy was missing. Becomes AUD-19; this report supplies the numbers.
+FINDINGS 1
+T4/T6 rejection is not supported by the runs that produced it
+Verified as still open
+Half-resolved: D and E are now in the canonical run with a registered D−B contrast. enhanced_inference.py's numbers should be retired from the paper.
+FINDINGS 5
+F−B SC and E−B disagree on sign, so they are inconclusive not null
+Verified for July; canonical differs
+Canonically F−B SC agrees 3/3 in direction but is untestable (AUD-04); E−B still splits.
+FINDINGS 6 / 6d
+Rubric does not penalise EMS mention, only EMS-only answers; the prompt shift is measurable but not costly
+Verified
+Rubric text confirms it. The probe reproduces July's config B to the decimal (41.7 words / 50.4 tokens). Downgrade to disclosure is correct.
+FINDINGS 6a
+The adapter reduced EMS referral while instructed to produce it
+Verified and reproduced
+This audit's regex on canonical items: A 48.8%, G 61.0%, B 9.8%, E 7.3%. Direction and magnitude confirmed. Still unreported.
+FINDINGS 6e
+Training instruction contradicts 97.3% of its own targets
+Verified
+122 of 4,441 answers advise EMS. Permanent under the retraining freeze.
+FINDINGS 21
+The BM25 similarity gate could not reject anything (normalise-then-threshold)
+Verified as partly closed
+score_kind: "bm25_raw" now recorded and the always-1.0 path is gone; canonical metadata shows raw scores (31.08, 37.98). The wider gate design remains unreviewed: only 2 of 41 questions are gated, so F is empirically "BM25 top-1 with two exclusions".
+FINDINGS 22
+Static padding wastes ~7× of training compute
+Verified as still open
+data_v2.py retains padding="max_length". No effect on any published number.
+FINDINGS 29
+The 8-bit adapter was trained by a different script/template
+Verified
+C−B is unaffected (C = 4-bit adapter on 8-bit base, confirmed in _config_resolution). README's 8-bit rejection claim violates this — AUD-17.
+FINDINGS 30
+9 verbatim (Q,A) pairs in test, 8 in val, 33 duplicate questions in train; eval bank has zero exact overlap
+Verified exactly
+Recomputed: 9 / 8 / 33 / 0. All four figures match.
+FINDINGS 32
+Training-side provenance absent
+Verified
+training_curve.json has seed 42, hyperparameters, script_version, template_method and training time — but no split hash, git commit, or library versions. Feeds AUD-07.
+FINDINGS 33
+enhanced_inference re-derives SC status and disagrees with the bank on 16/41
+Verified as still open
+Does not affect the canonical lane, which reads the frozen bank. Feeds AUD-14.
+FINDINGS 38
+gpt returned an undated alias on 167 of 582 July calls
+Verified; superseded
+Canonical gpt_ar returns the bare gpt-5.6-sol on all 664 — no snapshot pinning at all, which is why strict_model_match was added.
+FINDINGS 39
+Two eval questions have Jaccard-0.71 near-duplicates in train; V2Q34 is not gated
+Verified and quantified
+Both are 0.706. This audit confirmed from retrieval metadata that F actually retrieved both near-twins. Becomes AUD-13.
+rubric_flaws.md
+Band 5 effectively dead; within-config length correlations near zero; judges are not running a similarity metric; band 2 is not a refuge
+Verified, and it was written against the July run
+Canonically band 5 is still dead (1 of 1,148). Within-config length ρ is near-zero for 11 of 12 config×judge cells. The document's conclusions transfer; its numbers do not.
+NUMBER_FORENSICS.md
+5,550 corpus; 2,228 / 1,231 / 997 SC counts; 28/41 EMS-first pre-rewrite; 2,028 figure is a transcription error
+Every figure verified
+Recounted independently: 5,550 / 2,228 / 1,231 / 997 / 41 bank / 11 SC. Exemplary. Preserve as a supplementary artifact.
+DECISIONS.md
+The offline run supersedes July; every published number is replaced
+Verified as decided, not executed
+The replacement never happened in the paper-facing documents. This is the root cause of AUD-01.
+
+
+11 · Research Reproducibility Handoff
+Written for a researcher arriving with no prior context, who must not break the study.
+11.1 The canonical experiment — memorise these seven lines
+
+
+Canonical experiment
+CAMERA_READY_OFFLINE_20260905_204533 — 7 configs × 41 questions, generated 2026-09-05T21:01:25Z under git eda9a9e8 with a clean source tree
+Canonical result directory
+judging/results/{deepseek, claude_or, gpt_ar, glm_ar}/OFFLINE_FINAL/ — 664 judgments each, 0 INVALID
+Canonical configuration
+camera_ready/protocol.yaml for generation; judging/PRECOMMIT.md + PRECOMMIT_PANEL.md for hypotheses and panel; evaluation_protocol.py for prompt policy and frozen fields. Note AUD-15: the protocol's judging block names the wrong lane.
+Canonical code commit
+Generation eda9a9e8. Judging spans b230d82 (deepseek, glm_ar) → 68c44cb (gpt_ar) → 32b027c (claude_or). Only transport-level code changed between them — verified.
+Canonical dataset
+evaluations/eval_bank_v2_40q/eval_bank_v2.json, sha256 8dfb4f4b221426c7ff597abe4bcb87e4d74f9c7d23510ea6fd9c442f1c4a18b0, 41 questions, 11 SC. Training data: splits/10cat/train.json, sha a84114ae01c9…, 4,441 rows.
+Canonical judge configuration
+Templates 865fc114… (quality) + 36e3a7ba… (safety), combined 061b7799…, frozen 2026-09-06 at iteration 5. temperature 0, max_tokens 400 (2000 for glm_ar), reasoning disabled, MAX_CONCURRENCY 2, item shuffle seed 2026.
+Canonical statistical pipeline
+judging/aggregate.py --model <judge> --run_tag OFFLINE_FINAL. Paired percentile bootstrap 10,000 × seed 2026; exact two-sided binomial sign test; pairing on question_id. Then the 3-of-3 rule via judging/panel_verdict.py --run_tag OFFLINE_FINAL, which writes judging/PANEL_VERDICT_OFFLINE_FINAL.md (added 2026-09-10; the rule was previously unwritten for this run — see §15.1). The rule stays a human step: the generated file ends in a sign-off checklist, and --check exits 3 if it goes stale.
+
+11.2 What is trustworthy, what carries caveats, what cannot be reproduced
+
+Items
+Trustworthy as-is
+The four judgments.jsonl files and their manifests (664/664, 0 INVALID, 0 duplicates, single served model each). All four stats.csv files — independently recomputed to 4 d.p. All four controls_report.md files — re-run and 45/45. The run.json provenance block. The two-offline-run byte-identity proof of generation determinism. OLDBANK_ABLATION. prompt_shift_probe. NUMBER_FORENSICS.md.
+Trustworthy with disclosure
+B−A, G−B, G−F (rubric/treatment alignment, AUD-10; claude judge substitution, AUD-02). The safety lane (κ 0.62–0.75, but no pre-registered test and a null result — AUD-09). Config E results (blinding leak, AUD-05; not the same intervention as July's E). Configs F and G (2 of 41 items see a near-verbatim training answer, AUD-13).
+Do not report
+Everything in paper/Camera_ready_artifact_list.md's results table, including G−A (AUD-01). Any July CAMERA_READY_FINAL number (retired by DECISIONS.md). README §8's rubric and 6-judge list (AUD-16). README §11's 8-bit rejection (AUD-17). "Quantization is neutral" (canonically inconclusive). Any deployment-readiness or safety-improvement claim (AUD-09).
+Cannot be reproduced
+Generation — the base model (5 GB) and the adapter weights (~110 MB) are absent; retraining is frozen and would not be bit-exact in any case (no determinism flags, no training-side data hash). Judging — three of four judges are hosted APIs with no version pinning; two are behind a reseller that asserts rather than proves identity, requires a spoofed User-Agent, and blocks datacenter IPs via WAF. *What is reproducible from the committed artifacts alone is the entire analysis stage*, using stdlib Python, from judgments.jsonl forward. That is the layer that matters most for a reviewer and it is fully intact.
+Never change accidentally
+judging/prompt_quality.txt / prompt_safety.txt — any byte change invalidates every judgment and the resume guard will refuse to continue. evaluations/eval_bank_v2_40q/eval_bank_v2.json — the bank hash gates items.jsonl freshness. judging/items.jsonl + items_manifest.json — must stay paired. judging/blind_map.json — losing it makes 2,656 judgments unreadable. judging/controls_key.json. Any judging/results/*/OFFLINE_FINAL/ directory. judging/PRECOMMIT*.md — amend by appending a dated section, never by editing in place; the 2026-09-10 amendment follows that rule and marks the two rows it supersedes with a pointer rather than rewriting them. judging/PANEL_VERDICT_OFFLINE_FINAL.md is generated — never hand-edit it; change the inputs and regenerate, or --check will report drift that is not really there.
+
+11.3 The three ways to silently corrupt this study
+Resume into a used run tag. Resume keys on (qid, blind_id, prompt_type) and blind_id is a stable salted hash, so re-running into an existing tag keeps every prior judgment and scores only what is new — welding two evaluations together. resume_incompatibilities() compares template and bank hashes but not model or base_url. Two judges sharing one results directory would be undetectable. This is why gpt was renamed gpt_ar. Always use a fresh --run_tag.
+Change the reference bank without rebuilding items. Decoding is greedy, so regenerating produces byte-identical answers and a stale items.jsonl looks entirely plausible while carrying superseded references. check_items_freshness() now blocks this, and cache_key hashes the rendered prompt so the reference is covered. Do not weaken either guard.
+Change a decode setting and reuse the cache. The prompt is identical whether or not the model was told to reason, so before decode_fingerprint existed, a judgment produced with reasoning ON was served as a cache hit into a run that forbade it. Twelve such entries were found and purged on 2026-09-06. Anything that changes what the judge produces must enter decode_fingerprint.
+11.4 Commands that verify the artifact without spending anything
+# 1. Contract tests (21 tests, offline, openai SDK stubbed)python judging/test_judging_harness.py                  # expect: Ran 21 tests ... OK# 1b. Panel verdict is present and not stale (added 2026-09-10)python judging/panel_verdict.py --run_tag OFFLINE_FINAL --check#    exit 0 up to date | 3 stale, regenerate | 2 a confirmatory judge is missing# 2. Controls gate, per judge (reads committed judgments, zero API calls)python judging/check_controls.py --model deepseek  --run_tag OFFLINE_FINALpython judging/check_controls.py --model claude_or --run_tag OFFLINE_FINALpython judging/check_controls.py --model gpt_ar    --run_tag OFFLINE_FINALpython judging/check_controls.py --model glm_ar    --run_tag OFFLINE_FINAL#    expect: 45/45 PASS, exit 0, for each# 3. Judge self-review without API callspython judging/judge_deepseek.py --model deepseek --run_tag X --review_only# 4. Generation-run verification (exits 3 here: absolute-path artifacts absent -- AUD-07)python verify_camera_ready.py --run_dir evaluations/CAMERA_READY_OFFLINE_20260905_204533# 5. Protocol/bank/rubric/tree checkpython camera_ready/check.py                            # 42 pass; scipy + torch stack missing here# 6. Regenerate every report from committed judgments (INSTALL SCIPY FIRST -- fixes AUD-19)pip install scipyfor j in deepseek claude_or gpt_ar glm_ar; do  python judging/aggregate.py --model $j --run_tag OFFLINE_FINALdone
+11.5 Two-lane architecture — do not confuse them
+
+judging/ — CONFIRMATORY
+internal_eval/ — DECISION SUPPORT
+Purpose
+Published camera-ready results
+Internal go/no-go before a run
+Judges
+4 pinned in PRECOMMIT.md
+Up to 6, each on its own vendor API
+Controls
+45 planted items with known verdicts
+None
+Safety scoring
+A separate second call per item
+Same call as quality
+Pre-registration
+PRECOMMIT.md + PRECOMMIT_PANEL.md
+paper/PRECOMMIT_STATS_v2.md
+Paper-facing?
+Yes — this is the only lane that is
+No. internal_eval/README.md: "Nothing here is paper-facing."
+
+The two-lane split is clearly documented and correctly enforced. The one leak is AUD-15: camera_ready/protocol.yaml's judging block points at the internal lane.
+
+12 · Engineering Handoff
+12.1 What each file actually decides
+File
+Lines
+Role — and what breaks if you touch it
+judging/judge_deepseek.py
+1,251
+The judge harness. MODEL_CONFIGS is the panel definition and the disclosure record — the comments there are load-bearing documentation, not chatter. Contains the resume guard, blinding guard, model-substitution abort, cache keying and manifest writer. This is the highest-risk file in the repository.
+judging/aggregate.py
+975
+The statistical pipeline. Stdlib-only by deliberate design so it runs without the judge SDK. load_precommit_contrasts() hard-codes the eight contrasts and must be edited together with PRECOMMIT.md. assert_panel_complete() refuses to publish a partial run. Single-judge by construction — the cross-judge rule is not here.
+judging/panel_verdict.py
+610
+Added 2026-09-10. Applies the registered cross-judge rule to a completed panel and writes PANEL_VERDICT_<run_tag>.md. Reads each judge's confirmed column rather than recomputing it, so it cannot disagree with the artifacts. REGISTERED_PANEL carries the same hand-sync contract as aggregate.load_precommit_contrasts() — it must track `PRECOMMIT.md` including its amendments. Refuses to combine judges whose template, prompt, bank or contrast set differ.
+judging/assemble_items.py
+456
+Builds items.jsonl from a verified run. Calls validate_run_prompt_provenance() and check_bank_alignment() and exits 2 on failure — this is why the July run can no longer be judged by accident. Writes items_manifest.json, which pins the bank.
+judging/make_controls.py
+503
+Plants the 45 controls and writes controls_key.json. --key_only changes expected ranges without touching items — the mechanism that let the floor correction be applied with zero re-judging.
+judging/check_controls.py
+171
+Zero-cost gate over committed judgments. Distinguishes GATE FAILED (exit 1) from GATE INCOMPLETE (exit 2) — a real fix, since a missing key previously printed a spurious reference-bank diagnosis.
+judging/prompt_quality.txt / prompt_safety.txt
+146 / 33
+The instrument. Byte-frozen; hashed into every manifest; any change invalidates every judgment.
+evaluation_protocol.py
+—
+Shared contracts: PROMPT_POLICY, SYSTEM_PROMPT, SAFE_FALLBACK, FROZEN_QUESTION_FIELDS, artifact_fingerprint, and the four validate_* provenance gates. Both lanes depend on it.
+v2_comprehensive_eval.py
+—
+Generation for all 7 configs. Writes the immutable run.json with the full provenance block.
+bm25_rag.py
+—
+Gated BM25 top-1 retrieval over the train split. Empirically only 2 of 41 questions are gated; 5 of 7 gate patterns never fire.
+verify_camera_ready.py / camera_ready/check.py
+—
+Post-generation verification and protocol/tree checks. See AUD-07 for the absolute-path defect.
+train_v2.py / data_v2.py
+—
+Training. Frozen by decision. load_best_model_at_end=True on eval_loss, so the exported adapter is checkpoint-1000 (val loss 1.3400) — verified from trainer_state.json.
+ablation/build_oldbank_items.py
+—
+Deliberately bypasses assemble_items.py's bank-alignment guard to build the old-reference ablation. Correctly documented as an exception; do not generalise it.
+judging/test_judging_harness.py
+—
+21 offline contract tests. Stubs the openai module so they run without credentials. All pass.
+
+12.2 Known environment issues
+Windows IOCP hang. The asyncio core was replaced with ThreadPoolExecutor + sync OpenAI and MAX_CONCURRENCY reduced from 4 to 2. Do not reintroduce asyncio.
+Console encoding. main() reconfigures stdout/stderr to UTF-8 with errors="replace" because judge output and the script's own banners contain characters outside cp1252; without it a print inside an except handler raises UnicodeEncodeError and kills the run. Any new entry point needs the same call.
+Request timeout is mandatory, not optional. With SDK defaults a single gpt_ar call hung for 3,757 seconds, blocking both concurrency slots and completing 13 of 574 calls in an hour, with no error raised. REQUEST_TIMEOUT_S = 180, SDK_MAX_RETRIES = 2.
+Retry classification. _is_retryable() prefers the numeric status_code; timeouts and connection errors are retryable, 402 is terminal (a 402 must stop the run or 574 calls fail in sequence). The message-regex fallback is deliberately label-adjacent so a bare three-digit token count is not read as a status.
+Non-JSON provider bodies. A gateway can return an HTML block page with HTTP 200; the SDK then hands back a str, which used to surface 200 lines later as 'str' object has no attribute 'choices'. Now diagnosed explicitly.
+NTFS cache dir. The write test writes but does not unlink; the _test_write files under judging/cache/*/quality/ are that artifact, not stray data.
+scipy is absent on this checkout — it is why the canonical reliability reports have no statistics (AUD-19). requirements.txt now pins scipy>=1.11.0; the judging lane's dependency on openai at module scope was also undocumented until 2026-09-06.
+12.3 External API dependencies and their failure modes
+Provider
+Judges
+Failure modes actually encountered
+Operational rule
+api.deepseek.com
+deepseek
+Served v4-flash against a v4-pro request on 582/582 July calls; json_object mode requires thinking disabled
+Harness aborts on the first substitution. Never reuse a July results directory.
+openrouter.ai
+claude_or
+Hard non-resetting key cap: HTTP 403 "Key limit exceeded" at 568/664 (limit 7, usage 7.07, limit_reset: null). {reasoning:{exclude:true}} hides reasoning without disabling it.
+Check GET /v1/key before a full panel. Only {reasoning:{enabled:false}} or {reasoning_effort:"none"} actually disables reasoning.
+agentrouter.org
+gpt_ar, glm_ar
+401 for unrecognised User-Agents; per-model-pool 402 (not an empty account — $4.83 of $20 with other models returning 200); Alibaba Cloud WAF serves a JS bot-challenge to GitHub runner IPs; every model reports owned_by: "custom"
+A 402 here means switch model pool, not stop spending. Must be run from a residential IP. strict_model_match: True is mandatory.
+
+.github/workflows/gpt-panel.yml is manual-trigger only, deliberately, with a comment forbidding push/pull_request triggers so a fork-originated run can never reach the API-key secret. Its header documents the WAF discovery in full. This is good CI hygiene and the reasoning should be preserved.
+
+13 · Camera-Ready Disclosure Checklist
+Each row is either supported by the repository (report it) or absent (state the gap). Ordered as a medical-LLM reporting checklist would run.
+13.1 Model
+Item
+Value
+In repo?
+Base model
+google/gemma-2b-it, ~2.5B params, local copy sha b38a09b55153…
+Hashed; weights absent
+Fine-tuning method
+QLoRA — r=16, α=32, dropout 0.05, 7 target modules (q,k,v,o,gate,up,down)
+Yes, adapter_config.json
+Quantization (train)
+4-bit NF4 via bitsandbytes
+Yes
+Quantization (inference)
+4-bit for A/B/D/E/F/G; 8-bit base + 4-bit-trained adapter for C
+Yes, _config_resolution
+Adapter identifier
+10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337/adapter, sha 0eef1fb6b352…, 112,837,074 B
+Hashed; weights absent — AUD-07
+Selected checkpoint
+checkpoint-1000, val loss 1.3400, load_best_model_at_end=True
+Yes, trainer_state.json
+
+13.2 Data
+Item
+Value
+In repo?
+Corpus
+5,550 pairs (5,500 public FirstAidQA + a 50-record head/jaw block at 5500–5549)
+Yes — verified
+Splits
+4,441 / 556 / 553 (exact partition)
+Yes
+Categories
+10 after remapping from 18
+Yes
+Safety-critical rate
+22.2% corpus (1,231/5,550); 22.4% train (997/4,441). State the definition and threshold — AUD-14
+Yes
+Pre-existing corpus artifacts
+41 exact duplicate records (eye-injury block, indices 2808–2848); 60 repeated questions with different answers; no deduplication applied
+Yes, NUMBER_FORENSICS.md
+Split leakage
+9 verbatim (Q,A) pairs in test (1.6%), 8 in val (1.4%), 33 duplicate questions in train. val_loss is the early-stopping metric.
+Yes — verified exactly
+Evaluation bank
+41 hand-written questions, 11 SC, 10 categories, sha 8dfb4f4b2214…; zero exact overlap with any split
+Yes
+Reference revision
+Compressed 102 → 54 median words, approved by three medical professionals, committed before any canonical judging. Deletion log held outside the repository.
+Yes — the deletion log is an external dependency and should be noted
+Near-duplicate contamination
+Bank↔train question Jaccard median 0.421, max 0.706; F retrieves the near-twin for V2Q34 and V2Q31 — AUD-13
+Measured here; must be added
+Instruction templates
+4 prefixes rotated ~25% in train; val/test pinned to template 0
+Yes
+
+13.3 Training
+Item
+Value
+In repo?
+Hyperparameters
+lr 1e-4 cosine, warmup 0.03, wd 0.01, grad-clip 1.0, batch 2 × accum 4, max_length 320, patience 3, max 10 epochs
+Yes
+Seed
+42, applied to random / numpy / torch / cuda / set_seed
+Yes — but no determinism flags, so not bit-exact
+Training time / steps
+4,508.5 s; stopped at step 1,600 of 5,560 max; 8 eval points; best at 1,000 (epoch 1.80)
+Yes
+Hardware / VRAM
+Absent from training_curve.json. Inference peak VRAM is recorded per answer (2,239–2,244 MB).
+Gap — state it
+Training-side provenance
+No split hash, no git commit, no library versions (FINDINGS §32)
+Gap — state it
+Known training-lane defects
+Static padding wastes ~7× compute (FINDINGS §22); instruction contradicts 97.3% of targets (§6e); both permanent under the retraining freeze
+Yes — disclose as limitations, not open work
+
+13.4 Evaluation and judging
+Item
+Value
+In repo?
+Test size
+41 questions × 7 configs = 287 items, + 45 planted controls = 332
+Yes
+Judge models
+deepseek-v4-pro (direct), anthropic/claude-opus-5 (OpenRouter), gpt-5.6-sol (AgentRouter), glm-5.3 (AgentRouter, exploratory)
+Yes — note the opus-4.8 → opus-5 substitution, AUD-02
+Judge prompts
+Full text of both templates plus their SHA-256s. Publish them verbatim as an appendix.
+Yes
+Sampling
+temperature 0; max_tokens 400 (2,000 for glm_ar); one answer per call, no pairwise presentation
+Yes
+Reasoning policy
+Registered as disabled. Verifiably held for claude_or only; breached on 15 gpt_ar calls; unverifiable for deepseek; glm_ar declared deviating (real range 0–185, not 0–44) — AUD-06
+Correct the figures
+Blinding
+Config names and blind IDs never interpolated into the prompt; except the rubric's "Config E -- T6_IMPROVED" clause — AUD-05
+Correct the claim
+Position bias
+Structurally impossible — absolute single-answer scoring
+Yes — claim it
+Retry / invalid handling
+3 re-prompts on invalid JSON or schema failure; INVALID never cached and never suppresses a retry; 0 INVALID in the canonical run
+Yes
+Control items
+45 planted (13 CTRL_REF, 6 CTRL_DANGER, 13 CTRL_EMS, 13 CTRL_VAGUE); 45/45 pass for all four judges; 6/6 planted violations detected. Coverage is 5 distinct override categories, not 12 — AUD-12, OPEN §3
+Yes
+Statistical method
+Paired percentile bootstrap 10,000 × seed 2026; exact two-sided binomial sign test; unit = question
+Yes
+Significance criterion
+CI excludes 0 and sign p<0.05, two-sided, per judge; then 3-of-3 unanimity across confirmatory judges
+Yes — but the panel step is unwritten for this run, AUD-03
+Multiplicity
+None applied; all confirmed results survive Bonferroni across 8 contrasts (largest p = 5.9e-05 vs 0.00625)
+Add this sentence
+Power
+F−B SC could not reach p<0.05 at the observed tie rate — AUD-04
+Must be added
+Inter-judge reliability
+Quality exact 53–64%, within ±1 92–98%; safety κ 0.62–0.75
+Computed here; absent from repo reports
+Intra-judge stability
+deepseek, 20 items, nonce re-score: 90% exact, 95% within ±1. Superseded by §16.2: 92 identical-text pairs inside the canonical run give deepseek 76.1% exact, claude_or 90.2%, gpt_ar 75.0%, glm_ar 75.0%, max |Δ| = 2. Report the 92-pair figure — larger, all four judges, drawn from the canonical run itself.
+Measured here
+Length-bias check
+Overall ρ −0.117 to −0.232, all significant, but confounded with config; 11 of 12 within-config cells non-significant
+Computed here; absent from repo reports (AUD-19)
+Effective score range
+Band 5 awarded once in 1,148 model answers; 52/52 for verbatim references — effectively 0–4
+Must be added
+
+13.5 Reproducibility
+Item
+Value / gap
+Commits
+Generation eda9a9e8 (clean tree). Judging b230d82 / 68c44cb / 32b027c. Cite all four.
+Hashes
+Prompt policy, question bank, base model, adapter, train split, both judge templates, decode fingerprint, item-set hash. Publish this hash table — it is a genuine strength.
+Environment
+torch 2.7.1+cu118, transformers 5.16.1, peft 0.19.1. requirements.txt is range-pinned, not lock-pinned; no lockfile, no container.
+Provider versions
+None of the four judge models is version-pinnable. Two are behind a reseller reporting owned_by: "custom". State that judge results are not reproducible in principle and that this is why controls, blinding and a four-family panel were used instead.
+Provider access
+The harness sends a coding-agent User-Agent to satisfy AgentRouter's client allowlist — a deliberate workaround, disclosed in the code and the registration. Decide whether those two judges belong in the camera-ready panel or an appendix.
+What a reader can reproduce
+Everything from judgments.jsonl forward, with stdlib Python, exactly. This audit did it. Say so explicitly — it is a stronger reproducibility claim than most LLM-judge papers can make.
+
+13.6 Limitations that must appear
+Rubric/treatment alignment. The judge rubric states the training corpus's median answer length (43 words) as the expected band and caps EMS-led answers, which is the base model's dominant behaviour. B−A measures conformance to the offline-deployment target as much as independent clinical quality. The reference-compression alternative explanation is excluded by OLDBANK_ABLATION (Δ 0.024); the rubric-alignment explanation is also excluded by the length-matched subset in §17.1 (+1.07 vs +1.09). Disclose the non-separability of the two distributions (A 19–265w, B 26–65w, 10 of 41 overlapping), not a confound.
+The instrument has a hard ceiling. One score of 5 in 1,148 model answers; 52/52 for verbatim references; two of the seven score-5 specificity anchors appear zero times in 4,441 training answers, so fine-tuning could not have taught them.
+Train/test prompt shift. The adapter was trained under one system prompt and evaluated under another. Measured as costless on length, tokens and ROUGE-L, with EMS mentions falling 7 → 2 — but the shift is real and ROUGE-L is a weak proxy, measured on config B only.
+Judge identity is asserted for two of four judges. AgentRouter is a reseller reporting every model as owned_by: "custom". The July deepseek-v4-flash-for--pro substitution shows this is not hypothetical.
+One confirmatory judge differs from the registration (claude-opus-5 vs the registered claude-opus-4.8), and the substitution was made after the other three judges had completed.
+No safety hypothesis was pre-registered, and post-hoc tests are null. Exact McNemar B vs A: p = 1.00 / 0.125 / 1.00 / 0.625. The deliverable still produces safety-override violations on 2–3 of 11 safety-critical questions.
+Primary contrast #2 had no power. F−B SC: 4–5 non-tied pairs of 11; minimum attainable two-sided sign p 0.125 / 0.0625.
+Evaluation is within-distribution. Median question-level Jaccard 0.421 against training, maximum 0.706; the RAG configs retrieve the near-twin on 2 of 41 questions.
+Small split leakage. 1.6% of test and 1.4% of val are verbatim training pairs; val_loss is the early-stopping metric. Does not touch the camera-ready bank, which has zero exact overlap.
+Category-level and safety-category claims are unsupportable. Bank categories range from 1 question (Spinal) to 7 (Bleeding); the control battery plants 5 of 12 override categories.
+n = 41 questions, one adapter, one seed, one base model. No seed-variance estimate exists and retraining is frozen, so training-run variability is unmeasured.
+The reference deletion log is held outside the repository, so the reference revision cannot be fully audited from the artifact.
+13.7 Correction order before submission
+#
+Action
+Cost
+Fixes
+1 ✓
+~~Write and commit judging/PANEL_VERDICT_OFFLINE_FINAL.md from §4~~ — DONE 2026-09-10, plus panel_verdict.py to generate it
+done
+AUD-03 (P0) CLOSED
+2 ✓
+~~Rewrite paper/Camera_ready_artifact_list.md against the canonical run; remove or label G−A~~ — DONE 2026-09-10; G−A withdrawn, not restated
+done
+AUD-01 (P0) CLOSED
+3 ✓
+~~Append a dated amendment to PRECOMMIT.md: judge substitution, its timing, corrected glm_ar reasoning range~~ — DONE 2026-09-10; PRECOMMIT_PANEL.md bannered as superseded too
+done
+AUD-02 (P0) CLOSED, AUD-06 part
+4
+pip install scipy; re-run aggregate.py for all four judges
+20 min, zero API cost
+AUD-19, supplies length-bias and reliability numbers
+5 ½
+Correct the blinding claim ✓ done 2026-09-10 (artifact list §7 and §8); harden self_review() to match substrings — still open, and do NOT re-freeze the template
+15 min left
+AUD-05
+6
+Rewrite README §8 (rubric, judge list) and §11 (8-bit rejection); label the 6-evaluator work exploratory
+1.5 hours
+AUD-16, AUD-17
+7
+Add a judging_confirmatory block to camera_ready/protocol.yaml
+20 min
+AUD-15
+8
+Rotate the leaked key; plan a squashed release branch
+30 min
+AUD-08
+9
+Publish the adapter by hash; make verify_camera_ready.py path-relative
+2 hours
+AUD-07
+10
+Write the §13.6 limitations section
+2 hours
+AUD-04, 09, 10, 11, 12, 13, 14
+opt
+Extend OLDBANK_ABLATION to claude_or and gpt_ar (1,328 calls)
+API spend
+Strongest available strengthening of the headline result
+
+Items 1–8 and 10 require no API spend, no GPU time, and no re-judging. Total ≈ 9 hours of writing clears every P0 and most P1s. Items 1, 2, 3 and half of 5 were carried out on 2026-09-10 — see §15. Items 4, 6, 7, 8, 9, the rest of 5, and 10 remain.
+
+14 · Final Readiness Scorecard
+Dimension
+Score
+What earned it
+What lost it
+Research integrity
+82 / 100
+A dated findings register with a retracted claims section; a decisions log separating choices from defects; a measured revert of a change that would have improved its own numbers; a pre-hoc family-independence exclusion of Gemini honoured in practice; ablations run specifically to test the project's own worries; honest in-code disclosure of a provider-access workaround.
+PRECOMMIT.md never amended for a confirmatory-judge substitution made after 3 of 4 judges completed. The registered panel table is now false. An unregistered contrast (G−A) sits in the paper-facing artifact list.
+Results reliability
+88 / 100
+All 32 published contrast statistics reproduce to 4 d.p. from raw judgments using an independent stdlib reimplementation. 2,656/2,656 judgments valid. No imputation anywhere; missing safety data is represented as unknown rather than clean.
+The paper-facing headline table reproduces under no method and describes a retired run. The 3-of-3 verdict for the canonical run exists nowhere in the repository.
+Evaluation reliability
+71 / 100
+Blinded absolute per-item scoring with no pairwise presentation, so position bias is structurally impossible. 45 planted controls, 45/45 for all four judges, 6/6 planted violations detected. Frozen, hashed rubric. Separate safety pass per item.
+The rubric encodes the training distribution's median length and penalises the base model's dominant behaviour. Band 5 is empirically unreachable. The template names config E. CTRL_REF is near-trivially satisfiable. Override coverage is 5 of 12 categories.
+Judge reliability
+74 / 100
+Four genuinely independent families, 664/664 each, 0 INVALID, single served model string per judge. Substitution abort, strict model matching on reseller routes, cache keyed on the rendered prompt plus a decode fingerprint. κ 0.62–0.75 on safety; 92–98% within ±1 on quality.
+Identity asserted-not-verified for two judges, one confirmatory. Reasoning policy breached on 15 calls and unverifiable on 1,313 of 2,656. Two judges share one gateway and credential. Access depends on a spoofed User-Agent.
+Reproducibility
+58 / 100
+Hash-level provenance for prompt policy, bank, model, adapter, split, both templates, decode settings and item set; clean-tree assertion; enumerated source files. Generation determinism demonstrated by two runs producing byte-identical answers. The entire analysis stage is reproducible from committed artifacts with stdlib Python — this audit did it.
+Adapter weights and base model absent. Verification tool bound to machine-absolute paths and fails on this checkout for a file that is present. No training-side data hash, commit, or library versions. No determinism flags. Range-pinned dependencies, no lockfile. Judge APIs unpinnable.
+Camera-ready readiness
+55 / 100
+The canonical evidence supports a genuine, well-controlled, honestly-framed paper with one strong confirmed result, two strong exploratory results, a clean set of nulls, and an original negative finding about corpus ceilings.
+Every paper-facing document — artifact list, README methods, pre-registration panel table, frozen protocol file — describes a superseded run, a superseded rubric, or a panel that did not run. The headline table is unreproducible.
+
+Submission recommendation
+REQUIRES CORRECTION — as audited on 2026-09-10, before remediation. Superseded: see §15.5 for the revised verdict of READY WITH DISCLOSURES.
+Not results not yet trustworthy — the results are trustworthy, and unusually so. Every number this audit could recompute, it recomputed exactly, and the judging lane's provenance discipline exceeds what most accepted papers in this area provide. Not ready with disclosures either, because three P0 findings are live: the paper-facing headline table is unreproducible and describes a retired experiment, the pre-registration is factually wrong about its own panel, and the canonical run's headline verdict has never been written down.
+All three are documentation failures with a single root cause. DECISIONS.md correctly ruled on 2026-09-05 that the offline run supersedes July and that "every published number is replaced". The science followed that ruling completely: the run was regenerated under a provenance gate, the bank was clinically re-approved, the template was re-frozen, four judges were run to completion, controls passed, and an ablation was built to test the project's own doubt about its own instrument. The paperwork never followed. The repository is in the state of a careful experimentalist who finished the experiment and has not yet rewritten the write-up.
+Estimated remediation: about nine hours of writing, no API spend, no GPU time, no re-judging. After that, the honest paper this artifact supports is a good one — fine-tuning a 2B model on a first-aid corpus reliably and substantially improves judged answer quality on the deployment target, retrieval adds a small unconfirmed increment on top of it and cannot substitute for it, and the corpus itself cannot reach the clinical standard its own references encode, which caps the system well short of deployment — and it will be defensible line by line from the artifacts in this repository.
+STATUS 2026-09-10 — The nine hours were spent. §15 records the remediation: all three P0 findings closed, no API spend, no GPU time, no re-judging, and no historical artifact modified. Revised scores — research integrity 82 → 90, results reliability 88 → 94, camera-ready readiness 55 → 78; evaluation, judge and reproducibility scores unchanged, because nothing in the remediation touched the instrument, the judges, or the missing weights. Revised classification: READY WITH DISCLOSURES, conditional on the §13.6 limitations section and the no-cost re-aggregation in AUD-19.
+
+End of audit. All statistics in this report were recomputed from judging/results/*/OFFLINE_FINAL/judgments.jsonl and the committed data artifacts; no figure was taken on the authority of a repository document.
+
+15 · Remediation Applied — 2026-09-10
+Sections 1–14 are a point-in-time record and are not updated in place, following this repository's own stated convention (FINDINGS_20260905.md: "This is a point-in-time record. Statuses were accurate on 2026-09-05 and are not updated in place"). This section records what was changed in the repository after the audit, so the two can be read together without either being rewritten.
+All three P0 findings are closed. No API calls, GPU time, or re-judging were required, and no historical artifact was modified. The July run's committed result directories and the previous version of every edited document remain intact in git. Correction (§16.6, AUD-24): an earlier draft of this sentence also credited a july branch, repeating FINDINGS_20260905.md §A6. That branch does not exist — git branch -a returns only main and fix/generation-blockers-20260905. The July run is preserved by its committed directories and by git history, not by a branch.
+15.1 AUD-03 (P0) — the 3-of-3 rule now applied to the canonical run
+What was added
+Effect
+judging/panel_verdict.py  (610 lines, stdlib only)
+Applies the registered cross-judge rule mechanically to a completed panel. Reads the four committed stats.csv files and each judge's confirmed column — it does not recompute the per-judge criterion, so it cannot disagree with the artifacts it summarises.
+judging/PANEL_VERDICT_OFFLINE_FINAL.md
+The canonical run's headline verdict, in writing for the first time. Verdicts match §4 of this report exactly.
+
+The tool verifies, before combining any judges, that all four used an identical template_hash, quality_hash, safety_hash and bank_sha256; identical n_calls_total; zero INVALID rows; identical contrast names, order and n_pairs; and that items.jsonl still matches the bank recorded in the judgments. This re-derives the cross-judge identity check that aggregate.assert_panel_complete() computes but never persists. Mismatches are fatal unless explicitly waived, and a waiver is stamped into the output.
+It also carries the power arithmetic from §4.2 as an UNTESTABLE verdict class. That is arithmetic about the registered sign test, not a substitute for it: a contrast can only move from NULL to UNTESTABLE, never to CONFIRMED, so the addition is strictly more conservative about what was learned. F−B SC moves accordingly.
+The manual decision was not reversed. DECISIONS.md chose to keep the rule a human step; the generated file ends in a sign-off checklist and states that committing it is the ratification. What was removed is the possibility of the step being skipped — which is exactly how the canonical run came to have no verdict — and of a hand-typed panel mean drifting from the artifacts. --check exits 3 if the committed verdict is stale relative to any stats.csv.
+$ python judging/panel_verdict.py --run_tag OFFLINE_FINAL * F-B overall    panel= +0.2358  NULL         direction agrees, no judge significant * F-B SC         panel= +0.2424  UNTESTABLE   ... could not reach p<0.05 at the observed                                               tie count for: deepseek, claude_or, gpt_ar * B-A overall    panel= +1.0894  CONFIRMED    3/3 direction (positive) and 3/3 significant   E-B overall    panel= -0.0325  INCONCLUSIVE confirmatory judges disagree on sign;                                               underpowered for claude_or   C-B overall    panel= +0.0000  INCONCLUSIVE confirmatory judges disagree on sign   G-B overall    panel= -0.9512  CONFIRMED    3/3 direction (negative) and 3/3 significant   G-F overall    panel= -1.1870  CONFIRMED    3/3 direction (negative) and 3/3 significant   D-B overall    panel= +0.0244  INCONCLUSIVE ... (gpt_ar exactly zero) disclose: claude_or: registered `anthropic/claude-opus-4.8`, run used           `anthropic/claude-opus-5` under PRECOMMIT.md, Amendment 2026-09-10
+Guards exercised: incomplete panel → exit 2 (CAMERA_READY_FINAL, where gpt_ar has no results under that tag); missing run tag → exit 2; clean --check → exit 0. One defect was found and fixed in the tool during this verification: sys.exit(<string>) always exits 1, so the documented exit codes were false until the three call sites were changed to print-then-exit.
+15.2 AUD-02 (P0) — the judge substitution is now registered as a deviation
+judging/PRECOMMIT.md gained Amendment 2026-09-10, headed POST-HOC in its own title. Its first substantive statement is that it is not a pre-registration. It records:
+The substitution itself — registered anthropic/claude-opus-4.8, run used and served anthropic/claude-opus-5, changed at commit 32b027c, 2026-09-08 10:35 +0600.
+The timing, as a table: at that moment deepseek, glm_ar and gpt_ar were each 664/664 and aggregated, and claude_or had not started. The amendment states plainly that the third confirmatory judge's identity was fixed with two thirds of the confirmatory panel visible, that this is a researcher degree of freedom, and that nothing in the repository establishes the choice was outcome-blind.
+The reason without softening: claude-opus-4.8 was still purchasable on OpenRouter at that moment, so the binding constraint was budget and credential, not model availability. A newer model was used because it was the one being paid for.
+What bounds the damage, as evidence rather than reassurance: claude_or is the harshest judge (1.882 against 2.021 / 2.125 / 2.258), and all three CONFIRMED contrasts hold 4/4 including the exploratory judge, so each survives deleting the claude arm.
+The reasoning-parameter correction ({reasoning:{exclude:true}} → {reasoning:{enabled:false}}), which moved the run toward the registered policy and is verified: 0 reasoning tokens on all 664 rows, field reported on all 664.
+Two corrected measurements: glm_ar's registered 0–44 reasoning residue is really 0–185 over 664 calls (285 nonzero, p90 56), and the previously unrecorded reasoning-policy table showing the policy verified for one judge, breached on 15 gpt_ar calls, and unverifiable for deepseek.
+Six standing write-up instructions, and an explicit statement that no contrast, threshold, decision rule or judge role changed.
+Two registered rows in the file were marked ‡ SUPERSEDED in place — a pointer only; the registered strings themselves were left readable as registered, because a registration that is edited to match the outcome is worthless. The blanket integrity note "This file is committed before any aggregate output exists in git history" was replaced with a per-section ordering statement: the 2026-07-10 registration and the 2026-09-06 amendments each predate the judgments they govern — verifiable in git, 848ab90 at 06:59 UTC against a first judgment at 07:17 UTC — and the 2026-09-10 amendment is the one exception, labelled post-hoc.
+judging/PRECOMMIT_PANEL.md was bannered rather than edited: it is a July registration carrying July result verdicts, including "quantization is neutral at this scale", which the canonical run contradicts (C−B splits +0.098 / −0.049 / −0.049 and is inconclusive). The banner corrects that verdict, the stale B−A and G−B figures and the opus-4.8 row, and points to the panel verdict file. The July numbers stay visible, because they were true of July.
+15.3 AUD-01 (P0) — the artifact list rewritten against the canonical run
+paper/Camera_ready_artifact_list.md was rewritten. It now opens with a banner stating what it used to describe, that DECISIONS.md retired that run on 2026-09-05, and that the July artifacts, the july branch and the file's own previous version are all preserved. Every changed statement is itemised in a Corrections log — 15 rows — rather than replaced silently.
+Item
+Before
+After
+Run
+CAMERA_READY_FINAL (July)
+OFFLINE_FINAL on CAMERA_READY_OFFLINE_20260905_204533
+Scale
+582 judgments, 291 items, 3 judges
+664 judgments, 332 items, 4 judges, 2,656 total
+Panel
+DeepSeek · Claude Opus 4.8 · GPT-5.6 (all OpenRouter for the latter two)
+DeepSeek V4 Pro · Claude Opus 5 · GPT-5.6-sol (confirmatory) · GLM-5.3 (exploratory), with routes
+Configs
+A, B, C, E, F, G
+A–G, D_T4_IMPROVED added (registered contrast 8)
+Headline stats
+Six rows of Δ / CI / p, interval estimates unreproducible
+Panel means + confirmatory spread + verdict, regenerable from stats.csv; the unreproducible CIs and p-values withdrawn as untraceable
+G − A
+Reported beside the registered contrasts
+WITHDRAWN — see below
+C−B
+"null"
+INCONCLUSIVE — sign splits across confirmatory judges
+F−B
+−0.041 null
++0.236 — sign flipped between runs; still not confirmed
+Template hash
+80c50ee9919e00db…
+061b77993f5fdfd8… (ANZCOR re-freeze)
+Line count
+"judge_deepseek.py (~766 lines)"
+1,251, plus the other five judging modules
+config_summary.csv
+"Mean ± SD per config"
+Corrected — there is no SD column; dispersion moved to a judge-behaviour section
+Blinding
+"config names never appear in prompts"
+Corrected as false — the rubric names Config E; 7 of 41 E answers are identifiable; both guards miss it because they search for the full name E_T6_IMPROVED
+Judge leniency
+"DeepSeek most lenient / GPT harshest"
+claude_or harshest (1.882), glm_ar most lenient (2.258)
+
+On G−A — withdrawn, not restated. G−A appears in no pre-registration and in no stats.csv in the repository. Its mean reconciles as a July three-judge average (−0.2358) but its CI and p-value reproduce under no method, and it was presented in the same table as, and indistinguishably from, the eight registered contrasts. It was not recomputed on the canonical run and re-published: doing that would be registering a contrast after seeing the data, which is the original defect in a new form. The corrections log states what it was, why it is gone, and that anyone wanting the comparison must either register it prospectively or report it explicitly labelled post-hoc with statistics regenerated by aggregate.py.
+The rewritten file also carries the fourteen required disclosures from §13.6 of this report, the canonical hash table, the per-config and safety-lane results for all four judges, the inter-judge reliability figures this audit computed, the control-battery limits, and a zero-cost verification command block.
+15.4 Correction to this report
+§6.4, G−F paired effect sizes. The table gave dz = −1.242 for deepseek and, in the artifact-list draft, −1.018 / −0.786 for claude_or / gpt_ar. Recomputed from raw judgments the correct values are −1.131 / −1.392 / −0.908 (glm_ar −1.286). The −1.018 figure was claude_or's G−B dz reused in error. Corrected here and in the artifact list. The verdict is unaffected — G−F remains CONFIRMED with a very large effect for every judge — but the figures were wrong and the mechanism (an effect size asserted for two judges without being computed for them) is the same class of defect this audit raised against the artifact list.
+One claim in §2.2 and §8.3 was re-verified rather than carried from rubric_flaws.md: two of the seven score-5 specificity anchors — tourniquet 5–7 cm above the wound and 5 rescue breaths for drowning — appear zero times in the 4,441 training answers. Confirmed. (The 30:2 CPR anchor matched 3 times here against rubric_flaws.md's 6, a regex difference that does not affect the zero-count claim.)
+15.5 What remains open
+The P1 and lower findings in §9 and §10 are unchanged. The three that most affect the paper:
+ID
+Finding
+Why it is not closed here
+AUD-19
+Canonical reliability_report.md files carry no length-bias or agreement statistics
+Needs pip install scipy and a re-run of aggregate.py for all four judges. Reads only committed judgments, costs nothing — but it rewrites four published report files, which is the author's call, not an auditor's. This report supplies the numbers meanwhile.
+AUD-05
+The rubric names Config E, defeating the blinding claim
+The claim is now corrected in the artifact list. The template must not be changed: re-freezing it would invalidate all 2,656 judgments for no scientific gain. self_review() should be hardened to match substrings before any future run.
+AUD-08
+A live-format OpenRouter key remains recoverable from commit 77e19b7
+Rotation is an account action outside the repository. Note that rewriting history to remove it would destroy the commit-timestamp evidence that establishes the pre-registration ordering — a squashed release branch alongside a preserved private history is the better trade.
+
+Superseded by §16.11 — the scores below were computed before the second audit pass. §16 lowers four of the six: evaluation reliability 71 → 64 and judge reliability 74 → 69 on the judge non-determinism measurement, results reliability 94 → 91, research integrity 90 → 88 because pass 1 propagated an unverified register claim into a paper-facing document, and camera-ready readiness 78 → 70. Reproducibility rises 58 → 61. Use §16.11.
+Revised readiness, on the same scales as §14: Research integrity 82 → 90 (the deviation is now registered where a reader will find it, and the unregistered contrast is withdrawn rather than quietly kept), Results reliability 88 → 94 (the headline table is regenerable and the panel verdict exists), Camera-ready readiness 55 → 78. Evaluation, judge and reproducibility scores are unchanged, because nothing in this remediation touched the instrument, the judges or the missing weights.
+Revised classification: READY WITH DISCLOSURES, conditional on the §13.6 limitations section being written and AUD-19 being run. The three P0 findings that blocked submission are closed. What is left is a limitations section and one no-cost re-aggregation.
+
+16 · Second Pass — Exhaustiveness, and What Measurement Found
+Why this section exists — §1–§14 claimed to have read the repository comprehensively. They did not. Pass 1 read the judging lane deeply and audited the results empirically, but for a number of findings it relied on the repository's own registers rather than verifying them. That is the failure mode §22 of the audit brief explicitly forbids, and it produced at least one false statement that reached a paper-facing document. This section states the true coverage, replaces register-quoted findings with measurements, and adds what measurement found — including one result that changes how two of the eight contrasts must be interpreted.
+16.1 Honest coverage
+Surface
+Pass 1: read fully
+Pass 1: partial
+Pass 1: not read
+Python — 51 tracked files, 22,171 LOC
+5 files / 3,313 LOC
+7 files / 4,083 LOC
+40 files / 15,385 LOC (69%)
+Docs & config — 151 files, 44,037 lines
+17 files
+—
+134 files / 40,903 lines (93%)
+
+Largest unread code in pass 1: enhanced_inference.py (1,221 LOC), internal_eval/judge_per_item.py (1,153), build_v2_judge_prompt.py (945), internal_eval/stats_v2.py (855), t4_t6_isolation_eval.py (736), evaluate.py (681), rag_inference.py (590), bm25_rag.py (565), make_controls.py (503). Largest unread docs: the three paper/PROJECT_HANDOFF*.md files (2,180 lines), rubric_v2.md (754), REFRESHER_20260905.md (291), and three .docx deliverables — one at the repository root — that were never opened at all.
+Pass 2 did not read the remaining 15,385 LOC line by line either. It did something more useful for a results audit: it measured the behaviour those files produced, from the committed artifacts, and compared every register claim it relied on against a number. §16.10 states exactly what surface remains unaudited, so the residual risk is visible rather than implied away.
+16.2 AUD-30 (P0) — The judges are not deterministic, and the run itself proves it
+judge_deepseek.py's design principles state "temperature=0 for all calls (determinism)". That is false, and the canonical run contains a free, exact measurement of how false.
+Because cache_key() includes blind_id, two configurations that produced byte-identical answer text for the same question receive different cache keys and are therefore sent to the judge as two separate live API calls. The canonical run contains 92 such byte-identical answer pairs. Each is the same string, scored twice, by the same judge, in the same run, at temperature 0. Any score difference is pure judge non-determinism.
+Judge
+n pairs
+Scored identically
+Within ±1
+Mean \|Δ\|
+Max \|Δ\|
+Safety category set identical
+deepseek
+92
+76.1%
+98.9%
+0.250
+2
+97.8%
+claude_or
+92
+90.2%
+100.0%
+0.098
+1
+100.0%
+gpt_ar
+92
+75.0%
+92.4%
+0.326
+2
+94.6%
+glm_ar
+92
+75.0%
+100.0%
+0.250
+1
+96.7%
+
+Pair composition: B/E 34, B/D 27, D/E 25, A/G 2, B/F 2, D/F 1, E/F 1. Derived from byte-comparison of run.json answers cross-referenced against judgments.jsonl.
+Three judges disagree with themselves on one answer in four, and two of them by a full two score points on a 0–5 scale. Only claude_or approaches determinism at 90.2%.
+Implication 1 — the published stability figure overstates determinism. reliability_report.md reports the Test-3 nonce re-score as 90% exact / 95% within ±1 on 20 items, deepseek only. The within-run measurement on 92 pairs gives deepseek 76.1% exact. The Test-3 figure is not wrong, but it is a 20-item sample and it is the most favourable number available. Report the 92-pair figure, which is larger, is drawn from the canonical run itself, and covers all four judges.
+Implication 2 — this is a measured noise floor, and most of the results sit on it. Mean self-disagreement is 0.098–0.326 score points per judge. Set against the panel means: F−B +0.236, C−B +0.000, E−B −0.033, D−B +0.024 are all at or below the judges' own self-disagreement. B−A +1.089, G−B −0.951 and G−F −1.187 exceed it by 3–12×. That is a cleaner and more defensible way to separate the signal from the noise in this study than any p-value, and it is fully measured rather than assumed.
+16.3 AUD-31 (P0) — Two contrasts compare a configuration against itself
+The technique configurations are not independent systems. Measured by byte-comparison of the canonical answers:
+Contrast
+n_pairs as reported
+Identical answer text
+Effective n
+Ceiling sign-test p
+Consequence
+E−B overall
+41
+34 (83%)
+7
+0.0156
+E is B on 34 items. Every difference is a T6 gate fire.
+D−B overall
+41
+27 (66%)
+14
+0.0001
+D is B on 27 items. Every difference is a T4 re-prompt.
+F−B overall
+41
+2 (5%)
+39
+<0.0001
+Genuine comparison.
+F−B SC
+11
+0
+11
+0.0010
+Genuine, but n=11 — see §4.2.
+B−A, C−B, G−B, G−F
+41
+0
+41
+<0.0001
+Fully genuine comparisons.
+
+aggregate.sign_test discards ties, so an identical-text pair the judge scores identically simply vanishes — harmless. But an identical-text pair the judge scores differently survives as a win or a loss, and enters the pre-registered test as signal when it is pure noise. Combining §16.2 with the identical-text census gives the noise fraction of each test directly:
+Contrast
+Judge
+Non-tied pairs entering the sign test
+of which identical text (pure noise)
+Genuine
+Noise share
+E−B
+deepseek
+14
+9
+5
+64%
+E−B
+claude_or
+5
+1
+4
+20%
+E−B
+gpt_ar
+17
+11
+6
+65%
+E−B
+glm_ar
+15
+8
+7
+53%
+D−B
+deepseek
+12
+3
+9
+25%
+D−B
+claude_or
+14
+4
+10
+29%
+D−B
+gpt_ar
+14
+5
+9
+36%
+D−B
+glm_ar
+12
+5
+7
+42%
+F−B
+all four
+20–23
+0–1
+19–22
+0–5%
+
+This changes how E−B and D−B must be reported. §4 labelled both INCONCLUSIVE (confirmatory judges disagree on sign) — correct under the registered rule, and it stays. But the reason is now measured, and it is not what the label suggests. For E−B, 53–65% of the evidence entering the sign test for three of four judges is the same string scored differently by the same judge. The panel did not disagree about the T6 gate; the judges disagreed with themselves. Report E−B as "inconclusive; the test is majority-noise because the intervention changes only 7 of 41 answers" — not as a finding about the safety gate. D−B is the same failure at 25–42%.
+Note the interaction with the bootstrap, which cuts the other way: the CI is computed over all 41 pairs including the structurally identical ones, so those 34 guaranteed zeros pull the E−B interval toward zero and make it look tighter and more decisive than 7 informative pairs warrant. claude_or's E−B CI of [−0.195, +0.073] rests on 5 non-tied pairs, of which 1 is noise. Neither criterion in the conjunctive rule is measuring what its n implies.
+16.4 AUD-32 (P1) — The intervention mechanisms, measured
+Every technique claim in the repository is stated qualitatively. These are the measured rates from the canonical run's per-answer meta blocks.
+Config
+Mechanism
+Fire rate
+What it actually does
+D_T4_IMPROVED
+length-floor re-prompt
+retried 14/41 (34%)
+On the 14 items it changed, mean length rose 34.8 → 42.2 words. Panel delta +0.024 — the length floor buys 7 words and no measurable quality.
+E_T6_IMPROVED
+binary SAFE/UNSAFE gate
+flagged_unsafe 7/41 (17.1%)
+2 of the 7 are safety-critical questions, of 11 SC total. On the other 34 items E returns B verbatim. All four judges score the 7 fallbacks 1–2, as the rubric caps them.
+F_RAG_BM25
+topic-gated BM25 top-1
+fired 39/41; gated 2/41
+Retrieval fires on 11 of 11 safety-critical questions. The gate excludes exactly two non-SC items (V2Q35 tourniquet, V2Q41 log-roll). BM25 raw scores 18.9–45.5.
+G_BASE_RAG
+same, on the base model
+fired 39/41; gated 2/41
+Identical retrieval behaviour to F — so G−F isolates the adapter cleanly, with retrieval held constant. This strengthens G−F.
+all configs
+repetition truncation
+0/287
+The repetition_truncation_max_repeats=3 machinery never fired in the canonical run. The d0fdb61 repetition fix is inert here — it cannot be credited with any part of the result.
+F, G
+115-word retrieval cap
+word_cap_applied 0/41
+Never fires. Do not describe the retrieval path as word-capped; the cap is unexercised.
+
+Correction to §5 of this report, and to the repository's own register. FINDINGS_20260905.md's retracted-claims section describes the BM25 gate as "seven patterns" of which "five of seven never fire". Measured against the code: `bm25_rag.GAP_TOPIC_PATTERNS` defines three topics — `tourniquet_escalation`, `infant_choking`, `spinal_logroll` — of which two fire and one (`infant_choking`) is dead. The register's figure is stale relative to the current code. Pass 1 repeated it. The correct statement is: a three-topic gate, two of which fire, excluding two of 41 questions.
+A second correction to pass 1. §7.5 said config C's identity was "recorded" in _config_resolution. It is stronger than that: v2_comprehensive_eval.py:969 compares the actual (base_quant, adapter_key) against CAMERA_READY_CONFIG_RESOLUTION at generation time and aborts on mismatch. Config C being "8-bit base + 4-bit-trained adapter" is enforced by an assertion, not merely documented. Pass 1 under-credited the generation lane.
+16.5 AUD-33 (P2) — The deployment argument the project has and does not make
+PRECOMMIT_PANEL.md asserts "4-bit adapter is the deployment recommendation" on the strength of a quality comparison that the canonical run shows to be inconclusive (C−B panel mean exactly 0.0000, confirmatory judges split). So the stated basis for the recommendation does not hold. But the canonical run records per-answer telemetry that supports the same recommendation on grounds that are not in dispute:
+Config
+Peak VRAM
+Throughput
+Latency / answer
+Mean output
+B_FINETUNED_4BIT
+2,239 MB
+23.8 tok/s
+2.18 s
+42.8 words
+C_FINETUNED_8BIT
+3,413 MB (+52%)
+12.3 tok/s (−48%)
+4.20 s (+93%)
+42.6 words
+A_BASE_4BIT
+2,160 MB
+45.7 tok/s
+3.95 s
+134.4 words
+G_BASE_RAG
+2,169 MB
+45.4 tok/s
+4.77 s
+161.8 words
+
+Rewrite the recommendation on this basis. 8-bit costs +52% VRAM, −48% throughput and +93% latency for a quality difference the study is not powered to detect. That is a complete and defensible deployment argument for 4-bit, and it does not require the quantization-neutrality claim the canonical run withdraws. It is also the strongest support in the repository for the offline Android premise — 2.2 GB peak and 2.2 s per answer.
+One further measured cost, currently unreported: the LoRA adapter halves generation throughput (45.7 → 23.8 tok/s, base vs adapter at the same 4-bit quantization). Per-answer latency still improves (3.95 s → 2.18 s) because the fine-tuned model emits 42.8 words instead of 134.4. State both numbers; the adapter is faster per answer and slower per token.
+16.6 The document layer — findings pass 1 missed entirely
+ID
+Finding
+Measured evidence
+Priority
+AUD-24
+The july branch does not exist. FINDINGS_20260905.md §A6 states *"july preserves the pre-session state", and pass 1 of this audit repeated that claim into the rewritten artifact list without checking it*.
+git branch -a returns main and fix/generation-blockers-20260905 only. git rev-parse --verify july → fatal.
+P1
+AUD-25
+The July run is not "preserved unmodified". Its judgments.jsonl are untouched, but its derived reports were regenerated.
+git log -1 -- judging/results/deepseek/CAMERA_READY_FINAL/ → commit 1253760, 2026-09-05, "Apply the control-key correction and re-aggregate all three judges".
+P2
+AUD-26
+Three .docx deliverables, one at the repository root, unmarked as superseded, asserting the 8-bit adapter claim DECISIONS.md forbids — on an instrument the project has abandoned.
+Research_Findings_Complete.docx (3,759 words): "8-bit ranked 1st unanimously across all 4 judges", "4-BIT vs 8-BIT gap: ~0.34 mean… a real difference, not noise". paper/Model_Behaviour_Report.docx (5,110 words): judges are "Claude Opus 4.7 with reasoning, DeepSeek v4, Gemini 3 Thinking, GPT-5.3 Instant", scale "−1 to 5", "3 judges for Q1-9, 4 judges for Q10-20", and grades against "back blows + abdominal thrusts".
+P1
+AUD-27
+The repository asserts three mutually exclusive positions on 8-bit, none of the superseded ones marked.
+"8-bit ranked 1st unanimously" (two .docx) vs "8-bit is formally rejected… systematic dangerous positioning heuristic" (README.md §11) vs inconclusive (canonical C−B). Only the README documents the reversal.
+P2
+AUD-28
+Publishing the blind salt is equivalent to publishing blind_map.json, defeating the stated exclusion control.
+All 11 blind IDs re-derived exactly from sha256(salt:config)[:12].upper() — 11/11. PRECOMMIT.md withholds the map "until after de-anonymization" while the artifact list published the salt. Pass 1 copied the salt forward; it has been removed.
+P2
+AUD-29
+Authorship is unsettled across deliverables.
+paper/QLoRA_Experiment_Report.docx is bylined Sittul Muna <sittul.muna666@gmail.com>; every commit is authored i-am-mushfiq <mushfique2@iut-dhaka.edu>.
+P3
+AUD-34
+The three PROJECT_HANDOFF documents (2,180 lines, never opened in pass 1) carry pre-canonical result figures with no supersession marker.
+2.18/5 appears 4× / 3× / 2× across v1–v3; the V1 20-question 3.53 vs 3.19 8-bit-over-4-bit figures appear in v1 and v2; Gemini is named as a judge in all three. REFRESHER_20260905.md carries 582, 291 items, B−A=+0.902 — correct for its 2026-09-05 date, stale now.
+P2
+
+AUD-26 is the one to act on first. A root-level Word document is the single most likely artifact to be opened by a co-author, reviewer or supervisor by accident, and this one asserts the opposite of the project's own standing ruling, grades against a protocol the project has since corrected as clinically wrong (abdominal thrusts, superseded by ANZCOR chest thrusts at commit 4fa6186), and uses a judge the panel pre-registered as excluded. Banner all three files, or move them to an archive/ directory. They are May 2026 process reports and are legitimate as history — they are dangerous only because nothing says so.
+16.7 Verified clean — checks pass 1 should have run
+A steelman cuts both ways. These are the integrity checks pass 1 asserted or assumed; pass 2 measured them, and every one passed. Collectively they close the generation→judging→statistics chain that §3.1 could only trace by inspection.
+Check
+Result
+items.jsonl answers ≡ canonical run.json answers
+287/287 byte-identical, 0 mismatches. The generation→judging link is verified, not assumed.
+items.jsonl references ≡ live bank references
+0 mismatches across 287 real items.
+items.jsonl sc_flag ≡ bank safety_critical
+0 mismatches.
+blind_map.json reproducible from salt
+11/11 exact (also the basis of AUD-28).
+scores_per_question.csv ≡ judgments.jsonl
+0 disagreements, all four judges, 287 rows each.
+controls_key.json ≡ control items in items.jsonl
+45/45 matched, no orphans in either direction.
+Planted override categories
+SO05, SO06, SO12, SO06, SO09, SO11 → 5 distinct of 6 plants; never planted: SO01–04, SO07, SO08, SO10. Independently confirms OPEN_FINDINGS §3.
+Near-duplicate questions within the 41-item bank
+0 pairs above Jaccard 0.40 — the bank has no internal redundancy inflating n.
+Config C identity enforcement
+v2_comprehensive_eval.py:969 aborts on (base_quant, adapter) mismatch. Stronger than pass 1 credited.
+Panel token accounting
+4,147,647 tokens over 2,656 calls — deepseek 849,160 · claude_or 1,331,460 · gpt_ar 1,089,215 · glm_ar 877,812. Recorded per call; the run is fully cost-auditable.
+
+16.8 Category Ns — the measured basis for refusing category claims
+Category
+n
+SC
+
+Category
+n
+SC
+Bleeding & Wounds
+7
+1
+
+Airway, Choking & Drowning
+4
+1
+Cardiac & Resuscitation
+6
+3
+
+Bites, Stings & Envenomation
+3
+2
+Minor Injuries & General
+6
+1
+
+Burns & Environmental
+3
+1
+Trauma & Musculoskeletal
+5
+0
+
+Poisoning, Overdose & Toxic
+2
+1
+Neurological & Altered Consc.
+4
+1
+
+Spinal Injuries & Movement
+1
+0
+
+Two of ten categories have n<3; two have zero safety-critical questions. No per-category claim — and no per-category safety claim for Trauma or Spinal — is supportable at any significance level. This replaces the qualitative version of the finding in rubric_flaws.md.
+16.9 Residual unaudited surface
+Stated so the remaining risk is visible. None of the following was read line by line in either pass; none of it produced a number in the canonical results, but each could contain a defect that changes how a secondary claim should be worded.
+Unaudited
+LOC / size
+Risk if defective
+Why it is lower priority
+internal_eval/stats_v2.py + judge_per_item.py
+2,008 LOC
+Internal go/no-go decisions could rest on a broken statistic
+internal_eval/README.md states "Nothing here is paper-facing", and camera_ready/pipeline.py contains no reference to it. But camera_ready/protocol.yaml does name it as the judging script — that inconsistency is AUD-15 and remains open.
+enhanced_inference.py
+1,221 LOC
+The T4/T6 rejection narrative
+Already covered by FINDINGS §1, §33, §34 and §52; its numbers should be retired from the paper regardless, so auditing it further has no upside.
+build_v2_judge_prompt.py
+945 LOC
+The unblinded side-by-side manual protocol
+camera_ready/protocol.yaml labels it "report separately from per-item statistics". Not in the canonical chain.
+make_controls.py construction logic
+503 LOC
+Whether planted answers contain the hazards they claim
+Its outputs were verified end-to-end: 45/45 key↔item match, 5 distinct categories confirmed, and all four judges pass the gate with 6/6 planted violations detected.
+rubric_v2.md
+754 lines
+Rubric provenance and rejected candidates
+The operative instrument is prompt_quality.txt, hashed into every manifest. camera_ready/check.py reports "runtime rubric: matches documented final rubric" — PASS.
+evaluate.py, eval_suite.py, t4_t6_isolation_eval.py, rag_inference.py, utils/*
+~3,300 LOC
+Historical evaluation numbers
+None feeds the canonical run. rag_inference.py is already registered as defective (FINDINGS §19, §40).
+~100 historical evaluations/ artifacts
+~35,000 lines
+Stale figures being cited
+Superseded by DECISIONS.md. AUD-34 covers the documents that quote them.
+
+16.10 What must now change in the paper
+#
+Change
+Because
+1
+Add the judge-determinism measurement as a reported reliability result: 92 identical-text pairs, exact agreement 76.1% / 90.2% / 75.0% / 75.0%, max \|Δ\| = 2.
+AUD-30. It is the strongest reliability evidence in the project and it is currently unreported. It also corrects the 90%-exact Test-3 figure.
+2
+Replace "temperature=0 (determinism)" wherever it appears with "temperature=0; measured self-agreement 75–90% on identical inputs".
+AUD-30. The determinism claim is false as written.
+3
+Report E−B and D−B with their effective n (7 and 14, not 41) and their noise share (53–65% and 25–42%).
+AUD-31. The INCONCLUSIVE labels are correct but currently invite a wrong reading.
+4
+State that F−B, C−B, E−B and D−B all sit at or below the measured judge noise floor, and that B−A, G−B and G−F exceed it by 3–12×.
+AUD-30/31. Cleaner than any p-value and fully measured.
+5
+Rebase the 4-bit deployment recommendation on VRAM/throughput/latency (+52% / −48% / +93%), not on quantization neutrality.
+AUD-33. The neutrality claim is withdrawn; the cost argument is undisputed.
+6
+Describe the retrieval gate as three topics, two firing, excluding 2 of 41 questions, with retrieval firing on 11/11 safety-critical questions and the word cap never firing.
+AUD-32. Replaces a stale seven-pattern figure from the register.
+7
+Report E's gate-fire rate as 7/41 (17.1%), 2 of them safety-critical, and state that E returns B verbatim on the other 34.
+AUD-32, and DECISIONS.md already asked for the gate-fire rate to be reported separately.
+8
+State that repetition truncation fired 0/287 times, so the d0fdb61 fix cannot be credited with any part of the result.
+AUD-32. Prevents an unearned methods claim.
+9
+Banner or archive the three .docx deliverables and the three PROJECT_HANDOFF files.
+AUD-26, AUD-27, AUD-34.
+10
+Fix FINDINGS_20260905.md §A6's july branch claim, or create the branch.
+AUD-24.
+11
+Add per-category Ns (7,6,6,5,4,4,3,3,2,1; two categories with zero SC items) wherever categories are mentioned.
+§16.8.
+
+16.11 Revised scorecard
+Dimension
+§14 (pass 1)
+§15.5
+Now
+Reason for the change
+Research integrity
+82
+90
+88
+Down 2 from §15.5: pass 1 propagated an unverified register claim into a paper-facing document (AUD-24), which is the same class of error the audit raised against others.
+Results reliability
+88
+94
+91
+Down 3: the numbers all still reproduce, but AUD-30 shows the measurement instrument is noisier than the artifacts claim, and AUD-31 shows two contrasts' effective n is a fraction of their reported n.
+Evaluation reliability
+71
+71
+64
+Down 7: 75–76% self-agreement on identical inputs for three of four judges, and two contrasts that are majority-noise, are material defects in the instrument that pass 1 did not detect.
+Judge reliability
+74
+74
+69
+Down 5: same reason. Inter-judge κ 0.62–0.75 is respectable; intra-judge 75–90% is not, and the two are usually reported together.
+Reproducibility
+58
+58
+61
+Up 3: the generation→judging chain is now verified byte-for-byte (287/287), config identity is enforced by assertion, and the run is fully token-auditable — offset by nothing new.
+Camera-ready readiness
+55
+78
+70
+Down 8 from §15.5: three P0-closing edits stand, but AUD-30/31 add two new P0-class reporting obligations and AUD-26 adds an unmarked contradictory deliverable at the repository root.
+
+Revised classification: READY WITH DISCLOSURES — unchanged in label, but the disclosure list is now longer and two of its items are substantive rather than cosmetic. The three confirmed results are untouched by everything in this section: B−A, G−B and G−F have zero identical-text pairs, effective n = 41, noise shares of 0–5%, and effect sizes 3–12× the measured noise floor. They are, if anything, better supported now than in §4, because the noise floor against which they stand is measured rather than assumed. What §16 removes is any basis for reading E−B, D−B, C−B or F−B as evidence about the interventions they name.
+
+17 · Final — Consolidated Register and Verdict
+17.1 AUD-10 resolved by measurement — the confound's own prediction fails
+§5.3 and §16 treated the rubric/treatment alignment as the strongest live objection to B−A and stated that it was untested. It is now tested, and it is not supported.
+The rubric states "training data median is 43 words. Responses of 40-120 words are expected." If B−A is length conformance, it makes a falsifiable prediction: the effect must collapse on the questions where the base model's answer is already the fine-tuned model's length. There are 10 such questions — A averages 35.1 words on them against B's 38.3, so they are genuinely matched.
+Subset
+A mean words
+deepseek
+claude_or
+gpt_ar
+glm_ar
+Panel (3 conf.)
+All 41 questions
+134.4
++1.024
++1.341
++0.902
++1.049
++1.09
+A already inside B's word range (n=10)
+35.1
++1.200
++1.300
++0.700
++0.500
++1.07
+A outside B's range (n=31)
+166.5
++0.968
++1.355
++0.968
++1.226
++1.10
+A inside the rubric's 40–120 band (n=6)
+66.7
++0.167
++0.500
++0.500
++0.500
++0.39
+
+B−A is +1.07 on the length-matched subset against +1.09 on the full sample — unchanged, and positive for all four judges. Significance is lost (p = 0.125–0.727) purely because n falls from 41 to 10; the point estimate does not move. The confound predicted collapse and there is none.
+The one subset that does narrow is the n=6 rubric-band group (+0.39 panel). That is the number §16 would have rested a blocker on, and it does not survive its own control: B scores 2.50–3.00 on those six questions against 2.20–2.51 elsewhere, so B sits near its own ceiling there. The narrowing is top-of-scale compression, not evidence that length carried the effect. On the length-matched n=10 subset the same control is clean — B scores 2.40 / 2.20 / 2.20 / 2.00 there against 2.19 / 2.26 / 2.35 / 2.74 elsewhere, i.e. no easier.
+Argument that the effect is stylistic
+Status after measurement
+B−A tracks the rubric's stated length band
+Fails. Effect is +1.07 where A is already in-band by length, versus +1.09 overall.
+The rubric's EMS caps penalise the base model
+Fails. Within config A, EMS-mentioning answers score higher, not lower (1.30 vs 1.14 deepseek; flat for all four judges). The rubric caps EMS-only answers, as FINDINGS §6 concluded.
+Short answers score better, so B wins by being short
+Weak. Within-config length correlations are non-significant in 11 of 12 config×judge cells (§5.9). The one exception is A itself at ρ −0.35 to −0.43, which is the base model degenerating as it rambles — a quality signal.
+The model was optimised toward the rubric
+Fails on causality. The adapter was trained 2026-05-08; the rubric's 43-word figure was derived from the training corpus months later. The arrow runs rubric ← data, not model ← rubric.
+The between-question analysis showed a +1.3 length gap inside A
+Superseded. That is a between-question design; B−A is paired within-question and therefore already controls question difficulty. The weaker design should not have been allowed to override the stronger one.
+
+AUD-35 (P2) — what genuinely remains, stated exactly. The confound cannot be fully separated in this design, because the distributions barely overlap: A spans 19–269 words, B spans 26–65, and only 10 of 41 A-answers fall inside B's range. So the matched-subset test is the strongest available evidence and it is n=10 with wide intervals. The correct disclosure is: the rubric encodes the deployment target's length and structure; a matched-length subset shows the effect at full magnitude (+1.07 vs +1.09), but the two cannot be fully decoupled in a 41-question design where the base and fine-tuned length distributions overlap on 10 items. That is a limitation, not a threat to the conclusion.
+17.2 Corrections to this report
+Location
+What it said
+Correct position
+§5.3, §7.7, §8.1 caveat, §13.6 item 1
+*"The reference-compression alternative explanation is excluded by OLDBANK_ABLATION; this one is not."*
+Both are now excluded. OLDBANK_ABLATION excludes reference compression (Δ 0.024); the matched-length subset in §17.1 excludes length conformance (+1.07 vs +1.09). Disclose the non-separability (AUD-35), not the confound.
+§16.2 interpretive framing
+F−B, C−B, E−B, D−B sit at or below the judge noise floor.
+Stands unchanged. Independent of §17.1.
+§6.4 G−F effect sizes
+dz −1.242 / −1.018 / −0.786
+−1.131 / −1.392 / −0.908 (glm_ar −1.286). Corrected in §15.4; the −1.018 was claude_or's G−B dz reused in error.
+Pass-1 scope claim
+"Read the repository comprehensively."
+False. 69% of the Python and 93% of the documents were unread in pass 1 (§16.1).
+Pass-1 register reliance
+Several findings quoted FINDINGS_20260905.md rather than verifying it
+Produced AUD-24 (a false july branch claim propagated into a paper-facing document) and the stale seven-pattern gate figure (AUD-32).
+
+17.3 Complete findings register — all 35, with final status
+Every finding raised anywhere in this report, in one table. P = priority as raised. Status = position at 2026-09-10 close.
+ID
+Finding
+Key number
+P
+Final status
+AUD-01
+Artifact list described the retired July run; CIs/p-values unreproducible; unregistered G−A contrast
+6 rows; G−A in 0 of 4 stats.csv
+P0
+CLOSED — rewritten, 15-row corrections log, G−A withdrawn not restated
+AUD-02
+Confirmatory judge substituted opus-4.8 → opus-5 after 3 of 4 judges completed; never registered
+664/664 rows opus-5; changed 2026-09-08 10:35
+P0
+CLOSED — PRECOMMIT.md Amendment 2026-09-10, headed POST-HOC
+AUD-03
+3-of-3 panel rule never applied to the canonical run
+0 panel-level documents existed
+P0
+CLOSED — PANEL_VERDICT_OFFLINE_FINAL.md + panel_verdict.py, drift-guarded
+AUD-04
+Primary contrast F−B SC could not reach p<0.05 at any observed outcome
+4–5 non-tied pairs of 11; floor p 0.125 / 0.0625
+P1
+REPORTING ADDRESSED — UNTESTABLE class added. Power deficit permanent
+AUD-05
+Frozen quality template names "Config E — T6_IMPROVED"; both blinding guards miss it
+7 of 41 E answers identifiable
+P1
+CLAIM CORRECTED; self_review() hardening open. Do not re-freeze the template
+AUD-06
+No-reasoning policy breached and largely unverifiable
+gpt_ar 15/664 nonzero; 649 unreported; deepseek 0/664 reported; glm_ar max 185 not 44
+P1
+RECORDED in Amendment §5. RUNBOOK.md still stale
+AUD-07
+Adapter weights and base model absent; verification bound to machine-absolute paths
+4 of 6 adapter files present; verify exits 3
+P1
+OPEN — release blocker
+AUD-08
+Live-format OpenRouter key recoverable from git history
+commit 77e19b7, 2 files
+P1
+OPEN — release blocker; rotate
+AUD-09
+No safety contrast pre-registered; post-hoc safety tests are null
+McNemar B vs A p = 1.00 / 0.125 / 1.00 / 0.625; 2–3 of 11 SC violations remain in B
+P1
+DISCLOSED — permanent; blocks any deployment claim
+AUD-10
+Rubric encodes the training corpus's median length and caps the base model's dominant behaviour
+43-word median verified; A 134.4w vs B 42.8w; A EMS 20/41 vs B 4/41
+P1
+TESTED, NOT SUPPORTED (§17.1) — matched subset gives +1.07 vs +1.09
+AUD-11
+Score band 5 is empirically unreachable
+1 of 1,148 model answers; 52/52 for verbatim references; 2 of 7 anchors absent from 4,441 training answers
+P2
+REPORT AS A FINDING — instrument is effectively 0–4
+AUD-12
+CTRL_REF is near-trivially satisfiable
+13/13 byte-identical to the reference shown in the same prompt
+P2
+DISCLOSE the control's actual strength
+AUD-13
+Evaluation bank is near-paraphrastic to training; RAG retrieves the near-twin
+Jaccard median 0.421, max 0.706; F retrieved both 0.706 twins (V2Q34, V2Q31)
+P2
+DISCLOSE — no generalisation claim available
+AUD-14
+SC labelling excludes AED-in-arrest, severe asthma, spinal movement, drowning breaths; two SC definitions coexist
+8 non-SC items with conf 0.15–0.45; enhanced_inference disagrees on 16/41
+P2
+DISCLOSE definition + threshold; treat SC results as exploratory
+AUD-15
+camera_ready/protocol.yaml names the internal decision lane and the excluded Gemini as the judging config
+6 judges listed incl. gemini
+P2
+OPEN — add a judging_confirmatory block
+AUD-16
+README §8 documents a 5-dimension rubric that rewards EMS advice, and names 6 judges
+Operative rubric caps EMS-only at 2/5
+P2
+OPEN
+AUD-17
+README §11 claims "8-bit is formally rejected", against DECISIONS.md's own ruling
+Training-template confound, FINDINGS §29
+P2
+OPEN
+AUD-18
+A resumed run's manifest describes only its last session
+claude_or n_calls_new=96 vs 664 rows
+P2
+OPEN — record per-session provenance
+AUD-19
+Canonical reliability reports carry no length-bias or agreement statistics
+"scipy not available" in all 4
+P2
+OPEN — zero-cost fix; numbers supplied in §5.8/§5.9
+AUD-20
+No multiplicity control across 32 tests
+Largest confirmed p 5.9e-05 vs Bonferroni 0.00625
+P3
+STATE that all confirmed results survive Bonferroni
+AUD-21
+Bootstrap uses truncated percentile indices
+CI bounds quantise to 1/41 = 0.0244
+P3
+NOTE ONLY — do not change for this run
+AUD-22
+OLDBANK_ABLATION run for deepseek only
+1 of 3 confirmatory judges
+P3
+OPTIONAL — 1,328 calls to extend
+AUD-23
+RUNBOOK.md repeats a retracted "5-token floor" for glm_ar
+Real range 0–185
+P3
+OPEN
+AUD-24
+The july branch does not exist; this audit propagated the claim into a paper-facing document
+git branch -a → main, fix/generation-blockers-20260905
+P1
+CLOSED — corrected in 3 places, with the correction recorded
+AUD-25
+July run is not "preserved unmodified" — derived reports were regenerated
+commit 1253760, 2026-09-05
+P2
+CLOSED — wording corrected
+AUD-26
+Three .docx deliverables, one at repo root, unmarked as superseded, asserting the forbidden 8-bit claim
+"8-bit ranked 1st unanimously across all 4 judges"; scale −1..5; Gemini as judge; abdominal thrusts
+P1
+OPEN — act first. Banner or archive
+AUD-27
+Repository asserts three mutually exclusive positions on 8-bit
+better / "formally rejected" / inconclusive
+P2
+OPEN
+AUD-28
+Publishing the blind salt is equivalent to publishing blind_map.json
+11/11 blind IDs re-derived exactly
+P2
+CLOSED — salt removed from the artifact list
+AUD-29
+Authorship differs between deliverables and commits
+QLoRA_Experiment_Report.docx bylined Sittul Muna
+P3
+OPEN — settle before submission
+AUD-30
+The judges are not deterministic at temperature 0
+92 identical prompts sent twice: exact agreement 76.1 / 90.2 / 75.0 / 75.0%; max \|Δ\| = 2
+P0
+MUST REPORT. Supersedes the 90%-exact / 20-item Test-3 figure
+AUD-31
+Two contrasts compare a configuration against itself
+E−B: 34 of 41 identical text, effective n=7, noise share 53–65%. D−B: 27 of 41, n=14, 25–42%
+P0
+MUST REPORT effective n and noise share
+AUD-32
+Intervention mechanisms are smaller than described; two never fire
+Gate = 3 topics (2 fire, 1 dead), not 7. Word cap 0/41. Repetition truncation 0/287. E gate 7/41. Retrieval fires 11/11 SC
+P1
+MUST REPORT — corrects a stale register figure
+AUD-33
+The 4-bit deployment recommendation rests on a withdrawn claim, while an undisputed cost argument exists
+8-bit: +52% VRAM, −48% throughput, +93% latency
+P2
+REBASE the recommendation on cost
+AUD-34
+Three PROJECT_HANDOFF files carry pre-canonical figures with no supersession marker
+2.18/5 ×4/×3/×2; V1 3.53 vs 3.19; Gemini named in all three
+P2
+OPEN
+AUD-35
+The length confound is not fully separable in this design
+A 19–269 words, B 26–65; only 10 of 41 overlap
+P2
+DISCLOSE as a design limitation (§17.1)
+
+Tally: 35 findings — 3 P0 closed, 2 P0 newly raised and requiring reporting rather than repair, 9 P1, 16 P2, 5 P3. Closed: 8. Must-report: 5. Open: 15. Permanent limitations: 7.
+17.4 Blocker tiering — the final call
+Tier
+Items
+Verdict
+Blocks submission
+None on the science.
+The three confirmed results survive every test in §16 and §17: zero identical-text pairs, effective n=41, 0–5% noise contamination, effect sizes 3–12× the measured noise floor, and now a length-matched replication at full magnitude.
+Blocks release of the artifact
+AUD-08 (live key in git history) · AUD-07 (adapter weights absent, no reproducible recipe) · AUD-26 (root-level .docx asserting the forbidden 8-bit claim, on the superseded abdominal-thrust protocol, with an excluded judge)
+All three are release actions, not research problems. AUD-08 must be done regardless of publication.
+Blocks specific claims
+AUD-09 → no safety-improvement and no deployment-readiness claim · AUD-10/35 → B−A must be framed against the deployment target with the non-separability disclosed · AUD-13 → no generalisation claim · AUD-14 → SC-subset results exploratory · AUD-11 → absolute scores are ceiling-compressed · AUD-31 → E−B and D−B say nothing about the gate or the floor
+Each is a wording constraint with a measured basis, not a defect to fix.
+Cheap and outstanding
+AUD-19 (pip install scipy; re-run aggregate.py ×4 — zero cost) · AUD-15, 16, 17, 23, 27, 34 (documentation) · AUD-05 (self_review() hardening)
+≈4 hours, no API spend.
+
+17.5 Final scorecard
+Dimension
+§14
+§15.5
+§16.11
+FINAL
+Movement since §16.11
+Research integrity
+82
+90
+88
+87
+−1: §16 raised a blocker on a between-question analysis while a stronger paired analysis was available. Self-corrected in §17.1, but the error is the same class the audit charges others with.
+Results reliability
+88
+94
+91
+93
++2: the headline result now has a length-matched replication (+1.07 vs +1.09) in addition to reproducing bit-for-bit.
+Evaluation reliability
+71
+71
+64
+67
++3: the rubric-alignment objection was the largest open threat to the instrument's validity and it failed its own test. The 75–90% self-agreement defect stands.
+Judge reliability
+74
+74
+69
+69
+unchanged — nothing in §17 touches intra-judge determinism.
+Reproducibility
+58
+58
+61
+61
+unchanged.
+Camera-ready readiness
+55
+78
+70
+76
++6: the last live threat to the headline claim is resolved; what remains is release hygiene and wording.
+
+FINAL CLASSIFICATION: READY WITH DISCLOSURES. The three confirmed results — fine-tuning improves judged quality over the base model (+1.09, 4/4 judges, dz 0.80–0.98, replicated at +1.07 on a length-matched subset); base-model retrieval is worse than fine-tuning (−0.95) and worse than fine-tuning plus retrieval (−1.19) — are defensible line by line from the artifacts. Every statistic in them reproduces from committed data with stdlib Python. The paper is blocked only by release hygiene (a key to rotate, weights to publish, three documents to banner) and by wording: it must disclose 75–90% judge self-agreement, report E−B and D−B at effective n=7 and n=14, make no safety or deployment claim, and state that the corpus cannot reach the standard its own references encode — one score of 5 in 1,148 answers against 52 of 52 for the references. That last finding is the project's most original contribution and it should lead.
+Two things this audit got wrong and corrected itself on, recorded because a review's own reliability is part of its evidence: pass 1 claimed comprehensive coverage while leaving 69% of the code unread and propagated an unverified register claim into a paper-facing document (AUD-24); and §16 called the rubric confound a blocker on the strength of a between-question analysis, then measured it properly and withdrew the claim (§17.1). Both are recorded in place rather than edited away, on the same principle the repository applies to its own registers.

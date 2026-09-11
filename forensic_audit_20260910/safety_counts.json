@@ -1,0 +1,226 @@
+[
+  {
+    "judge": "deepseek",
+    "config": "A_BASE_4BIT",
+    "flagged": 8,
+    "flagged_SC": 5,
+    "quality_le1": 29,
+    "quality_ge4": 0
+  },
+  {
+    "judge": "deepseek",
+    "config": "G_BASE_RAG",
+    "flagged": 9,
+    "flagged_SC": 5,
+    "quality_le1": 29,
+    "quality_ge4": 1
+  },
+  {
+    "judge": "deepseek",
+    "config": "B_FINETUNED_4BIT",
+    "flagged": 7,
+    "flagged_SC": 2,
+    "quality_le1": 11,
+    "quality_ge4": 5
+  },
+  {
+    "judge": "deepseek",
+    "config": "D_T4_IMPROVED",
+    "flagged": 5,
+    "flagged_SC": 2,
+    "quality_le1": 13,
+    "quality_ge4": 8
+  },
+  {
+    "judge": "deepseek",
+    "config": "E_T6_IMPROVED",
+    "flagged": 4,
+    "flagged_SC": 0,
+    "quality_le1": 14,
+    "quality_ge4": 4
+  },
+  {
+    "judge": "deepseek",
+    "config": "F_RAG_BM25",
+    "flagged": 5,
+    "flagged_SC": 2,
+    "quality_le1": 5,
+    "quality_ge4": 5
+  },
+  {
+    "judge": "deepseek",
+    "config": "C_FINETUNED_8BIT",
+    "flagged": 7,
+    "flagged_SC": 3,
+    "quality_le1": 12,
+    "quality_ge4": 6
+  },
+  {
+    "judge": "claude_or",
+    "config": "A_BASE_4BIT",
+    "flagged": 12,
+    "flagged_SC": 6,
+    "quality_le1": 31,
+    "quality_ge4": 0
+  },
+  {
+    "judge": "claude_or",
+    "config": "G_BASE_RAG",
+    "flagged": 15,
+    "flagged_SC": 5,
+    "quality_le1": 33,
+    "quality_ge4": 0
+  },
+  {
+    "judge": "claude_or",
+    "config": "B_FINETUNED_4BIT",
+    "flagged": 7,
+    "flagged_SC": 2,
+    "quality_le1": 9,
+    "quality_ge4": 6
+  },
+  {
+    "judge": "claude_or",
+    "config": "D_T4_IMPROVED",
+    "flagged": 8,
+    "flagged_SC": 2,
+    "quality_le1": 10,
+    "quality_ge4": 5
+  },
+  {
+    "judge": "claude_or",
+    "config": "E_T6_IMPROVED",
+    "flagged": 4,
+    "flagged_SC": 0,
+    "quality_le1": 11,
+    "quality_ge4": 6
+  },
+  {
+    "judge": "claude_or",
+    "config": "F_RAG_BM25",
+    "flagged": 5,
+    "flagged_SC": 2,
+    "quality_le1": 5,
+    "quality_ge4": 2
+  },
+  {
+    "judge": "claude_or",
+    "config": "C_FINETUNED_8BIT",
+    "flagged": 8,
+    "flagged_SC": 2,
+    "quality_le1": 12,
+    "quality_ge4": 3
+  },
+  {
+    "judge": "gpt_ar",
+    "config": "A_BASE_4BIT",
+    "flagged": 9,
+    "flagged_SC": 5,
+    "quality_le1": 22,
+    "quality_ge4": 0
+  },
+  {
+    "judge": "gpt_ar",
+    "config": "G_BASE_RAG",
+    "flagged": 12,
+    "flagged_SC": 4,
+    "quality_le1": 20,
+    "quality_ge4": 0
+  },
+  {
+    "judge": "gpt_ar",
+    "config": "B_FINETUNED_4BIT",
+    "flagged": 9,
+    "flagged_SC": 3,
+    "quality_le1": 13,
+    "quality_ge4": 7
+  },
+  {
+    "judge": "gpt_ar",
+    "config": "D_T4_IMPROVED",
+    "flagged": 8,
+    "flagged_SC": 2,
+    "quality_le1": 11,
+    "quality_ge4": 5
+  },
+  {
+    "judge": "gpt_ar",
+    "config": "E_T6_IMPROVED",
+    "flagged": 9,
+    "flagged_SC": 3,
+    "quality_le1": 10,
+    "quality_ge4": 4
+  },
+  {
+    "judge": "gpt_ar",
+    "config": "F_RAG_BM25",
+    "flagged": 8,
+    "flagged_SC": 3,
+    "quality_le1": 7,
+    "quality_ge4": 4
+  },
+  {
+    "judge": "gpt_ar",
+    "config": "C_FINETUNED_8BIT",
+    "flagged": 8,
+    "flagged_SC": 2,
+    "quality_le1": 13,
+    "quality_ge4": 3
+  },
+  {
+    "judge": "glm_ar",
+    "config": "A_BASE_4BIT",
+    "flagged": 6,
+    "flagged_SC": 4,
+    "quality_le1": 24,
+    "quality_ge4": 1
+  },
+  {
+    "judge": "glm_ar",
+    "config": "G_BASE_RAG",
+    "flagged": 7,
+    "flagged_SC": 4,
+    "quality_le1": 21,
+    "quality_ge4": 1
+  },
+  {
+    "judge": "glm_ar",
+    "config": "B_FINETUNED_4BIT",
+    "flagged": 4,
+    "flagged_SC": 2,
+    "quality_le1": 8,
+    "quality_ge4": 6
+  },
+  {
+    "judge": "glm_ar",
+    "config": "D_T4_IMPROVED",
+    "flagged": 5,
+    "flagged_SC": 2,
+    "quality_le1": 7,
+    "quality_ge4": 7
+  },
+  {
+    "judge": "glm_ar",
+    "config": "E_T6_IMPROVED",
+    "flagged": 4,
+    "flagged_SC": 1,
+    "quality_le1": 3,
+    "quality_ge4": 7
+  },
+  {
+    "judge": "glm_ar",
+    "config": "F_RAG_BM25",
+    "flagged": 4,
+    "flagged_SC": 2,
+    "quality_le1": 5,
+    "quality_ge4": 3
+  },
+  {
+    "judge": "glm_ar",
+    "config": "C_FINETUNED_8BIT",
+    "flagged": 4,
+    "flagged_SC": 1,
+    "quality_le1": 11,
+    "quality_ge4": 10
+  }
+]

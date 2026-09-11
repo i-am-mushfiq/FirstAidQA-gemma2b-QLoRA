@@ -1,0 +1,491 @@
+Gemma 2B QLoRA Fine-Tuning
+Complete Research Findings — All Phases
+Medical Emergency First Aid on Offline Mobile Devices
+May 2026  |  RTX GPU 12 GB VRAM  |  Base model: google/gemma-2b-it
+
+1. Dataset Findings
+1.1 Original Dataset Composition
+5,550 first-aid Q&A pairs (firstaidqa_v1.json) — single flat list, no category labels, no train/val/test split at intake.
+15 distinct clinical categories identified on analysis: CPR, bleeding, burns, choking, shock, spinal, envenomation, wounds, and 7 others.
+Answer length highly consistent: mean 44 words, median 43 words — tight, procedural instructions rather than explanatory text.
+75% of questions are What / How / Can type — factual recall and step-by-step procedures dominate.
+Only 3 samples exceed 100 words — the model needs to learn concise clinical steps, not essays.
+No train / val / test split existed in the raw file. All 5,550 samples were fed into V1 training.
+1.2 Category Classification Attempts
+V1 — 18-category zero-shot NLI (DeBERTa cross-encoder):
+SC count: 1,231 / 5,550 = 22.2%
+Threshold tuning failed to resolve coverage gaps — 18 categories too granular for NLI.
+Semantic classifier confused dual-category questions (e.g. 'unconscious near fire' → Neurological, not Spinal).
+V2 — 10-category keyword classifier (classify_10cat.py):
+SC count: 2,028 / 5,550 = 36.5% — 64.8% increase over NLI approach.
+Keyword priority ordering resolved dual-category ambiguity correctly.
+Spinal category capped at 148 samples — dual-category questions correctly captured elsewhere.
+Key insight: jump from 22% to 36.5% SC strengthens safety-critical training signal substantially.
+1.3 Critical Protocol Gaps in the Dataset
+Five question types returned near-zero scores across ALL adapters — evidence of training data gaps, not model capacity failures:
+Q17 Shock position: correct answer (lay flat, elevate legs) absent or underrepresented in training data.
+Q21 Infant choking: correct back-blow / chest-thrust variant for infants missing.
+Q6 Arterial bleeding / tourniquet: correct placement instructions sparse.
+Q22 Embedded glass: 'do not remove, stabilise only' protocol undertrained.
+Q28 Helmet removal: spinal immobilisation protocol undertrained.
+These failures are not fixable by hyperparameter tuning or quantisation change — they require targeted data augmentation.
+
+2. Training Pipeline & Infrastructure Findings
+2.1 Template Bleed Bug (V1 Critical Defect)
+Root cause: pad_token set to eos_token (Gemma has no dedicated pad). EOS became ambiguous. At inference, no <end_of_turn> stop condition was set in eval_suite.py.
+Effect: models generated past their answer boundary, producing garbage — repeated questions, template fragments, corrupted characters.
+Severity: 18/20 answers flagged for 4-bit, 18/20 for 8-bit, 19/20 for fp16. Base model: 0/20 flags.
+Specific artifacts: 'verle a conscious casualty', '0utright position', '0utline:' — all template bleed from next prompt turn.
+Fix applied: added <end_of_turn> to eos_token_id stop list + repetition_penalty=1.15 in generate().
+Impact: ROUGE-L for fine-tuned variants reversed from below-baseline to above-baseline. The single biggest measured quality change in the project.
+2.2 Trailing \n Token Mismatch (V1 Systematic Defect)
+Discovery: tokenizer.apply_chat_template() always appends a trailing \n after <end_of_turn>. Manual templates in data.py did not.
+Effect: every training example across all V1 runs ended with <end_of_turn> instead of <end_of_turn>\n. Token [108] absent from all targets.
+Fix: data_v2.py switched all templates to tokenizer.apply_chat_template().
+Measured improvement: best_val_loss dropped from 1.3600 (V1) to 1.3400 (V2) — a clean 0.02 improvement attributable solely to this fix.
+2.3 Gradient Clipping — Effective LR Was Never Nominal
+Finding: gradient clipping fired on 100% of training steps across all runs.
+Mean gradient norms: 3.6 (r16), 3.9 (r8) — clip threshold was 1.0.
+Consequence: effective LR = 1e-4 × (1.0 / 3.7) ≈ 2.7e-5. Every experiment labeled '1e-4' trained at ~2.7e-5 effective LR.
+Raising nominal LR to 4e-4 (P2, P5): achieved fast initial convergence then diverged at epoch 0.7, best val 1.4651.
+Removing clip (P1, clip=10.0): best val 1.3650 — essentially tied with original. Clipping was not the bottleneck.
+2.4 Chat Template Alignment
+Gemma 2B Instruct was RLHF-aligned against: <bos><start_of_turn>user\n{Q}<end_of_turn>\n<start_of_turn>model\n{A}<end_of_turn>\n
+V1 training: 4 rotating manual string templates. 3 of 4 included system prompt framing.
+25% of V1 training examples had no safety framing, directly causing inconsistent EMS escalation at inference.
+verify_template_v1.py confirmed: instruction masking boundary was correct on all 8 test cases; only the trailing \n was missing.
+
+3. Training Results
+3.1 V1 Training (Original Dataset, No Classification)
+All V1 adapters trained on raw 5,550 samples — no classification, no stratified split, no template fix.
+Inference speeds: 4-bit ~19 tok/s | 8-bit ~10 tok/s | FP16 ~29 tok/s | base ~53 tok/s.
+VRAM at inference: 4-bit ~6 GB | 8-bit ~9 GB | FP16 ~15 GB.
+3.2 First 10-Cat Run — r16 vs r8
+Adapter
+r / alpha
+Best Val Loss
+@ Epoch
+ROUGE-L
+Notes
+r16 (original best)
+16 / 32
+1.3600
+1.8
+0.238
+Ranked 1st by all 6 LLM judges
+r8 (original)
+8 / 16
+1.3753
+1.8
+0.234
+alpha/r bug: 2x unintended scaling
+
+r16 beat r8 at every single one of 8 evaluation checkpoints — margin ~0.015 val loss throughout. Not noise.
+Both runs hit the same training cliff: train loss plummets at epoch 2.0 while val loss spikes — classic memorisation transition.
+Early stopping fired at epoch ~1.8 (patience=3) for both runs. The cliff appears one epoch later for higher-capacity models.
+3.3 Five-Profile Hyperparameter Ablation
+Profile
+r / α
+LR
+Clip
+Best Val
+@ Epoch
+Outcome
+P1 Unleash
+16/32
+1e-4
+10.0
+1.3650
+1.8
+Tied original — clipping not the bottleneck
+P2 Calibrate
+16/32
+4e-4
+0.3
+1.4651
+0.7
+Diverged — linear + high LR collapsed early
+P3 Capacity r32
+32/64
+1e-4
+10.0
+1.3822
+1.8
+2x params, no improvement — capacity not the limit
+P4 Compress r8
+8/8
+1e-4
+1.0
+1.4005
+1.8
+Heavy regularisation hurt performance
+P5 Synthesis
+32/32
+4e-4
+0.3
+1.4669
+0.7
+Worst — same divergence pattern as P2
+
+None of the 5 profiles beat the original best (1.3600). Val loss found a stable attractor that hyperparameter variations cannot easily escape.
+Linear LR schedule (P2, P5) reliably diverged at epoch 0.7. Cosine decay is critical for stability past epoch 1.
+r32 (P3): 2× VRAM and training time with no val loss benefit — capacity is not the limiting factor.
+3.4 V2 Training — Template Fix Results
+Adapter
+Template Method
+Best Val Loss
+@ Epoch
+Train Time
+Change vs V1
+V1 r16 (reference)
+Manual 4-template rotation
+1.3600
+1.8
+~1.2 h
+Baseline
+V2 4-bit r16
+apply_chat_template (data_v2)
+1.3400
+1.8
+1.25 h
+−0.02 from \n token fix
+8-bit r16 (V1 method)
+Manual templates (pre-fix)
+1.3614
+1.8
+7.84 h
+6.3× slower than 4-bit
+
+V2 4-bit achieved the best val loss in the entire project: 1.3400.
+8-bit training took 7.84 hours vs 1.25 hours for 4-bit — a 6.3× speed penalty for marginally worse val loss (1.3614 vs 1.3400).
+
+4. Lexical Evaluation (ROUGE)
+4.1 Critical Finding — Pre-Fix ROUGE Was Inverted
+Before template bleed fix, ROUGE-L ranked fine-tuned models BELOW base:
+Base: 0.2040  |  8-bit: 0.1539  |  4-bit: 0.1489  |  FP16: 0.1301
+After fix, the true ranking:
+8-bit: 0.2565  |  4-bit: 0.2402  |  Base: 0.1811  |  FP16: 0.1784
+Implication: the initial conclusion that 'fine-tuning hurt performance' was completely wrong — it was measuring garbage length, not answer quality.
+4.2 Full ROUGE Summary — All Evaluated Adapters
+Adapter / Variant
+R-1
+R-2
+R-L
+SC R-L
+Non-SC R-L
+Tok/s
+Base model (no FT)
+0.298
+0.093
+0.193
+0.184
+0.208
+53.6
+FP16 fine-tuned (V1)
+0.238
+0.070
+0.156
+0.147
+0.172
+29.6
+4-bit fine-tuned (V1 early)
+0.381
+0.135
+0.258
+0.251
+0.274
+18.8
+8-bit fine-tuned (V1 early)
+0.308
+0.110
+0.205
+0.197
+0.221
+10.9
+exp_10cat r16 (orig best)
+0.375
+0.128
+0.253
+0.232
+0.294
+19.1
+exp_10cat r8
+0.366
+0.120
+0.239
+0.218
+0.281
+19.3
+V2 r16 (template fix, 30Q)
+0.358
+0.118
+0.233
+0.223
+0.261
+19.0
+Enhanced T2+T4+T6 (40Q)
+0.327
+0.089
+0.196
+0.182
+0.235
+4.1
+
+SC ROUGE-L consistently lower than Non-SC across all variants — safety-critical answers are harder to match lexically and clinically.
+Enhanced inference (T2+T4+T6) produced worse ROUGE than the baseline fine-tuned model — the ROUGE expression of the dangerous hallucination finding.
+
+5. LLM Judge Evaluation
+5.1 Rubric
+Medical Accuracy (0-2)  +  Critical Step Coverage (0-2)  +  Safety/Escalation (0-1)  +  Dangerous Advice Penalty (0 or −1)  =  max 5, min −1
+5.2 V1 Evaluation — 4 Judges, 4 Variants, 20 Questions
+Variant
+Claude
+ChatGPT
+DeepSeek
+Gemini
+Mean
+SC Mean
+Non-SC Mean
+BASE
+2.10
+2.35
+1.75
+2.85
+2.26
+1.66
+3.44
+4-BIT
+3.45
+3.10
+2.60
+3.60
+3.19
+2.78
+3.97
+8-BIT
+3.55
+3.45
+2.85
+4.25
+3.53
+3.03
+4.30
+FP16
+3.30
+2.55
+1.30
+2.55
+2.43
+2.08
+3.09
+
+8-bit ranked 1st unanimously across all 4 judges — unambiguous and consistent.
+FP16 underperformed 4-bit despite higher precision — wider weight space more susceptible to V1 pipeline defects.
+SC mean gap: BASE scored 1.66 SC vs 3.44 Non-SC. Fine-tuned 8-bit: 3.03 SC. Large improvement, gap remains.
+4-BIT vs 8-BIT gap: ~0.34 mean, consistent across all judges — a real difference, not noise.
+5.3 5-Profile Evaluation — 6 Judges, 7 Adapters, 30 Questions
+Judge Tag
+Adapter Profile
+Best Val Loss
+Judge Rank
+_1 (P1)
+r16, lr=1e-4, clip=10.0
+1.3650
+2nd
+_2 (original best)
+r16, lr=1e-4, clip=1.0
+1.3600
+1st — unanimous
+_3 (P2)
+r16, lr=4e-4, clip=0.3, linear
+1.4651
+5th-6th
+_4 (P3)
+r32, lr=1e-4, clip=10.0
+1.3822
+3rd
+_5 (P5)
+r32, lr=4e-4, clip=0.3, linear
+1.4669
+6th-7th
+_6 (P4)
+r8, alpha=8, clip=1.0
+1.4005
+4th
+_7 (orig r8)
+r8, lr=1e-4, clip=1.0
+1.3753
+3rd-4th
+
+Val loss predicted judge ranking almost perfectly — monotonic correlation across all 7 adapters.
+All 6 judges agreed _2 (val=1.3600) was best — robust result across Claude, ChatGPT, DeepSeek, Gemini, and two others.
+P2 and P5 (linear schedule, high LR) scored poorly despite more training epochs — divergence destroyed early gains.
+
+5.4 V2 Precision Comparison — 4-bit vs 8-bit (40 Questions, DeepSeek Judge)
+Evaluation: DeepSeek LLM judge on 40-question bank. Both adapters used standard inference (eval_suite.py), no enhanced techniques.
+4-bit V2 (10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337, val_loss=1.3400): mean 2.18 / 5.00, SC mean 1.61.
+8-bit (10cat_8bit_r16_lr1e-4_p3_20260508_195536, val_loss=1.3614): mean 1.80 / 5.00, SC mean 1.19.
+REVERSAL OF V1 FINDING: In V1 (20Q, different adapters, V1 pipeline), 8-bit ranked 1st unanimously (mean ~3.53) over 4-bit (mean ~3.19). In V2 (40Q, corrected template), 4-bit outperforms 8-bit on every metric.
+Root cause of 8-bit failure — systematic dangerous positioning heuristic: 8-bit over-applies recovery/lateral position regardless of clinical context:
+Q2 (Cardiac arrest): 8-bit suggested lateral position — dangerous, contradicts CPR supine requirement.
+Q16 (Seizure during convulsions): lateral position recommended during convulsions — correct only after convulsions stop.
+Q18 (Spinal injury): lateral position suggested — contradicts immobilisation protocol.
+Q28 (Helmet removal): 8-bit recommended removal — contradicts spinal immobilisation.
+Q33 (Child CPR): head-lower positioning — dangerous, reverses CPR airway geometry.
+Dangerous advice penalty (−1) applied: 8-bit received it on 5 questions vs 4-bit on 3 — the 8-bit positioning heuristic is a systematic failure pattern, not a random error.
+Explanation: 8-bit retains more base-model precision but that fidelity amplifies a spurious recovery-position heuristic in the base Gemma weights. The 4-bit NF4 quantisation noise partially disrupted this heuristic.
+The V1 advantage of 8-bit was real on 20 questions but did not survive the expanded 40-question set — the harder edge cases (drowning, amputations, chest seals, AED, paediatric CPR) exposed the positioning heuristic.
+FINAL ADAPTER DECISION: 10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337 is confirmed as the production adapter for all remaining experiments, paper, and deployment.
+6. Garbage Audit Findings
+Pre-fix flag counts: 4-bit: 18/20 tmpl, 8-bit: 18/20 tmpl, FP16: 19/20 tmpl, Base: 0/20.
+Post-fix: near-zero flags across all fine-tuned variants — EOS stop token addition eliminated template bleed completely.
+Non-English / corrupted characters: appeared in FP16 more than quantised variants — low-probability tokens from multilingual pretraining data surfacing through the wider FP16 weight space.
+Repetition penalty (1.15): successfully suppressed looping behaviour that was inflating answer length and dragging down ROUGE.
+LLM judge prompt size: shrank from ~15,500 words to ~8,200 words after fix — the model was generating the right length all along; garbage inflated the apparent length.
+
+7. Critical Per-Question Failure Analysis
+Q17 (Shock / recovery position): All variants failed. Correct: lay flat, elevate legs. FP16: 'verle a conscious casualty', '0utright position' — template bleed + corruption.
+Q4 (Choking): 4-bit produced '0utline:' prefix — template bleed. Heimlich technique underrepresented in training data.
+Q11 (Anaphylaxis): EpiPen use and call-112 escalation inconsistently present. Judges docked safety/escalation points.
+Q6 (Arterial bleeding): Tourniquet partially learned for upper limb; lower-limb positioning missed.
+Q22 (Embedded glass): Baseline correctly said 'do not remove, stabilise'. Enhanced T4 forced continuation → model added 'apply direct pressure to the wound' (pressing on glass — dangerous).
+Q27 (Stroke): Baseline: 'call emergency services, keep calm'. Enhanced T6 appended 'perform CPR if necessary' — a breathing patient does not need CPR.
+Q32 (Hypoglycaemia): Baseline: direct conscious patient to sugar, unconscious to recovery position. T6 changed to 'if unconscious, begin CPR' — dangerous if breathing present.
+Q18 (Spinal injury): Baseline: correctly avoided movement. T6 added 'if movement is necessary, move by the ankles or elbows' — textbook mechanism for spinal cord damage.
+Q28 (Helmet removal): Baseline: left helmet on. T6: 'remove helmet if causing neck or head injury' — contradicts spinal immobilisation protocol, risks catastrophic cord injury.
+Q15 (Heat stroke): Baseline: fluids only if conscious. T6 collapsed to 'rehydration' without consciousness check — aspiration risk if patient unconscious.
+
+8. Enhanced Inference — T2, T4, T5, T6 Findings
+8.1 T2 — Greedy Decoding for Safety-Critical Questions
+Design: temperature=0 for SC categories; temperature=0.3 / top_p=0.9 for non-SC.
+Not directly harmful in isolation. Highest-probability sequence is often incomplete but rarely dangerous.
+When combined with T4 + T6: greedy locks in flawed high-probability paths and deterministically follows them into fabricated dangerous territory.
+8.2 T4 — Calibrated min_new_tokens Floor
+Design: per-category floors from p25 word count × 1.3 tok/word in train.json. SC hard floors: CPR=60, Severe bleeding=55, Anaphylaxis=45 tokens.
+Critical finding: a short correct answer is a form of calibration — the model knows when it has exhausted its reliable signal. T4 overrides this calibration.
+Root error: floors computed assuming short training answers were truncated. For some SC categories, correct protocols are genuinely brief. Forcing continuation pushes into the uncertainty zone.
+Interaction with T6: T4 inflates pass-1 beyond the safe stopping point. T6 then treats that inflated, partially wrong answer as a floor to improve from.
+8.3 T5 — RAG from Training KB
+Design: TrainingRAG using splits/10cat/train.json (4,441 Q&A pairs) as KB — no test contamination.
+Earlier version error: KB was eval_questions_40.json — reference answers injected into prompts, ROUGE inflation guaranteed. Fixed before any runs.
+Actual run result: T5 enabled (t5_rag_active=True) but fired 0 times — sentence-transformers not installed, retriever silently skipped.
+T5 is the only technique not yet empirically tested. Architecturally distinct from T4/T6 — supplies correct anchors before generation rather than extending afterwards.
+8.4 T6 — Two-Pass Self-Critique
+SC-mean result: dropped to approximately 1.52 — worse than the uncorrected baseline. Biggest damaging finding in the project.
+Root cause: self-critique requires the model to hold a correct protocol in memory to compare against its output. At 2B parameters, it does not. It confabulates from high-probability clinical phrases.
+Selection guard flaw: pass-2 accepted if len(pass2_words) ≥ max(len(pass1_words)−5, 10). Hallucinated additions are always longer — the guard actively selected for dangerous answers.
+Three-way destructive interaction: T4 inflates pass-1. T2 locks in flawed high-probability continuation. T6 treats that wrong answer as a floor.
+Paper finding: inference-time techniques that improve factual completeness on larger models can introduce active harm on sub-3B models in safety-critical domains by extending generation past the model's reliable knowledge boundary.
+8.5 Token Speed Impact of Enhanced Inference
+Mode
+Tok/s
+Notes
+Base model (no FT)
+53.6
+FP16 weights, no adapter
+4-bit fine-tuned baseline
+19.0
+QLoRA adapter loaded
+8-bit fine-tuned
+10.9
+~half 4-bit speed
+FP16 fine-tuned
+29.6
+Faster but ~15 GB VRAM
+Enhanced T2+T4+T6
+4.1
+T6 two-pass is a 2× latency multiplier
+
+4.1 tok/s from enhanced stack would be unacceptable on mid-range Android (CPU-only, no CUDA).
+
+8.6 Expert Consensus — Four-LLM Second Opinion (May 2026)
+The second_opinion_prompt.txt was submitted to four independent frontier LLMs. Key consensus findings follow. Full synthesis: paper/notes/four_opinion_synthesis.md.
+BM25 beats dense retrieval for this task. All four reports recommend BM25 as the primary retrieval method — exact medical keyword matching ("tourniquet", "epinephrine", "cardiac arrest") outperforms semantic similarity, which returns "clinically wrong but semantically close" examples.
+RAG will fail on the 5 protocol-gap questions. Unanimous. RAG retrieves the nearest plausible-but-wrong example from train.json for Q17, Q21, Q6, Q22, Q28. Q21 (infant choking) and Q22 (embedded object) are actively dangerous if retrieval fires — BM25 RAG must be gated to skip these questions.
+Category B heuristics (recovery position in cardiac arrest, CPR on breathing patient) cannot be reliably suppressed by system prompts alone. All four: "probabilistically effective, not deterministically effective." A system prompt will help but not guarantee safety on these patterns.
+Post-generation rule-based safety filter is essential — unanimously recommended by all four. Deterministic keyword/phrase scanner on generated text; canned safe fallback for highest-risk categories. On-device, no model pass required, ~0ms latency.
+Token budget discipline: ~1 retrieved example, under 100–150 tokens. Quadratic attention cost on mobile CPU makes larger contexts untenable within the 20–30 second response budget.
+Expert-agreed implementation stack (priority order):
+1. Category-conditional system prompt with explicit "NEVER" prohibitions — per-category, not generic.
+2. BM25 RAG with hard 1-example limit, gap-question gating (skip retrieval for Q17/Q21/Q6/Q22/Q28).
+3. Rule-based post-generation safety filter — keyword matching + canned fallbacks for SC categories.
+4. Greedy decoding (T2, temperature=0) for all SC queries.
+Points of disagreement / scepticism:
+Logit biasing: Reports 2 and 3 recommend it; Reports 1 and 4 call it brittle and token-level. No consensus. Deferring.
+RAG example count: Report 2 says 2 max; Report 3 says strictly 1; Report 4 says 2 with token guard. Decision: start with 1 to stay within latency ceiling.
+T3 keyword anchoring: Reports 1 and 3 moderately positive; Report 4 explicitly negative for SC (will force hallucinated step lists on gap questions). Decision: non-SC only.
+SC-mean ceiling: Report 3 (optimistic) estimates 3.0–3.5 achievable inference-only. Report 4 (pessimistic) says 3.0+ is unlikely without retraining — protocol gaps are a hard ceiling. Using Report 4 framing for honest expectations.
+9. Cross-Cutting Findings
+9.1 Metric Reliability Hierarchy
+Val loss: strongest predictor of quality — monotonically correlated with judge scores across all 7 profiles.
+LLM judge scores: most clinically meaningful. 4-6 judges showed high agreement — ranking stable across models.
+ROUGE-L: necessary but unreliable in isolation. Misled the project early (inverted ranking pre-fix). Cannot detect dangerous-but-fluent answers.
+Garbage audit: useful for infrastructure bugs only. Flags binary corruption, not semantic errors.
+9.2 Quantisation Effects
+4-bit QLoRA: best val loss (1.3400 V2), strong judge scores, 19 tok/s, 6 GB VRAM — the sweet spot for this task.
+8-bit: marginally better early ROUGE (0.2565 vs 0.2402) but worse val loss (1.3614) and 7.84h training vs 1.25h.
+FP16: consistently worst LLM judge scores (mean 2.43 vs 3.19 4-bit vs 3.53 8-bit) despite highest precision — wider weight space amplifies V1 pipeline defects.
+No cross-quantisation comparison yet on V2-trained adapters — the next planned experiment.
+V2 cross-quantisation result (40Q, DeepSeek): 4-bit V2 mean 2.18 > 8-bit mean 1.80. SC mean 4-bit 1.61 > 8-bit 1.19. The V1 finding reversed.
+Format: GGUF via llama.cpp / MLC LLM. 2B model in GGUF 4-bit (Q4_K_M) ~1.3–1.5 GB on disk — feasible.
+On-device inference speed: CPU-bound ARM Cortex-A78, estimated 2–6 tok/s — acceptable for a one-at-a-time emergency query interface.
+Enhanced inference stack (T6): halves speed — unacceptable for offline emergency tool.
+9.5 What Val Loss Does and Does Not Predict
+Val loss reliably predicts: judge score ranking, direction of quality change, stability (P2/P5 diverged before epoch 1).
+Val loss does not predict: specific dangerous answers (dataset gaps), or ROUGE-L in isolation (template bleed contaminated ROUGE, not val loss).
+The 0.02 improvement V1→V2 (1.3600→1.3400) is meaningful. Further hyperparameter sweeps for 0.01 improvement are not worth the compute vs fixing the 5 protocol gaps.
+
+10. Open Questions & Planned Experiments
+8-bit and FP16 V2 training (with template fix): not yet run. Critical for the cross-quantisation comparison table the paper requires.
+T5 RAG isolated test: install sentence-transformers and rank_bm25, test RAG alone (all other techniques off) to isolate retrieval effect.
+Protocol gap repair: targeted augmentation for Q17, Q21, Q6, Q22, Q28. Likely +0.3–0.8 judge points on SC-mean.
+T6 redesign: defensive critique prompt ('identify dangerous advice') rather than completeness critique ('what is missing?') to avoid hallucination injection.
+Category gate for T4 and T6: disable both for SC categories, leave active for non-SC (burns, minor wounds) where risk profile is lower.
+GGUF export and on-device benchmarking: merge final adapter, convert to GGUF, test on Android hardware class.
+Model ladder: Gemma 3B, 7B comparison — paper's 'how small before quality collapses' question requires at least one larger data point.
+
+T5 RAG isolated test — PRIORITY 1: install rank_bm25, implement gap-question gate, run T5-only ablation (all other techniques off). Evaluate SC mean with and without gap questions separately.
+Category-conditional system prompt — PRIORITY 2: draft per-category "NEVER" prohibition prompts (e.g., SC/Cardiac: NEVER suggest recovery position before confirming breathing and pulse). Test Safety/Escalation dimension delta specifically.
+Post-generation safety filter — PRIORITY 3: implement deterministic keyword scanner ("recovery position", "CPR", "remove the object", "remove the helmet"). Define canned safe fallbacks for each dangerous pattern. This is the only deterministic safety guarantee available.
+T3 keyword anchoring — non-SC only: test "Key steps for treating [category]:" anchor on burns, minor wounds, bites/stings categories. Do not apply to any SC category until gap questions resolved.
+GGUF export and on-device benchmarking: merge final adapter, convert to GGUF Q4_K_M, measure actual tok/s on target Android device. Validate the 2–6 tok/s estimate.
+Logit biasing: low priority, high risk of degenerate output. Only revisit if T5+T1+filter stack still leaves Category B heuristic failures unaddressed.
+Paper write-up: document the 8-bit reversal, the T4/T6 failure, and the expert-consensus inference stack as a contribution to the "inference techniques on small safety-critical models" literature.
+Summary: Best Results Across All Phases
+Metric
+Best Result
+Adapter / Run
+Best val loss
+1.3400
+V2 4-bit r16 (template fix, data_v2.py)
+Best ROUGE-L (overall)
+0.258
+4-bit V1 early (post bleed fix)
+Best SC ROUGE-L
+0.232
+exp_10cat r16 original best
+Best LLM judge mean (5/5)
+3.53 / 5.0
+8-bit V1, 4 judges, 20 questions
+Best SC judge mean
+3.03 / 5.0
+8-bit V1
+Fastest fine-tuned speed
+19.0 tok/s
+4-bit variants (all)
+Slowest (acceptable)
+10.9 tok/s
+8-bit variants
+Enhanced stack speed
+4.1 tok/s
+T2+T4+T6 two-pass — unacceptable for mobile
+Worst val loss (profile)
+1.4669
+P5 Synthesis (diverged at epoch 0.7)
+Worst enhanced SC score
+~1.52
+V2 4-bit + T2+T4+T6 — worse than baseline
+
+Final Adapter Selection (Confirmed May 2026)
+10cat_4bit_r16_lr1e-4_p3_v2_20260508_054337 | 4-bit NF4 QLoRA | r=16, alpha=32 | lr=1e-4 | patience=3 | val_loss=1.3400 | apply_chat_template | mean judge score 2.18/5 (40Q) | SC mean 1.61
+This adapter is the final production model. 8-bit was trialled and rejected due to a systematic dangerous positioning heuristic revealed by the 40-question evaluation. Enhanced inference techniques (T4, T6) were trialled and rejected as they introduced hallucinated dangerous medical advice at 2B scale. T5 (RAG) remains the only untested technique and is the highest-priority remaining experiment.
